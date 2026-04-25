@@ -24,16 +24,18 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     description: p.description,
     price: p.price,
     images: [p.imageUrl],
-    sizes: p.sizes.map((s: any) => parseFloat(s.size)).sort((a: number, b: number) => a - b),
+    sizes: (p.sizes || []).map((s: any) => parseFloat(s.size)).filter((s: any) => !isNaN(s)).sort((a: number, b: number) => a - b),
     category: p.category,
     featured: p.featured,
     stock: Object.fromEntries(p.sizes.map((s: any) => [s.size, s.stock])),
   });
 
   if (featured === 'true') {
+    const limitNum = parseInt((limit as string) || '10');
     const featuredResult = await getFeaturedProducts();
+    const slicedResult = featuredResult.slice(0, limitNum);
     return successResponse(res, { 
-      products: featuredResult.map(mapProduct) 
+      products: slicedResult.map(mapProduct) 
     });
   }
 

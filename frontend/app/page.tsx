@@ -127,6 +127,7 @@ function FeaturedProductsSection() {
         const json = await res.json()
         
         if (json.success && json.data?.products?.length > 0) {
+          console.log(`Successfully fetched ${json.data.products.length} featured products`)
           setProducts(json.data.products)
         } else {
           // Fallback: Fetch any products if no featured ones are found

@@ -41,11 +41,15 @@ export function ProductCard({ id, name, slug, price, image, index = 0 }: Product
               alt={name}
               fill
               onLoad={() => setImgLoaded(true)}
+              onError={(e) => {
+                // If the primary image fails, try a fallback or just show the card
+                console.warn(`Image failed to load for ${name}: ${image}`)
+                setImgLoaded(true) // Show the card even if image failed
+              }}
               className={[
                 'object-cover transition-all duration-700',
                 'group-hover:brightness-[1.06]',
-                // Fade-in: image starts invisible, slides to full opacity on load
-                imgLoaded ? 'opacity-100' : 'opacity-0',
+                imgLoaded ? 'opacity-100' : 'opacity-20', // Show dimmed version if loading/failed
               ].join(' ')}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
