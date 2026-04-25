@@ -1,8 +1,10 @@
 // API configuration for separate backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export async function apiFetch(path: string, options?: RequestInit) {
-  const url = `${API_URL}${path}`
+  // Use relative path for Next.js rewrites if no absolute URL is provided
+  // If API_URL is provided, it should be the base (e.g. 'https://api.velvet.com')
+  const url = path.startsWith('http') ? path : `${API_URL}/api${path}`
   const res = await fetch(url, {
     ...options,
     credentials: 'include', // Send cookies

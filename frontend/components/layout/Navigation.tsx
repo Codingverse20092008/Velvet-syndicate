@@ -7,6 +7,8 @@ import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { ShoppingBag, User } from 'lucide-react'
 
+import Image from 'next/image'
+
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const { totalItems, toggleCart } = useCartStore()
@@ -34,10 +36,16 @@ export function Navigation() {
       <div className="max-w-7xl mx-auto px-6 py-5">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="interactive">
-            <span className="font-heading text-lg tracking-widest text-velvet-white">
-              VS
-            </span>
+          <Link href="/" className="interactive flex items-center">
+            <div className="relative w-8 h-8 md:w-10 md:h-10">
+              <Image 
+                src="/logo.png" 
+                alt="Velvet Syndicate Logo" 
+                fill 
+                className="object-contain"
+                priority
+              />
+            </div>
           </Link>
 
           {/* Center Links */}

@@ -122,18 +122,19 @@ function FeaturedProductsSection() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await apiFetch('/products?limit=6')
+        // Try fetching featured products explicitly first
+        const res = await apiFetch('/products?featured=true&limit=6')
         const json = await res.json()
         
-        if (json.success) {
-          const allProducts = json.data.products
-          // Filter featured first, then fallback to latest
-          const featured = allProducts.filter((p: any) => p.featured)
-          const finalProducts = featured.length >= 4 
-            ? featured.slice(0, 6) 
-            : allProducts.slice(0, 6)
-          
-          setProducts(finalProducts)
+        if (json.success && json.data?.products?.length > 0) {
+          setProducts(json.data.products)
+        } else {
+          // Fallback: Fetch any products if no featured ones are found
+          const fallbackRes = await apiFetch('/products?limit=6')
+          const fallbackJson = await fallbackRes.json()
+          if (fallbackJson.success && fallbackJson.data?.products) {
+            setProducts(fallbackJson.data.products)
+          }
         }
       } catch (error) {
         console.error('Failed to fetch products:', error)

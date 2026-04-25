@@ -16,9 +16,25 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 
   const { featured, category, sort, limit, offset } = req.query;
 
+  // Function to map product from DB to standardized API format
+  const mapProduct = (p: any) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    description: p.description,
+    price: p.price,
+    images: [p.imageUrl],
+    sizes: p.sizes.map((s: any) => parseFloat(s.size)).sort((a: number, b: number) => a - b),
+    category: p.category,
+    featured: p.featured,
+    stock: Object.fromEntries(p.sizes.map((s: any) => [s.size, s.stock])),
+  });
+
   if (featured === 'true') {
-    const products = await getFeaturedProducts();
-    return successResponse(res, { products });
+    const featuredResult = await getFeaturedProducts();
+    return successResponse(res, { 
+      products: featuredResult.map(mapProduct) 
+    });
   }
 
   const filters = {
@@ -33,18 +49,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const result = await getProducts(parsed);
 
   return successResponse(res, {
-    products: result.products.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      slug: p.slug,
-      description: p.description,
-      price: p.price,
-      images: [p.imageUrl],
-      sizes: p.sizes.map((s: any) => parseFloat(s.size)).sort((a: number, b: number) => a - b),
-      category: p.category,
-      featured: p.featured,
-      stock: Object.fromEntries(p.sizes.map((s: any) => [s.size, s.stock])),
-    })),
+    products: result.products.map(mapProduct),
     pagination: {
       total: result.total,
       limit: result.limit,
