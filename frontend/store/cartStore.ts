@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { apiFetch } from '@/lib/api'
+
 
 export interface CartItem {
   id: string
@@ -39,7 +39,7 @@ export const useCartStore = create<CartState>()(
 
       fetchCart: async () => {
         set({ isLoading: true })
-        try {apiF
+        try {
           const res = await fetch('/api/cart')
           const data = await res.json()
           if (data.success) {
@@ -80,7 +80,7 @@ export const useCartStore = create<CartState>()(
         set({ items: newItems })
         get().recalculate()
 
-        try {apiF
+        try {
           await fetch('/api/cart', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -101,7 +101,7 @@ export const useCartStore = create<CartState>()(
         }))
         get().recalculate()
 
-        try {apiFiem
+        try {
           await fetch(`/api/cart?productId=${productId}&size=${size}`, {
             method: 'DELETE',
           })
@@ -123,7 +123,7 @@ export const useCartStore = create<CartState>()(
         }))
         get().recalculate()
 
-        try {apiF
+        try {
           await fetch('/api/cart', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },

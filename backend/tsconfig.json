@@ -9,13 +9,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
-    "ignoreDeprecations": "6.0"
+    "resolveJsonModule": true
   },
   "include": ["server.ts", "src/**/*"],
   "exclude": ["node_modules", "dist"]

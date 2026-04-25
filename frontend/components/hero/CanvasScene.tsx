@@ -37,7 +37,7 @@ export default function CanvasScene({ onReady }: CanvasSceneProps) {
         <Stage 
           environment="city" 
           intensity={0.4} 
-          contactShadow={{ opacity: 0.35, blur: 2.5 }}
+          shadows={true}
           adjustCamera={true}
           // Shifted down a bit more to clear the main headline
           position={[0, -0.4, 0]}
