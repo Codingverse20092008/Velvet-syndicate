@@ -1,0 +1,45 @@
+import type { Metadata } from 'next'
+import './globals.css'
+import { Cursor } from '@/components/ui/Cursor'
+import { Navigation } from '@/components/layout/Navigation'
+import { Footer } from '@/components/layout/Footer'
+import { CartDrawer } from '@/components/ui/CartDrawer'
+import { AuthProvider } from './providers'
+
+export const metadata: Metadata = {
+  title: 'Velvet Syndicate | Wear the Unspoken',
+  description: 'Premium footwear designed for silent luxury. The unspoken presence.',
+  keywords: ['luxury footwear', 'premium sneakers', 'minimal fashion', 'streetwear'],
+  authors: [{ name: 'Velvet Syndicate' }],
+  openGraph: {
+    title: 'Velvet Syndicate | Wear the Unspoken',
+    description: 'Premium footwear designed for silent luxury.',
+    type: 'website',
+    locale: 'en_US',
+  },
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet" />
+      </head>
+      <body>
+        <AuthProvider>
+          <Cursor />
+          <Navigation />
+          <main>{children}</main>
+          <Footer />
+          <CartDrawer />
+        </AuthProvider>
+      </body>
+    </html>
+  )
+}

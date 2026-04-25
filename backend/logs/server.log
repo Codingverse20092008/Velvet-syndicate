@@ -1,0 +1,28 @@
+
+> velvet-syndicate@1.0.0 dev
+> next dev
+
+  ▲ Next.js 14.2.3
+  - Local:        http://localhost:3000
+  - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 4s
+ ✓ Compiled /middleware in 270ms (73 modules)
+ ○ Compiling /api/cart ...
+ ✓ Compiled /api/cart in 851ms (391 modules)
+◇ injected env (0) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+{"level":40,"time":"2026-04-24T10:55:12.752Z","service":"velvet-backend","msg":"Redis not configured - caching disabled"}
+ POST /api/cart 401 in 2894ms
+ GET /api/cart 401 in 52ms
+ POST /api/cart 401 in 17ms
+ ○ Compiling / ...
+ ✓ Compiled / in 8.9s (1674 modules)
+ GET / 200 in 9232ms
+ ✓ Compiled in 607ms (660 modules)
+ GET / 200 in 84ms
+ GET / 200 in 73ms
+ ✓ Compiled /api/products in 494ms (931 modules)
+◇ injected env (0) from .env.local // tip: ◈ secrets for agents [www.dotenvx.com]
+{"level":40,"time":"2026-04-24T10:57:15.245Z","service":"velvet-backend","msg":"Redis not configured - caching disabled"}
+ GET /api/products 200 in 1901ms

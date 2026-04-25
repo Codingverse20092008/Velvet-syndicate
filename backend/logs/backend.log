@@ -1,0 +1,9 @@
+
+> velvet-syndicate-backend@1.0.0 dev
+> tsx watch server.ts
+
+◇ injected env (6) from .env.local // tip: ⌁ auth for agents [www.vestauth.com]
+{"level":40,"time":"2026-04-24T12:51:15.623Z","service":"velvet-backend","msg":"Redis not configured - caching disabled"}
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+🚀 Backend server running on http://localhost:3001
+📦 API endpoints available at http://localhost:3001/api/*

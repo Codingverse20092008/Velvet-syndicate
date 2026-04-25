@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velvet Syndicate | Wear the Unspoken</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-follower" id="cursor-follower"></div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-logo">VS</div>
+        <div class="nav-links">
+            <a href="#collection" class="nav-link">Collection</a>
+            <a href="#about" class="nav-link">About</a>
+            <a href="#contact" class="nav-link">Contact</a>
+        </div>
+        <div class="nav-cart">Cart (0)</div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-content">
+            <h1 class="hero-title fade-in">VELVET SYNDICATE</h1>
+            <p class="hero-tagline fade-in-delay">Wear the Unspoken</p>
+            <a href="#reveal" class="explore-btn fade-in-delay-2">
+                <span>Explore</span>
+                <div class="explore-line"></div>
+            </a>
+        </div>
+        <div class="scroll-indicator">
+            <div class="scroll-line"></div>
+        </div>
+    </section>
+
+    <!-- Scroll Reveal Section -->
+    <section class="reveal" id="reveal">
+        <div class="reveal-content">
+            <div class="product-silhouette" id="product-silhouette">
+                <div class="shoe-placeholder">
+                    <div class="shoe-outline"></div>
+                </div>
+            </div>
+            <div class="reveal-text">
+                <p class="reveal-headline">Built Quiet. Worn Loud.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Product Showcase -->
+    <section class="showcase" id="collection">
+        <div class="showcase-header">
+            <h2 class="showcase-title">The Collection</h2>
+            <p class="showcase-subtitle">Silence speaks volumes</p>
+        </div>
+        <div class="product-grid">
+            <!-- Product 1 -->
+            <div class="product-card" data-product="obsidian">
+                <div class="product-image">
+                    <div class="product-placeholder obsidian"></div>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">Obsidian Low</h3>
+                    <p class="product-price">$425</p>
+                </div>
+            </div>
+            <!-- Product 2 -->
+            <div class="product-card" data-product="phantom">
+                <div class="product-image">
+                    <div class="product-placeholder phantom"></div>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">Phantom Runner</h3>
+                    <p class="product-price">$495</p>
+                </div>
+            </div>
+            <!-- Product 3 -->
+            <div class="product-card" data-product="noir">
+                <div class="product-image">
+                    <div class="product-placeholder noir"></div>
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">Noir High</h3>
+                    <p class="product-price">$550</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Brand Statement -->
+    <section class="statement" id="about">
+        <div class="statement-content">
+            <p class="statement-text">
+                This is not just footwear.<br>
+                This is presence.
+            </p>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta" id="contact">
+        <div class="cta-content">
+            <a href="#" class="cta-button">
+                <span>Enter the Syndicate</span>
+                <span class="cta-arrow">→</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p class="footer-logo">VELVET SYNDICATE</p>
+            <div class="footer-links">
+                <a href="#">Shipping</a>
+                <a href="#">Returns</a>
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+            </div>
+            <p class="footer-copy">© 2026 Velvet Syndicate. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
