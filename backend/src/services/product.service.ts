@@ -76,14 +76,14 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
         SELECT
           p.id,
           CASE
-            WHEN LOWER(p.brand) = ? THEN 4
+            WHEN LOWER(COALESCE(p.brand, '')) = ? THEN 4
             WHEN LOWER(p.name) = ?   THEN 3
             WHEN LOWER(p.name) LIKE ? THEN 2
             WHEN LOWER(p.name) LIKE ? THEN 1
             ELSE 0
           END AS rank
         FROM products p
-        WHERE LOWER(p.name) LIKE ? OR LOWER(p.brand) LIKE ?
+        WHERE LOWER(p.name) LIKE ? OR LOWER(COALESCE(p.brand, '')) LIKE ?
         ORDER BY rank DESC, p.name ASC
         LIMIT ? OFFSET ?
       `,
@@ -113,9 +113,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       (a, b) => (rankMap.get(b.id) ?? 0) - (rankMap.get(a.id) ?? 0)
     );
 
-    // Count for pagination
     const countResult = await dbClient.execute({
-      sql: `SELECT COUNT(*) as count FROM products WHERE LOWER(name) LIKE ? OR LOWER(brand) LIKE ?`,
+      sql: `SELECT COUNT(*) as count FROM products WHERE LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ?`,
       args: [containsPattern, containsPattern],
     });
     const total = Number((countResult.rows[0] as any)?.count ?? 0);

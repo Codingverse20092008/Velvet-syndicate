@@ -48,26 +48,32 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  const filters = {
-    category: category as string | undefined,
-    featured: featured as string | undefined,
-    sort: (sort as string) || 'createdAt',
-    limit: parseInt((limit as string) || '50'),
-    offset: parseInt((offset as string) || '0'),
-    search: (search as string) || undefined,
-  };
+  try {
+    const filters = {
+      category: category as string | undefined,
+      featured: featured as string | undefined,
+      sort: (sort as string) || 'createdAt',
+      limit: parseInt((limit as string) || '50'),
+      offset: parseInt((offset as string) || '0'),
+      search: (search as string) || undefined,
+    };
 
-  const parsed = productFiltersSchema.parse(filters);
-  const result = await getProducts(parsed);
+    const parsed = productFiltersSchema.parse(filters);
+    const result = await getProducts(parsed);
 
-  return successResponse(res, {
-    products: result.products.map(mapProduct),
-    pagination: {
-      total: result.total,
-      limit: result.limit,
-      offset: result.offset,
-    },
-  });
+    return successResponse(res, {
+      products: result.products.map(mapProduct),
+      pagination: {
+        total: result.total,
+        limit: result.limit,
+        offset: result.offset,
+      },
+    });
+  } catch (err) {
+    console.error("SEARCH ERROR:", err);
+    // @ts-ignore
+    return res.status(500).json({ success: false, message: "Search failed", error: err.message });
+  }
 }));
 
 // GET /api/products/:slug
