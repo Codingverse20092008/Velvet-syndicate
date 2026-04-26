@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { ProductCard } from '@/components/product/ProductCard'
-import { AboutSection } from '@/components/home/AboutSection'
+import { AboutPreview } from '@/components/home/AboutPreview'
 import { ProductGridSkeleton } from '@/components/product/ProductSkeleton'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { apiFetch } from '@/lib/api'
@@ -22,7 +22,6 @@ const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => mod.
 function HeroFallback() {
   return (
     <div className="relative w-full h-screen bg-velvet-black flex items-center justify-center overflow-hidden">
-      {/* Radial vignette — matches 3D version */}
       <div
         className="absolute inset-0 z-10 pointer-events-none"
         style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.72) 100%)' }}
@@ -58,22 +57,28 @@ function HeroFallback() {
   )
 }
 
-
 export default function HomePage() {
   return (
     <div className="bg-velvet-black min-h-screen">
-      {/* 1. Hero Section with 3D Model */}
+
+      {/* 1. Hero Section */}
       <ErrorBoundary fallback={<HeroFallback />}>
         <Hero3D />
       </ErrorBoundary>
 
-      {/* 2. About Section */}
-      <AboutSection />
+      {/* Divider: subtle hairline separating hero from story */}
+      <div className="h-px bg-white/5 mx-auto max-w-5xl" />
+
+      {/* 2. About Preview — brand story teaser directly below hero */}
+      <AboutPreview />
+
+      {/* Divider */}
+      <div className="h-px bg-white/5 mx-auto max-w-5xl" />
 
       {/* 3. Featured Products */}
       <FeaturedProductsSection />
 
-      {/* 4. Brand Statement — tighter vertical padding removes dead space */}
+      {/* 4. Brand Statement */}
       <section className="py-28 flex items-center justify-center bg-velvet-black px-6">
         <motion.div
           className="max-w-2xl text-center"
@@ -89,7 +94,7 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* CTA Section — py-28 matches brand statement rhythm */}
+      {/* 5. CTA Section */}
       <section className="py-28 flex items-center justify-center bg-velvet-dark px-6">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -122,15 +127,12 @@ function FeaturedProductsSection() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        // Try fetching featured products explicitly first
         const res = await apiFetch('/products?featured=true&limit=6')
         const json = await res.json()
-        
+
         if (json.success && json.data?.products?.length > 0) {
-          console.log(`Successfully fetched ${json.data.products.length} featured products`)
           setProducts(json.data.products)
         } else {
-          // Fallback: Fetch any products if no featured ones are found
           const fallbackRes = await apiFetch('/products?limit=6')
           const fallbackJson = await fallbackRes.json()
           if (fallbackJson.success && fallbackJson.data?.products) {
@@ -157,12 +159,16 @@ function FeaturedProductsSection() {
           transition={{ duration: 0.8, ease: EASE }}
         >
           <div>
-            <span className="text-[10px] uppercase tracking-[0.45em] text-velvet-muted/60 mb-3 block">Selected Pieces</span>
-            <h2 className="font-heading text-3xl md:text-4xl text-velvet-white tracking-tight">Featured</h2>
+            <span className="text-[10px] uppercase tracking-[0.45em] text-velvet-muted mb-3 block">
+              Selected Pieces
+            </span>
+            <h2 className="font-heading text-3xl md:text-4xl text-velvet-white tracking-tight">
+              Featured
+            </h2>
           </div>
           <Link
             href="/collection"
-            className="text-[9px] uppercase tracking-[0.38em] text-velvet-muted/60 hover:text-velvet-white transition-colors duration-300 pb-px border-b border-white/10 hover:border-white/30 self-end md:self-auto"
+            className="text-[9px] uppercase tracking-[0.38em] text-velvet-muted hover:text-velvet-white transition-colors duration-300 pb-px border-b border-white/20 hover:border-white/50 self-end md:self-auto"
           >
             View All
           </Link>
@@ -188,7 +194,8 @@ function FeaturedProductsSection() {
                   name={product.name}
                   slug={product.slug}
                   price={product.price}
-                  image={product.images[0]}
+                  image={product.variants?.[0]?.images?.[0]}
+                  variants={product.variants?.map((v: any) => ({ id: v.id, color: v.color }))}
                   index={index}
                 />
               ))}
