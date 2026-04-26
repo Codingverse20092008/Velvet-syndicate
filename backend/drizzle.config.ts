@@ -12,7 +12,7 @@ const env = z.object({
 }).parse(process.env);
 
 export default defineConfig({
-  schema: "./lib/schema.ts",
+  schema: "./src/lib/schema.ts",
   out: "./drizzle",
   dialect: "turso", // Using 'turso' to support authToken for remote libSQL
   dbCredentials: {

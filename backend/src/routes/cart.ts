@@ -25,9 +25,9 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
   const body = req.body;
-  const { productId, size, quantity } = addToCartSchema.parse(body);
+  const { productId, variantId, size, quantity } = addToCartSchema.parse(body);
 
-  await addToCart(user.id, productId, size, quantity);
+  await addToCart(user.id, productId, variantId, size, quantity);
 
   return successResponse(res, { message: 'Item added to cart' }, 201);
 }));
@@ -51,10 +51,20 @@ router.patch('/', asyncHandler(async (req: Request, res: Response) => {
 router.delete('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
   const itemId = req.query.itemId as string;
+  const { productId, variantId, size } = req.query;
 
-  if (!itemId) throw new ValidationError('Item ID is required');
-
-  await removeFromCart(user.id, itemId);
+  if (itemId) {
+    await removeFromCart(user.id, itemId);
+  } else if (productId && variantId && size) {
+    // Optional: find by properties if itemId not provided
+    const cartData = await getCartWithItems(user.id);
+    const item = cartData.items.find((i: any) => 
+      i.productId === productId && i.variantId === variantId && i.size === size
+    );
+    if (item) await removeFromCart(user.id, item.id);
+  } else {
+    throw new ValidationError('Item ID or product/variant/size required');
+  }
 
   return successResponse(res, { message: 'Item removed from cart' });
 }));

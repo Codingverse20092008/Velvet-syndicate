@@ -13,6 +13,7 @@ const EASE = [0.22, 1, 0.36, 1]
 interface SearchResult {
   id: string
   name: string
+  brand: string
   slug: string
   price: number
   image?: string
@@ -53,13 +54,26 @@ export function SearchBar() {
         if (cancelled) return
         const json = await res.json()
         if (json.success && json.data?.products) {
-          setResults(json.data.products.map((p: any) => ({
+          const rawResults = json.data.products.map((p: any) => ({
             id: p.id,
             name: p.name,
+            brand: p.brand || 'Velvet',
             slug: p.slug,
             price: p.price,
             image: p.variants?.[0]?.images?.[0] ?? undefined,
-          })))
+          }));
+
+          // SECOND LAYER FILTER: Strict name or brand match
+          const filteredResults = rawResults.filter((p: any) => 
+            p.name.toLowerCase().includes(q.toLowerCase()) || 
+            p.brand.toLowerCase().includes(q.toLowerCase())
+          );
+
+          // MANDATORY LOGGING
+          console.log("SEARCH INPUT:", q);
+          console.log("RESULT COUNT:", filteredResults.length);
+
+          setResults(filteredResults);
           setIsOpen(true)
         } else {
           setResults([])
@@ -163,7 +177,7 @@ export function SearchBar() {
             ) : results.length === 0 ? (
               <div className="px-4 py-6 text-center">
                 <span className="text-[10px] uppercase tracking-widest text-white/25">
-                  No results found
+                  No relevant results
                 </span>
               </div>
             ) : (

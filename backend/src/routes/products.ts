@@ -8,6 +8,29 @@ import { successResponse } from '../lib/api-response-express';
 
 const router = Router();
 
+// Function to map product from DB to standardized API format
+const mapProduct = (p: any) => ({
+  id: p.id,
+  name: p.name,
+  brand: p.brand,
+  slug: p.slug,
+  description: p.description,
+  price: p.price,
+  category: p.category,
+  featured: p.featured,
+  variants: (p.variants || []).map((v: any) => ({
+    id: v.id,
+    name: v.name,
+    color: v.color,
+    slug: v.slug,
+    images: (v.images || []).map((img: any) => img.imageUrl),
+    sizes: (v.sizes || []).map((s: any) => ({
+      size: s.size,
+      stock: s.stock
+    })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
+  }))
+});
+
 // GET /api/products
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const ip = req.ip || 'anonymous';
@@ -15,28 +38,6 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   if (!allowed) throw new RateLimitError();
 
   const { featured, category, sort, limit, offset, search } = req.query;
-
-  // Function to map product from DB to standardized API format
-  const mapProduct = (p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    price: p.price,
-    category: p.category,
-    featured: p.featured,
-    variants: (p.variants || []).map((v: any) => ({
-      id: v.id,
-      name: v.name,
-      color: v.color,
-      slug: v.slug,
-      images: (v.images || []).map((img: any) => img.imageUrl),
-      sizes: (v.sizes || []).map((s: any) => ({
-        size: s.size,
-        stock: s.stock
-      })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
-    }))
-  });
 
   if (featured === 'true') {
     const limitNum = parseInt((limit as string) || '10');
@@ -73,27 +74,6 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 router.get('/:slug', asyncHandler(async (req: Request, res: Response) => {
   const { slug } = req.params;
   const product = await getProductBySlug(slug);
-
-  const mapProduct = (p: any) => ({
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    description: p.description,
-    price: p.price,
-    category: p.category,
-    featured: p.featured,
-    variants: (p.variants || []).map((v: any) => ({
-      id: v.id,
-      name: v.name,
-      color: v.color,
-      slug: v.slug,
-      images: (v.images || []).map((img: any) => img.imageUrl),
-      sizes: (v.sizes || []).map((s: any) => ({
-        size: s.size,
-        stock: s.stock
-      })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
-    }))
-  });
 
   return successResponse(res, {
     product: mapProduct(product)

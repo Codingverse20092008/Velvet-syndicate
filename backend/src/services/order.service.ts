@@ -32,7 +32,7 @@ export async function createOrder(
     // 2. Validate stock and calculate total
     for (const item of userCart.items) {
       const sizeRecord = await tx.query.productSizes.findFirst({
-        where: and(eq(productSizes.productId, item.productId), eq(productSizes.size, item.size)),
+        where: and(eq(productSizes.variantId, item.variantId), eq(productSizes.size, item.size)),
       });
 
       if (!sizeRecord || sizeRecord.stock < item.quantity) {

@@ -4,6 +4,8 @@ import { persist } from 'zustand/middleware'
 
 export interface CartItem {
   id: string
+  variantId: string
+  variantName?: string
   name: string
   slug: string
   price: number
@@ -20,8 +22,8 @@ interface CartState {
   totalPrice: number
   fetchCart: () => Promise<void>
   addItem: (item: Omit<CartItem, 'quantity'>) => Promise<void>
-  removeItem: (productId: string, size: string) => Promise<void>
-  updateQuantity: (productId: string, size: string, quantity: number) => Promise<void>
+  removeItem: (productId: string, variantId: string, size: string) => Promise<void>
+  updateQuantity: (productId: string, variantId: string, size: string, quantity: number) => Promise<void>
   clearCart: () => void
   toggleCart: () => void
   closeCart: () => void
@@ -45,10 +47,12 @@ export const useCartStore = create<CartState>()(
           if (data.success) {
             const mappedItems = data.data.items.map((item: any) => ({
               id: item.productId,
+              variantId: item.variantId,
+              variantName: item.variant?.name !== 'Standard' ? item.variant?.name : undefined,
               name: item.product.name,
               slug: item.product.slug,
               price: item.product.price,
-              image: item.product.imageUrl,
+              image: item.variant?.images?.[0]?.imageUrl || item.product.imageUrl,
               size: item.size,
               quantity: item.quantity,
             }))
@@ -65,7 +69,7 @@ export const useCartStore = create<CartState>()(
       addItem: async (item) => {
         // Optimistic update
         const existingItemIndex = get().items.findIndex(
-          (i) => i.id === item.id && i.size === item.size
+          (i) => i.id === item.id && i.variantId === item.variantId && i.size === item.size
         )
 
         let newItems
@@ -86,6 +90,7 @@ export const useCartStore = create<CartState>()(
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               productId: item.id,
+              variantId: item.variantId,
               size: item.size,
               quantity: 1,
             }),
@@ -95,14 +100,14 @@ export const useCartStore = create<CartState>()(
         }
       },
 
-      removeItem: async (productId, size) => {
+      removeItem: async (productId, variantId, size) => {
         set((state) => ({
-          items: state.items.filter((i) => !(i.id === productId && i.size === size)),
+          items: state.items.filter((i) => !(i.id === productId && i.variantId === variantId && i.size === size)),
         }))
         get().recalculate()
 
         try {
-          await fetch(`/api/cart?productId=${productId}&size=${size}`, {
+          await fetch(`/api/cart?productId=${productId}&variantId=${variantId}&size=${size}`, {
             method: 'DELETE',
           })
         } catch (error) {
@@ -110,15 +115,15 @@ export const useCartStore = create<CartState>()(
         }
       },
 
-      updateQuantity: async (productId, size, quantity) => {
+      updateQuantity: async (productId, variantId, size, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId, size)
+          get().removeItem(productId, variantId, size)
           return
         }
 
         set((state) => ({
           items: state.items.map((i) =>
-            i.id === productId && i.size === size ? { ...i, quantity } : i
+            i.id === productId && i.variantId === variantId && i.size === size ? { ...i, quantity } : i
           ),
         }))
         get().recalculate()
@@ -127,7 +132,7 @@ export const useCartStore = create<CartState>()(
           await fetch('/api/cart', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId, size, quantity }),
+            body: JSON.stringify({ productId, variantId, size, quantity }),
           })
         } catch (error) {
           console.error('Failed to sync update quantity:', error)

@@ -8,7 +8,18 @@ import { ProductGallery } from '@/components/product/ProductGallery'
 import { SizeSelector } from '@/components/product/SizeSelector'
 import { Button } from '@/components/ui/Button'
 import { useCartStore } from '@/store/cartStore'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { VariantSelector } from '@/components/product/VariantSelector'
+import { AnimatePresence } from 'framer-motion'
+
+interface Variant {
+  id: string
+  name: string
+  color: string
+  slug: string | null
+  images: string[]
+  sizes: { size: string; stock: number }[]
+}
 
 interface Product {
   id: string
@@ -16,9 +27,9 @@ interface Product {
   slug: string
   description: string
   price: number
-  images: string[]
-  sizes: number[]
-  stock?: Record<number, number>
+  category: string
+  featured: boolean
+  variants: Variant[]
 }
 
 export default function ProductPage() {
@@ -26,8 +37,9 @@ export default function ProductPage() {
   const router = useRouter()
   const slug = params.slug as string
 
-  const [product, setProduct] = useState<any | null>(null)
+  const [product, setProduct] = useState<Product | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const { addItem, toggleCart } = useCartStore()
@@ -43,7 +55,11 @@ export default function ProductPage() {
       const res = await fetch(`/api/products/${slug}`)
       const data = await res.json()
       if (data.success) {
-        setProduct(data.data.product)
+        const p = data.data.product
+        setProduct(p)
+        if (p.variants && p.variants.length > 0) {
+          setSelectedVariantId(p.variants[0].id)
+        }
       } else {
         setProduct(null)
       }
@@ -54,8 +70,10 @@ export default function ProductPage() {
     }
   }
 
+  const selectedVariant = product?.variants.find(v => v.id === selectedVariantId) || product?.variants[0]
+
   const handleAddToCart = () => {
-    if (!product || !selectedSize) return
+    if (!product || !selectedVariant || !selectedSize) return
 
     setIsAdding(true)
 
@@ -63,10 +81,12 @@ export default function ProductPage() {
     setTimeout(() => {
       addItem({
         id: product.id,
+        variantId: selectedVariant.id,
         name: product.name,
+        variantName: selectedVariant.name !== 'Standard' ? selectedVariant.name : undefined,
         slug: product.slug,
         price: product.price,
-        image: product.images[0],
+        image: selectedVariant.images[0] || '',
         size: selectedSize,
       })
       setIsAdding(false)
@@ -120,8 +140,12 @@ export default function ProductPage() {
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, ease: [0.215, 0.61, 0.355, 1] }}
+            key={selectedVariantId} // Reset animation on variant change
           >
-            <ProductGallery images={product.images} productName={product.name} />
+            <ProductGallery 
+              images={selectedVariant?.images || []} 
+              productName={product.name} 
+            />
           </motion.div>
 
           {/* Product Info */}
@@ -149,6 +173,23 @@ export default function ProductPage() {
               </p>
             </motion.div>
 
+            {/* Variant Selector */}
+            <motion.div
+              className="mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+            >
+              <VariantSelector
+                variants={product.variants}
+                selectedVariantId={selectedVariantId || ''}
+                onSelectVariant={(id) => {
+                  setSelectedVariantId(id)
+                  setSelectedSize(null) // Reset size on variant change
+                }}
+              />
+            </motion.div>
+
             {/* Size Selector */}
             <motion.div
               className="mb-8"
@@ -157,10 +198,10 @@ export default function ProductPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
             >
               <SizeSelector
-                availableSizes={product.sizes}
+                availableSizes={(selectedVariant?.sizes || []).map(s => s.size)}
                 selectedSize={selectedSize}
                 onSelectSize={setSelectedSize}
-                stock={product.stock}
+                stock={Object.fromEntries((selectedVariant?.sizes || []).map(s => [s.size, s.stock]))}
               />
             </motion.div>
 

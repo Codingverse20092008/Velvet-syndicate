@@ -13,11 +13,12 @@ interface ProductCardProps {
   name: string
   slug: string
   price: number
-  image: string
+  image?: string
+  variants?: { id: string; color: string }[]
   index?: number
 }
 
-export function ProductCard({ id, name, slug, price, image, index = 0 }: ProductCardProps) {
+export function ProductCard({ id, name, slug, price, image, variants, index = 0 }: ProductCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false)
 
   return (
@@ -58,10 +59,26 @@ export function ProductCard({ id, name, slug, price, image, index = 0 }: Product
 
         {/* Text hierarchy: name prominent, price recedes */}
         <div className="space-y-[6px]">
-          <h3 className="font-heading text-[15px] font-semibold text-velvet-white tracking-wide leading-snug">
-            {name}
-          </h3>
-          <p className="text-[10px] font-light text-velvet-muted/70 tracking-[0.32em] uppercase">
+          <div className="flex items-start justify-between gap-4">
+            <h3 className="font-heading text-[15px] font-semibold text-velvet-white tracking-wide leading-snug flex-1">
+              {name}
+            </h3>
+            {variants && variants.length > 1 && (
+              <div className="flex gap-1 mt-1">
+                {variants.slice(0, 4).map((v) => (
+                  <div
+                    key={v.id}
+                    className="w-2 h-2 rounded-full border border-white/10"
+                    style={{ backgroundColor: v.color }}
+                  />
+                ))}
+                {variants.length > 4 && (
+                  <span className="text-[8px] text-velvet-muted leading-none">+{variants.length - 4}</span>
+                )}
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] font-medium text-velvet-muted tracking-[0.32em] uppercase">
             {formatPrice(price)}
           </p>
         </div>

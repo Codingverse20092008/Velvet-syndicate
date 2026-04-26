@@ -41,7 +41,11 @@ app.use('/api/products', productsRoutes);
 // Error handling
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-  console.log(`📦 API endpoints available at http://localhost:${PORT}/api/*`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Backend server running on http://localhost:${PORT}`);
+    console.log(`📦 API endpoints available at http://localhost:${PORT}/api/*`);
+  });
+}
+
+export default app;

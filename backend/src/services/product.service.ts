@@ -1,5 +1,5 @@
-import { eq, and, asc, desc, inArray, sql, like, or } from 'drizzle-orm';
-import { db } from '../lib/db';
+import { eq, and, asc, desc, inArray, sql } from 'drizzle-orm';
+import { db, dbClient } from '../lib/db';
 import { products, productSizes, type Product, type ProductSize } from '../lib/schema';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { CACHE_KEYS, CACHE_TTL, setCachedProducts, getCachedProducts, invalidateProductsCache } from '../lib/cache';
@@ -22,6 +22,7 @@ export interface ProductWithVariants {
   description: string;
   price: number;
   imageUrl: string;
+  brand: string;
   category: string;
   featured: boolean;
   createdAt: string;
@@ -67,22 +68,28 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     const startsPattern  = `${q}%`;
     const containsPattern = `%${q}%`;
 
-    // We cannot use Drizzle's relational API with custom ORDER BY rank,
-    // so we use a raw SQL query scoped strictly to the name column.
-    const rawResults = await db.all(sql`
-      SELECT
-        p.id,
-        CASE
-          WHEN LOWER(p.name) = ${exactPattern}   THEN 3
-          WHEN LOWER(p.name) LIKE ${startsPattern} THEN 2
-          WHEN LOWER(p.name) LIKE ${containsPattern} THEN 1
-          ELSE 0
-        END AS rank
-      FROM products p
-      WHERE LOWER(p.name) LIKE ${containsPattern}
-      ORDER BY rank DESC, p.name ASC
-      LIMIT ${limit} OFFSET ${offset}
-    `) as { id: string; rank: number }[];
+    const searchLimit = limit === 50 ? 6 : limit; // Override to 6 if it's the default large limit, else respect request
+
+    // Use dbClient.execute() — the correct raw SQL API for Turso/libSQL
+    const searchResult = await dbClient.execute({
+      sql: `
+        SELECT
+          p.id,
+          CASE
+            WHEN LOWER(p.brand) = ? THEN 4
+            WHEN LOWER(p.name) = ?   THEN 3
+            WHEN LOWER(p.name) LIKE ? THEN 2
+            WHEN LOWER(p.name) LIKE ? THEN 1
+            ELSE 0
+          END AS rank
+        FROM products p
+        WHERE LOWER(p.name) LIKE ? OR LOWER(p.brand) LIKE ?
+        ORDER BY rank DESC, p.name ASC
+        LIMIT ? OFFSET ?
+      `,
+      args: [exactPattern, exactPattern, startsPattern, containsPattern, containsPattern, containsPattern, searchLimit, offset],
+    });
+    const rawResults = searchResult.rows as unknown as { id: string; rank: number }[];
 
     if (rawResults.length === 0) {
       return { products: [], total: 0, limit, offset };
@@ -107,11 +114,11 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     );
 
     // Count for pagination
-    const countResult = await db.all(sql`
-      SELECT COUNT(*) as count FROM products
-      WHERE LOWER(name) LIKE ${containsPattern}
-    `) as { count: number }[];
-    const total = Number(countResult[0]?.count ?? 0);
+    const countResult = await dbClient.execute({
+      sql: `SELECT COUNT(*) as count FROM products WHERE LOWER(name) LIKE ? OR LOWER(brand) LIKE ?`,
+      args: [containsPattern, containsPattern],
+    });
+    const total = Number((countResult.rows[0] as any)?.count ?? 0);
 
     return { products: sorted as any[], total, limit, offset };
   }

@@ -16,9 +16,13 @@ interface Product {
   name: string
   slug: string
   price: number
-  images: string[]
-  sizes: string[] // Backend returns string sizes
   category: string
+  variants: {
+    id: string
+    color: string
+    images: string[]
+    sizes: { size: string; stock: number }[]
+  }[]
 }
 
 export default function CollectionPage() {
@@ -50,9 +54,14 @@ export default function CollectionPage() {
   }
 
   const filteredProducts = products.filter((product) => {
-    // Size check - sizes from backend are objects with size/stock or string keys
-    // Assuming backend returns sizes in standardized product object
-    if (selectedSize && !Object.keys((product as any).stock || {}).includes(selectedSize)) return false
+    // Check if any variant has the selected size and stock
+    if (selectedSize) {
+      const hasSize = product.variants.some(v => 
+        v.sizes.some(s => s.size === selectedSize && s.stock > 0)
+      )
+      if (!hasSize) return false
+    }
+    
     if (selectedCategory && product.category.toLowerCase() !== selectedCategory.toLowerCase()) return false
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false
     return true
@@ -78,7 +87,7 @@ export default function CollectionPage() {
           <div className="flex items-center gap-6">
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-velvet-white/60 hover:text-velvet-white transition-colors cursor-none interactive px-4 py-2 border border-white/5 hover:border-white/20"
+              className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-velvet-white hover:text-velvet-white transition-colors cursor-none interactive px-4 py-2 border border-white/20 hover:border-white/40"
             >
               <SlidersHorizontal size={12} />
               Filter
@@ -87,7 +96,7 @@ export default function CollectionPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent border border-white/5 hover:border-white/20 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-velvet-white/60 focus:outline-none focus:text-velvet-white cursor-none interactive transition-all"
+              className="bg-transparent border border-white/20 hover:border-white/40 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-velvet-white focus:outline-none focus:text-velvet-white cursor-none interactive transition-all"
             >
               <option value="createdAt" className="bg-neutral-900">Newest</option>
               <option value="price-asc" className="bg-neutral-900">Price Low</option>
@@ -155,7 +164,8 @@ export default function CollectionPage() {
                   name={product.name}
                   slug={product.slug}
                   price={product.price}
-                  image={product.images[0]}
+                  image={product.variants[0]?.images[0]}
+                  variants={product.variants.map(v => ({ id: v.id, color: v.color }))}
                   index={index}
                 />
               ))}

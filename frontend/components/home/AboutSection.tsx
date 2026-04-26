@@ -12,7 +12,7 @@ export function AboutSection() {
       <div className="max-w-[600px] mx-auto text-center">
 
         <motion.span
-          className="text-[10px] uppercase tracking-[0.52em] text-velvet-muted/60 mb-7 block"
+          className="text-[10px] uppercase tracking-[0.52em] text-velvet-muted mb-7 block"
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
@@ -33,7 +33,7 @@ export function AboutSection() {
 
         {/* Brand statement — surfaced as the primary voice */}
         <motion.p
-          className="text-base md:text-lg text-velvet-white/90 font-light leading-[1.85] mb-6"
+          className="text-base md:text-lg text-velvet-white font-light leading-[1.85] mb-6"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
@@ -43,7 +43,7 @@ export function AboutSection() {
         </motion.p>
 
         <motion.p
-          className="text-sm text-velvet-muted/55 font-light leading-[1.9]"
+          className="text-sm text-velvet-muted font-light leading-[1.9]"
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}

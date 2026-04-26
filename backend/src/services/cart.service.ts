@@ -1,6 +1,6 @@
 import { eq, and } from 'drizzle-orm';
 import { db } from '../lib/db';
-import { cart, cartItems, products, productSizes } from '../lib/schema';
+import { cart, cartItems, products, productSizes, productVariants } from '../lib/schema';
 import { NotFoundError, ValidationError, AppError } from '../lib/errors';
 import { invalidateCartCache } from '../lib/cache';
 import { logger } from '../lib/logger';
@@ -14,6 +14,11 @@ export async function getCartWithItems(userId: string) {
       items: {
         with: {
           product: true,
+          variant: {
+            with: {
+              images: true
+            }
+          }
         },
       },
     },
@@ -27,6 +32,7 @@ export async function getCartWithItems(userId: string) {
   const items = cartRecord.items.map((item) => ({
     id: item.id,
     productId: item.productId,
+    variantId: item.variantId,
     size: item.size,
     quantity: item.quantity,
     product: {
@@ -36,6 +42,12 @@ export async function getCartWithItems(userId: string) {
       price: item.product.price,
       imageUrl: item.product.imageUrl,
     },
+    variant: {
+      id: item.variant.id,
+      name: item.variant.name,
+      color: item.variant.color,
+      images: item.variant.images,
+    }
   }));
 
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
@@ -46,6 +58,7 @@ export async function getCartWithItems(userId: string) {
 export async function addToCart(
   userId: string,
   productId: string,
+  variantId: string,
   size: string,
   quantity: number = 1
 ) {
@@ -53,17 +66,17 @@ export async function addToCart(
   if (quantity > MAX_ITEM_QUANTITY) throw new ValidationError(`Max ${MAX_ITEM_QUANTITY} items allowed per product`);
 
   return await db.transaction(async (tx) => {
-    // 1. Verify product exists and is available
-    const product = await tx.query.products.findFirst({
-      where: eq(products.id, productId),
+    // 1. Verify product and variant relationship
+    const variant = await tx.query.productVariants.findFirst({
+      where: and(eq(productVariants.id, variantId), eq(productVariants.productId, productId)),
     });
-    if (!product) throw new NotFoundError('Product');
+    if (!variant) throw new NotFoundError('Variant not found for this product');
 
-    // 2. Verify size and stock within transaction
+    // 2. Verify variant and size/stock within transaction
     const sizeRecord = await tx.query.productSizes.findFirst({
-      where: and(eq(productSizes.productId, productId), eq(productSizes.size, size)),
+      where: and(eq(productSizes.variantId, variantId), eq(productSizes.size, size)),
     });
-    if (!sizeRecord) throw new NotFoundError('Size selection is invalid');
+    if (!sizeRecord) throw new NotFoundError('Size selection is invalid for this variant');
     if (sizeRecord.stock <= 0) throw new ValidationError('Item is out of stock');
 
     // 3. Get or Create Cart (UPSERT to handle concurrency)
@@ -76,11 +89,11 @@ export async function addToCart(
     if (!userCart) throw new AppError('Failed to initialize cart', 500);
 
 
-    // 4. Check if item already exists in cart
     const existingItem = await tx.query.cartItems.findFirst({
       where: and(
         eq(cartItems.cartId, userCart.id),
         eq(cartItems.productId, productId),
+        eq(cartItems.variantId, variantId),
         eq(cartItems.size, size)
       ),
     });
@@ -100,6 +113,7 @@ export async function addToCart(
         id: crypto.randomUUID(),
         cartId: userCart.id,
         productId,
+        variantId,
         size,
         quantity,
       });
@@ -146,7 +160,7 @@ export async function updateCartItemQuantity(
 
     // Check stock again for update
     const sizeRecord = await tx.query.productSizes.findFirst({
-      where: and(eq(productSizes.productId, item.productId), eq(productSizes.size, item.size)),
+      where: and(eq(productSizes.variantId, item.variantId), eq(productSizes.size, item.size)),
     });
 
     if (!sizeRecord || sizeRecord.stock < quantity) {

@@ -32,24 +32,47 @@ export const products = sqliteTable('products', {
   description: text('description').notNull(),
   price: real('price').notNull(),
   imageUrl: text('image_url').notNull(),
+  brand: text('brand').notNull().default('Velvet'),
   category: text('category').notNull().default('footwear'),
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
+  features: text('features'),
+  careInstructions: text('care_instructions'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
   slugIdx: uniqueIndex('products_slug_idx').on(table.slug),
+  brandIdx: index('products_brand_idx').on(table.brand),
   categoryIdx: index('products_category_idx').on(table.category),
   featuredIdx: index('products_featured_idx').on(table.featured),
 }));
 
-export const productSizes = sqliteTable('product_sizes', {
+export const productVariants = sqliteTable('product_variants', {
   id: text('id').primaryKey(),
   productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  color: text('color').notNull(),
+  slug: text('slug'),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  productIdIdx: index('product_variants_product_id_idx').on(table.productId),
+}));
+
+export const productVariantImages = sqliteTable('product_variant_images', {
+  id: text('id').primaryKey(),
+  variantId: text('variant_id').notNull().references(() => productVariants.id, { onDelete: 'cascade' }),
+  imageUrl: text('image_url').notNull(),
+}, (table) => ({
+  variantIdIdx: index('product_variant_images_variant_id_idx').on(table.variantId),
+}));
+
+export const productSizes = sqliteTable('product_sizes', {
+  id: text('id').primaryKey(),
+  variantId: text('variant_id').notNull().references(() => productVariants.id, { onDelete: 'cascade' }),
   size: text('size').notNull(),
   stock: integer('stock').notNull().default(0),
 }, (table) => ({
-  productIdIdx: index('product_sizes_product_id_idx').on(table.productId),
-  productSizeIdx: uniqueIndex('product_sizes_unique_idx').on(table.productId, table.size),
+  variantIdIdx: index('product_sizes_variant_id_idx').on(table.variantId),
+  variantSizeIdx: uniqueIndex('product_sizes_unique_idx').on(table.variantId, table.size),
 }));
 
 export const cart = sqliteTable('cart', {
@@ -64,11 +87,12 @@ export const cartItems = sqliteTable('cart_items', {
   id: text('id').primaryKey(),
   cartId: text('cart_id').notNull().references(() => cart.id, { onDelete: 'cascade' }),
   productId: text('product_id').notNull().references(() => products.id),
+  variantId: text('variant_id').notNull().references(() => productVariants.id),
   size: text('size').notNull(),
   quantity: integer('quantity').notNull().default(1),
 }, (table) => ({
   cartIdIdx: index('cart_items_cart_id_idx').on(table.cartId),
-  uniqueCartItemIdx: uniqueIndex('cart_items_unique_idx').on(table.cartId, table.productId, table.size),
+  uniqueCartItemIdx: uniqueIndex('cart_items_unique_idx').on(table.cartId, table.productId, table.variantId, table.size),
 }));
 
 
@@ -110,13 +134,24 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 }));
 
 export const productsRelations = relations(products, ({ many }) => ({
-  sizes: many(productSizes),
+  variants: many(productVariants),
   cartItems: many(cartItems),
   orderItems: many(orderItems),
 }));
 
+export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
+  product: one(products, { fields: [productVariants.productId], references: [products.id] }),
+  images: many(productVariantImages),
+  sizes: many(productSizes),
+  cartItems: many(cartItems),
+}));
+
+export const productVariantImagesRelations = relations(productVariantImages, ({ one }) => ({
+  variant: one(productVariants, { fields: [productVariantImages.variantId], references: [productVariants.id] }),
+}));
+
 export const productSizesRelations = relations(productSizes, ({ one }) => ({
-  product: one(products, { fields: [productSizes.productId], references: [products.id] }),
+  variant: one(productVariants, { fields: [productSizes.variantId], references: [productVariants.id] }),
 }));
 
 export const cartRelations = relations(cart, ({ one, many }) => ({
@@ -127,6 +162,7 @@ export const cartRelations = relations(cart, ({ one, many }) => ({
 export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   cart: one(cart, { fields: [cartItems.cartId], references: [cart.id] }),
   product: one(products, { fields: [cartItems.productId], references: [products.id] }),
+  variant: one(productVariants, { fields: [cartItems.variantId], references: [productVariants.id] }),
 }));
 
 export const ordersRelations = relations(orders, ({ one, many }) => ({
@@ -144,6 +180,8 @@ export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
+export type ProductVariant = typeof productVariants.$inferSelect;
+export type ProductVariantImage = typeof productVariantImages.$inferSelect;
 export type ProductSize = typeof productSizes.$inferSelect;
 export type Cart = typeof cart.$inferSelect;
 export type CartItem = typeof cartItems.$inferSelect;

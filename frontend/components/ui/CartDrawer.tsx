@@ -55,9 +55,9 @@ export function CartDrawer() {
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {items.map((item) => (
+                      {items.map((item) => (
                       <motion.div
-                        key={`${item.id}-${item.size}`}
+                        key={`${item.id}-${item.variantId}-${item.size}`}
                         className="flex gap-4"
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -72,24 +72,27 @@ export function CartDrawer() {
                         </div>
                         <div className="flex-1">
                           <h3 className="font-heading text-base mb-1">{item.name}</h3>
+                          {item.variantName && (
+                            <p className="text-[10px] uppercase tracking-widest text-velvet-accent mb-1">{item.variantName}</p>
+                          )}
                           <p className="text-sm text-velvet-muted mb-2">Size: {item.size}</p>
                           <p className="text-velvet-accent text-sm">{formatPrice(item.price)}</p>
                           <div className="flex items-center gap-3 mt-3">
                             <button
-                              onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.id, item.variantId, item.size, item.quantity - 1)}
                               className="w-8 h-8 border border-white/20 flex items-center justify-center text-velvet-muted hover:text-velvet-white hover:border-velvet-white transition-colors cursor-none"
                             >
                               -
                             </button>
                             <span className="text-sm w-8 text-center">{item.quantity}</span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.id, item.variantId, item.size, item.quantity + 1)}
                               className="w-8 h-8 border border-white/20 flex items-center justify-center text-velvet-muted hover:text-velvet-white hover:border-velvet-white transition-colors cursor-none"
                             >
                               +
                             </button>
                             <button
-                              onClick={() => removeItem(item.id, item.size)}
+                              onClick={() => removeItem(item.id, item.variantId, item.size)}
                               className="ml-auto text-xs text-velvet-muted hover:text-velvet-white transition-colors cursor-none"
                             >
                               Remove
