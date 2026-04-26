@@ -11,8 +11,8 @@ import { SearchBar } from './SearchBar'
 
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
-  const { items, toggleCart } = useCartStore()
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+  const { items, toggleCart, hasHydrated } = useCartStore()
+  const totalItems = hasHydrated ? items.reduce((sum, item) => sum + item.quantity, 0) : 0
   const { isAuthenticated } = useAuthStore()
 
   useEffect(() => {

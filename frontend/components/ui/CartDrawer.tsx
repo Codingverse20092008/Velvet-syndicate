@@ -11,9 +11,9 @@ import { useRouter } from 'next/navigation'
 
 export function CartDrawer() {
   const router = useRouter()
-  const { items, isOpen, closeCart, removeItem, updateQuantity } = useCartStore()
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const { items, isOpen, closeCart, removeItem, updateQuantity, hasHydrated } = useCartStore()
+  const totalItems = hasHydrated ? items.reduce((sum, item) => sum + item.quantity, 0) : 0
+  const totalPrice = hasHydrated ? items.reduce((sum, item) => sum + item.price * item.quantity, 0) : 0
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
 
   return (
@@ -124,12 +124,12 @@ export function CartDrawer() {
                     size="lg"
                     isLoading={authLoading}
                     onClick={() => {
-                      closeCart()
                       if (isAuthenticated) {
                         router.push('/checkout')
                       } else {
                         router.push('/login?redirect=/checkout')
                       }
+                      closeCart()
                     }}
                   >
                     Proceed to Checkout

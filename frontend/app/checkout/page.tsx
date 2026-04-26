@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
@@ -238,10 +238,14 @@ function CheckoutPage() {
   )
 }
 
+
+
 export default function Checkout() {
   return (
-    <ErrorBoundary>
-      <CheckoutPage />
-    </ErrorBoundary>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center animate-pulse uppercase tracking-widest text-velvet-muted">Entering Secure Vault...</div>}>
+      <ErrorBoundary>
+        <CheckoutPage />
+      </ErrorBoundary>
+    </Suspense>
   )
 }

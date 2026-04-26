@@ -18,7 +18,10 @@ interface CartState {
   items: CartItem[]
   isOpen: boolean
   isLoading: boolean
-  isProcessing: boolean // Guard for race conditions
+  isProcessing: boolean
+  hasHydrated: boolean
+  totalItems: number
+  totalPrice: number
   version: number
   syncCart: () => Promise<void>
   fetchCart: () => Promise<void>
@@ -28,6 +31,7 @@ interface CartState {
   clearCart: () => void
   toggleCart: () => void
   closeCart: () => void
+  recalculate: () => void
 }
 
 export const useCartStore = create<CartState>()(
@@ -37,16 +41,23 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       isLoading: false,
       isProcessing: false,
+      hasHydrated: false,
+      totalItems: 0,
+      totalPrice: 0,
       version: 0,
+
+      recalculate: () => {
+        const items = get().items
+        set({
+          totalItems: items.reduce((sum, i) => sum + i.quantity, 0),
+          totalPrice: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+        })
+      },
 
       syncCart: async () => {
         const localItems = get().items
         if (localItems.length === 0) return
-
         try {
-          const { trackEvent } = await import('@/lib/analytics')
-          trackEvent('cart_merge_started', { itemCount: localItems.length })
-
           for (const item of localItems) {
             await fetch('/api/cart', {
               method: 'POST',
@@ -59,11 +70,9 @@ export const useCartStore = create<CartState>()(
               }),
             })
           }
-          
           set((state) => ({ version: state.version + 1 }))
-          trackEvent('cart_merge_success')
         } catch (error) {
-          console.error('Failed to sync local cart to server:', error)
+          console.error('Failed to sync local cart:', error)
         }
       },
 
@@ -85,6 +94,7 @@ export const useCartStore = create<CartState>()(
               quantity: item.quantity,
             }))
             set({ items: mappedItems })
+            get().recalculate()
           }
         } catch (error) {
           console.error('Failed to fetch cart:', error)
@@ -96,38 +106,26 @@ export const useCartStore = create<CartState>()(
       addItem: async (item) => {
         if (get().isProcessing) return
         set({ isProcessing: true })
-
         try {
-          const existingItemIndex = get().items.findIndex(
-            (i) => i.id === item.id && i.variantId === item.variantId && i.size === item.size
-          )
-
+          const items = get().items
+          const idx = items.findIndex(i => i.id === item.id && i.variantId === item.variantId && i.size === item.size)
           let newItems
-          if (existingItemIndex > -1) {
-            newItems = get().items.map((i, idx) =>
-              idx === existingItemIndex ? { ...i, quantity: i.quantity + 1 } : i
-            )
+          if (idx > -1) {
+            newItems = items.map((i, k) => k === idx ? { ...i, quantity: i.quantity + 1 } : i)
           } else {
-            newItems = [...get().items, { ...item, quantity: 1 }]
+            newItems = [...items, { ...item, quantity: 1 }]
           }
-
           set({ items: newItems })
+          get().recalculate()
 
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
             await fetch('/api/cart', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                productId: item.id,
-                variantId: item.variantId,
-                size: item.size,
-                quantity: 1,
-              }),
+              body: JSON.stringify({ ...item, quantity: 1, productId: item.id }),
             })
           }
-        } catch (error) {
-          console.error('Failed to sync add item:', error)
         } finally {
           set({ isProcessing: false })
         }
@@ -136,20 +134,15 @@ export const useCartStore = create<CartState>()(
       removeItem: async (productId, variantId, size) => {
         if (get().isProcessing) return
         set({ isProcessing: true })
-
         try {
           set((state) => ({
             items: state.items.filter((i) => !(i.id === productId && i.variantId === variantId && i.size === size)),
           }))
-
+          get().recalculate()
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
-            await fetch(`/api/cart?productId=${productId}&variantId=${variantId}&size=${size}`, {
-              method: 'DELETE',
-            })
+            await fetch(`/api/cart?productId=${productId}&variantId=${variantId}&size=${size}`, { method: 'DELETE' })
           }
-        } catch (error) {
-          console.error('Failed to sync remove item:', error)
         } finally {
           set({ isProcessing: false })
         }
@@ -158,20 +151,18 @@ export const useCartStore = create<CartState>()(
       updateQuantity: async (productId, variantId, size, quantity) => {
         if (get().isProcessing) return
         set({ isProcessing: true })
-
         try {
           if (quantity <= 0) {
-            set({ isProcessing: false }) 
+            set({ isProcessing: false })
             await get().removeItem(productId, variantId, size)
             return
           }
-
           set((state) => ({
             items: state.items.map((i) =>
               i.id === productId && i.variantId === variantId && i.size === size ? { ...i, quantity } : i
             ),
           }))
-
+          get().recalculate()
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
             await fetch('/api/cart', {
@@ -180,28 +171,25 @@ export const useCartStore = create<CartState>()(
               body: JSON.stringify({ productId, variantId, size, quantity }),
             })
           }
-        } catch (error) {
-          console.error('Failed to sync update quantity:', error)
         } finally {
           set({ isProcessing: false })
         }
       },
 
       clearCart: () => {
-        set({ items: [] })
+        set({ items: [], totalItems: 0, totalPrice: 0 })
       },
 
-      toggleCart: () => {
-        set((state) => ({ isOpen: !state.isOpen }))
-      },
-
-      closeCart: () => {
-        set({ isOpen: false })
-      },
+      toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
+      closeCart: () => set({ isOpen: false }),
     }),
     {
       name: 'velvet-cart',
-      partialize: (state) => ({ items: state.items }), // ONLY persist items
+      partialize: (state) => ({ items: state.items }),
+      onRehydrateStorage: () => (state) => {
+        state?.set({ hasHydrated: true })
+        state?.recalculate()
+      }
     }
   )
 )
