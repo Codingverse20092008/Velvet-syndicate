@@ -71,48 +71,70 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   // Ranking: exact match (3) > starts-with (2) > contains (1)
   // We run a raw SQL query for search so we can ORDER BY relevance rank
   if (search) {
-    const q = search.toLowerCase().trim();
+    const q = search.toLowerCase().trim().replace(/\s+/g, ' ');
     if (!q) return { products: [], total: 0, limit, offset };
 
-    const mappedBrands = BRAND_MAP[q] || [q];
-    const brandPlaceholders = mappedBrands.map(() => '?').join(', ');
-    
-    const startsPattern = `${q}%`;
-    const containsPattern = `%${q}%`;
-    const searchLimit = 6; 
+    const tokens = q.split(' ').filter(t => t.length > 0);
+    if (tokens.length === 0) return { products: [], total: 0, limit, offset };
 
+    const searchLimit = 6;
+    const ecosystemBrands = tokens.length === 1 ? (BRAND_MAP[tokens[0]] || []) : [];
+    
+    const scoreSqlParts: string[] = [];
+    const whereSqlParts: string[] = [];
+    const sqlArgs: any[] = [];
+
+    // Each token contributes to the score
+    tokens.forEach(token => {
+      const starts = `${token}%`;
+      const contains = `%${token}%`;
+      
+      scoreSqlParts.push(`(
+        CASE WHEN LOWER(COALESCE(brand, '')) = ? THEN 100 ELSE 0 END +
+        CASE WHEN LOWER(name) LIKE ? THEN 80 ELSE 0 END +
+        CASE WHEN LOWER(name) LIKE ? THEN 60 ELSE 0 END +
+        CASE WHEN LOWER(COALESCE(brand, '')) LIKE ? THEN 40 ELSE 0 END +
+        CASE WHEN LOWER(name) LIKE ? THEN 20 ELSE 0 END
+      )`);
+      sqlArgs.push(token, starts, contains, contains, contains);
+      
+      whereSqlParts.push(`(LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ?)`);
+      sqlArgs.push(contains, contains);
+    });
+
+    // Ecosystem bonus for single token searches (e.g. "nike" -> Jordan)
+    if (ecosystemBrands.length > 0) {
+      const placeholders = ecosystemBrands.map(() => '?').join(', ');
+      scoreSqlParts.push(`(CASE WHEN LOWER(COALESCE(brand, '')) IN (${placeholders}) THEN 30 ELSE 0 END)`);
+      sqlArgs.push(...ecosystemBrands);
+      
+      // Also allow ecosystem brands in WHERE clause
+      whereSqlParts.push(`(LOWER(COALESCE(brand, '')) IN (${placeholders}))`);
+      sqlArgs.push(...ecosystemBrands);
+    }
+
+    const scoreSql = scoreSqlParts.join(' + ');
+    const whereSql = whereSqlParts.join(' OR ');
+
+    // Main search query with grouping to avoid variants flooding
+    // We select the product ID that matches the highest individual score for that name group
     const searchResult = await dbClient.execute({
       sql: `
-        SELECT
-          p.id,
-          CASE
-            WHEN LOWER(COALESCE(p.brand, '')) = ? THEN 1
-            WHEN LOWER(p.name) LIKE ? THEN 2
-            WHEN LOWER(p.name) LIKE ? THEN 3
-            WHEN LOWER(COALESCE(p.brand, '')) IN (${brandPlaceholders}) THEN 4
-            ELSE 5
-          END AS rank
-        FROM products p
-        WHERE 
-          LOWER(p.name) LIKE ? 
-          OR LOWER(COALESCE(p.brand, '')) LIKE ?
-          OR LOWER(COALESCE(p.brand, '')) IN (${brandPlaceholders})
-        ORDER BY rank ASC, p.name ASC
+        SELECT 
+          id, 
+          name,
+          (${scoreSql}) as score
+        FROM products
+        WHERE ${whereSql}
+        GROUP BY name
+        HAVING score > 0
+        ORDER BY score DESC, LENGTH(name) ASC
         LIMIT ? OFFSET ?
       `,
-      args: [
-        q,
-        startsPattern,
-        containsPattern,
-        ...mappedBrands,
-        containsPattern,
-        containsPattern,
-        ...mappedBrands,
-        searchLimit, 
-        offset
-      ],
+      args: [...sqlArgs, searchLimit, offset],
     });
-    const rawResults = searchResult.rows as unknown as { id: string; rank: number }[];
+
+    const rawResults = searchResult.rows as unknown as { id: string; score: number }[];
 
     if (rawResults.length === 0) {
       return { products: [], total: 0, limit, offset };
@@ -120,7 +142,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
 
     const ids = rawResults.map((r) => r.id);
 
-    // Fetch full product data with variants for matched IDs
+    // Fetch full product data with variants
     const fullProducts = await db.query.products.findMany({
       where: inArray(products.id, ids),
       with: {
@@ -130,18 +152,20 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       },
     });
 
-    // Re-apply rank order from raw results
-    const rankMap = new Map(rawResults.map((r) => [r.id, Number(r.rank)]));
+    // Re-apply score order
+    const scoreMap = new Map(rawResults.map((r) => [r.id, Number(r.score)]));
     const sorted = fullProducts.sort(
-      (a, b) => (rankMap.get(a.id) ?? 5) - (rankMap.get(b.id) ?? 5)
+      (a, b) => (scoreMap.get(b.id) ?? 0) - (scoreMap.get(a.id) ?? 0)
     );
 
+    // Count for pagination (accounting for GROUP BY name)
     const countResult = await dbClient.execute({
       sql: `
-        SELECT COUNT(*) as count FROM products 
-        WHERE LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ? OR LOWER(COALESCE(brand, '')) IN (${brandPlaceholders})
+        SELECT COUNT(DISTINCT name) as count 
+        FROM products 
+        WHERE ${whereSql}
       `,
-      args: [containsPattern, containsPattern, ...mappedBrands],
+      args: sqlArgs,
     });
     const total = Number((countResult.rows[0] as any)?.count ?? 0);
 
