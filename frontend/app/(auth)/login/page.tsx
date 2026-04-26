@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { apiFetch } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
@@ -11,6 +11,8 @@ import { Button } from '@/components/ui/Button'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
   const { setUser, setLoading } = useAuthStore()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -69,6 +71,16 @@ export default function LoginPage() {
           >
             Enter the Syndicate
           </motion.p>
+          {message && (
+            <motion.p
+              className="text-[10px] uppercase tracking-[0.2em] text-velvet-accent mt-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              {message}
+            </motion.p>
+          )}
         </div>
 
         {/* Form */}

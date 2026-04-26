@@ -6,7 +6,10 @@ import { Button } from './Button'
 import { formatPrice } from '@/lib/utils'
 import { X } from 'lucide-react'
 
+import { useRouter } from 'next/navigation'
+
 export function CartDrawer() {
+  const router = useRouter()
   const { items, isOpen, totalItems, totalPrice, closeCart, removeItem, updateQuantity } = useCartStore()
 
   return (
@@ -127,6 +130,9 @@ export function CartDrawer() {
                           alert('Order placed successfully. Silence is yours.')
                           useCartStore.getState().clearCart()
                           closeCart()
+                        } else if (res.status === 401 || data.error?.toLowerCase().includes('authentication')) {
+                          closeCart()
+                          router.push('/login?message=authentication is required')
                         } else {
                           alert(data.error || 'Failed to place order')
                         }
