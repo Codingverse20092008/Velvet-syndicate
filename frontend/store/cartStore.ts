@@ -19,8 +19,6 @@ interface CartState {
   isOpen: boolean
   isLoading: boolean
   isProcessing: boolean // Guard for race conditions
-  totalItems: number
-  totalPrice: number
   version: number
   syncCart: () => Promise<void>
   fetchCart: () => Promise<void>
@@ -30,7 +28,6 @@ interface CartState {
   clearCart: () => void
   toggleCart: () => void
   closeCart: () => void
-  recalculate: () => void
 }
 
 export const useCartStore = create<CartState>()(
@@ -40,8 +37,6 @@ export const useCartStore = create<CartState>()(
       isOpen: false,
       isLoading: false,
       isProcessing: false,
-      totalItems: 0,
-      totalPrice: 0,
       version: 0,
 
       syncCart: async () => {
@@ -90,7 +85,6 @@ export const useCartStore = create<CartState>()(
               quantity: item.quantity,
             }))
             set({ items: mappedItems })
-            get().recalculate()
           }
         } catch (error) {
           console.error('Failed to fetch cart:', error)
@@ -118,7 +112,6 @@ export const useCartStore = create<CartState>()(
           }
 
           set({ items: newItems })
-          get().recalculate()
 
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
@@ -148,7 +141,6 @@ export const useCartStore = create<CartState>()(
           set((state) => ({
             items: state.items.filter((i) => !(i.id === productId && i.variantId === variantId && i.size === size)),
           }))
-          get().recalculate()
 
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
@@ -169,7 +161,7 @@ export const useCartStore = create<CartState>()(
 
         try {
           if (quantity <= 0) {
-            set({ isProcessing: false }) // Reset before calling another action
+            set({ isProcessing: false }) 
             await get().removeItem(productId, variantId, size)
             return
           }
@@ -179,7 +171,6 @@ export const useCartStore = create<CartState>()(
               i.id === productId && i.variantId === variantId && i.size === size ? { ...i, quantity } : i
             ),
           }))
-          get().recalculate()
 
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
@@ -198,7 +189,6 @@ export const useCartStore = create<CartState>()(
 
       clearCart: () => {
         set({ items: [] })
-        get().recalculate()
       },
 
       toggleCart: () => {
@@ -208,23 +198,10 @@ export const useCartStore = create<CartState>()(
       closeCart: () => {
         set({ isOpen: false })
       },
-
-      recalculate: () => {
-        set((state) => ({
-          totalItems: state.items.reduce((sum, item) => sum + item.quantity, 0),
-          totalPrice: state.items.reduce(
-            (sum, item) => sum + item.price * item.quantity,
-            0
-          ),
-        }))
-      },
     }),
     {
       name: 'velvet-cart',
-      partialize: (state) => ({ items: state.items }), // ONLY persist items, not derived totals
-      onRehydrateStorage: () => (state) => {
-        state?.recalculate() // Always re-calculate totals on load
-      }
+      partialize: (state) => ({ items: state.items }), // ONLY persist items
     }
   )
 )

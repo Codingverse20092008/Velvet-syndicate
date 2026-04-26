@@ -15,7 +15,8 @@ import { trackEvent } from '@/lib/analytics'
 
 function CheckoutPage() {
   const router = useRouter()
-  const { items, totalPrice, clearCart, version } = useCartStore()
+  const { items, clearCart, version } = useCartStore()
+  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const { user, isLoading } = useAuthStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   

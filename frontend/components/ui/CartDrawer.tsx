@@ -11,7 +11,9 @@ import { useRouter } from 'next/navigation'
 
 export function CartDrawer() {
   const router = useRouter()
-  const { items, isOpen, totalItems, totalPrice, closeCart, removeItem, updateQuantity } = useCartStore()
+  const { items, isOpen, closeCart, removeItem, updateQuantity } = useCartStore()
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
 
   return (
