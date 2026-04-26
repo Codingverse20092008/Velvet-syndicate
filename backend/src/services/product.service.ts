@@ -83,7 +83,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     
     const scoreSqlParts: string[] = [];
     const whereSqlParts: string[] = [];
-    const sqlArgs: any[] = [];
+    const scoreArgs: any[] = [];
+    const whereArgs: any[] = [];
 
     // Each token contributes to the score with refined weights
     tokens.forEach(token => {
@@ -96,19 +97,19 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
         CASE WHEN LOWER(name) LIKE ? THEN 40 ELSE 0 END +
         CASE WHEN LOWER(COALESCE(brand, '')) LIKE ? THEN 20 ELSE 0 END
       )`);
-      sqlArgs.push(token, starts, contains, contains);
+      scoreArgs.push(token, starts, contains, contains);
       
       whereSqlParts.push(`(LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ?)`);
-      sqlArgs.push(contains, contains);
+      whereArgs.push(contains, contains);
     });
 
     // Ecosystem bonus for single token searches
     if (ecosystemBrands.length > 0) {
       const placeholders = ecosystemBrands.map(() => '?').join(', ');
       scoreSqlParts.push(`(CASE WHEN LOWER(COALESCE(brand, '')) IN (${placeholders}) THEN 30 ELSE 0 END)`);
-      sqlArgs.push(...ecosystemBrands);
+      scoreArgs.push(...ecosystemBrands);
       whereSqlParts.push(`(LOWER(COALESCE(brand, '')) IN (${placeholders}))`);
-      sqlArgs.push(...ecosystemBrands);
+      whereArgs.push(...ecosystemBrands);
     }
 
     const scoreSql = scoreSqlParts.join(' + ');
@@ -133,7 +134,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
         ORDER BY score DESC, LENGTH(name) ASC
         LIMIT ? OFFSET ?
       `,
-      args: [...sqlArgs, searchLimit, offset],
+      args: [...scoreArgs, ...whereArgs, searchLimit, offset],
     });
 
     const rawResults = searchResult.rows as unknown as { id: string; score: number }[];
@@ -167,7 +168,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
         FROM products 
         WHERE ${whereSql}
       `,
-      args: sqlArgs,
+      args: whereArgs,
     });
     const total = Number((countResult.rows[0] as any)?.count ?? 0);
 
