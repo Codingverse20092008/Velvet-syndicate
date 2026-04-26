@@ -56,6 +56,12 @@ export function Navigation() {
             >
               Collection
             </Link>
+            <Link
+              href="/about"
+              className="text-xs tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive"
+            >
+              About
+            </Link>
           </div>
 
 

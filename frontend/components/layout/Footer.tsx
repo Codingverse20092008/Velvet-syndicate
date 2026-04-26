@@ -36,7 +36,11 @@ export function Footer() {
                   Collection
                 </Link>
               </li>
-
+              <li>
+                <Link href="/about" className="text-sm text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive">
+                  About
+                </Link>
+              </li>
             </ul>
           </div>
 
