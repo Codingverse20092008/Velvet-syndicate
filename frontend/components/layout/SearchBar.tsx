@@ -114,16 +114,18 @@ export function SearchBar() {
   }, [])
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-[220px] md:max-w-[260px]">
-      {/* Input */}
+    <div ref={containerRef} className="relative w-full max-w-[220px] md:max-w-[280px]">
+      {/* Luxury Minimal Input */}
       <div
-        className={`flex items-center gap-2 px-3 py-[7px] rounded-lg bg-neutral-900 border transition-all duration-300 ${
-          isFocused ? 'border-white/20' : 'border-white/8'
+        className={`flex items-center gap-3 h-11 px-4 rounded-full bg-white/5 backdrop-blur-md border transition-all duration-500 ease-luxury ${
+          isFocused 
+            ? 'border-white/25 ring-1 ring-white/20' 
+            : 'border-white/10 hover:border-white/20'
         }`}
       >
         <Search
-          size={13}
-          className={`flex-shrink-0 transition-colors duration-200 ${isFocused ? 'text-velvet-muted' : 'text-white/30'}`}
+          size={14}
+          className={`flex-shrink-0 transition-colors duration-300 ${isFocused ? 'text-white/60' : 'text-white/30'}`}
         />
         <input
           ref={inputRef}
@@ -136,90 +138,95 @@ export function SearchBar() {
           }}
           onBlur={() => setIsFocused(false)}
           placeholder="Search sneakers..."
-          className="bg-transparent text-[11px] tracking-wide text-velvet-white placeholder-white/25 outline-none w-full min-w-0"
+          className="bg-transparent text-sm tracking-wide text-white placeholder-white/40 outline-none w-full min-w-0"
           aria-label="Search products"
           autoComplete="off"
         />
         <AnimatePresence>
           {query && (
             <motion.button
-              initial={{ opacity: 0, scale: 0.7 }}
+              initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.7 }}
-              transition={{ duration: 0.15 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2, ease: EASE }}
               onClick={handleClear}
-              className="flex-shrink-0 text-white/25 hover:text-velvet-muted transition-colors"
+              className="flex-shrink-0 text-white/30 hover:text-white/60 transition-colors p-1"
               aria-label="Clear search"
             >
-              <X size={11} />
+              <X size={14} />
             </motion.button>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Dropdown */}
+      {/* Floating Redesigned Dropdown */}
       <AnimatePresence>
         {isOpen && query.trim() && (
           <motion.div
-            initial={{ opacity: 0, y: -6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
+            initial={{ opacity: 0, y: 10, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.96 }}
             transition={{ duration: 0.2, ease: EASE }}
-            className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#0e0e0e]/95 backdrop-blur-xl border border-white/8 rounded-xl shadow-2xl overflow-hidden"
-            style={{ minWidth: '280px', right: 'auto', left: '50%', transform: 'translateX(-50%)' }}
+            className="absolute top-full left-0 right-0 mt-3 z-50 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-3"
+            style={{ width: '100%' }}
           >
             {isLoading ? (
-              <div className="px-4 py-6 text-center">
-                <span className="text-[10px] uppercase tracking-widest text-white/25 animate-pulse">
+              <div className="py-4 text-center">
+                <span className="text-[10px] uppercase tracking-[0.2em] text-white/40 animate-pulse">
                   Searching...
                 </span>
               </div>
             ) : results.length === 0 ? (
-              <div className="px-4 py-6 text-center">
-                <span className="text-[10px] uppercase tracking-widest text-white/25">
-                  No relevant results
+              <div className="py-4 text-center">
+                <span className="text-sm text-white/40">
+                  No results found
                 </span>
               </div>
             ) : (
-              <ul>
-                {results.map((product, i) => (
-                  <li key={product.id}>
-                    <Link
-                      href={`/product/${product.slug}`}
-                      onClick={handleResultClick}
-                      className={`flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors duration-150 group ${
-                        i !== results.length - 1 ? 'border-b border-white/5' : ''
-                      }`}
-                    >
-                      {/* Thumbnail */}
-                      <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden bg-neutral-800">
-                        {product.image ? (
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            fill
-                            className="object-cover"
-                            sizes="40px"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="absolute inset-0 bg-neutral-800" />
-                        )}
-                      </div>
-                      {/* Text */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] text-velvet-white font-medium truncate group-hover:text-white transition-colors">
-                          {product.name}
-                        </p>
-                        <p className="text-[10px] text-velvet-muted/70 tracking-wide mt-0.5">
-                          {formatPrice(product.price)}
-                        </p>
-                      </div>
-                      <span className="text-white/20 group-hover:text-white/40 transition-colors text-xs">→</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex flex-col">
+                <span className="text-[10px] uppercase tracking-[0.15em] text-white/40 px-2 pb-2">
+                  Results
+                </span>
+                <ul className="space-y-1">
+                  {results.map((product) => (
+                    <li key={product.id}>
+                      <Link
+                        href={`/product/${product.slug}`}
+                        onClick={handleResultClick}
+                        className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 ease-out hover:bg-white/5 hover:translate-x-[2px] group"
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative w-10 h-10 flex-shrink-0 rounded-md overflow-hidden bg-white/5">
+                          {product.image ? (
+                            <Image
+                              src={product.image}
+                              alt={product.name}
+                              fill
+                              className="object-cover transition-transform duration-500 group-hover:scale-110"
+                              sizes="40px"
+                              unoptimized
+                            />
+                          ) : (
+                            <div className="absolute inset-0 bg-neutral-900" />
+                          )}
+                        </div>
+                        {/* Text */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-white font-medium truncate group-hover:text-white transition-colors">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-white/50 tracking-wide mt-0.5">
+                            {formatPrice(product.price)}
+                          </p>
+                        </div>
+                        <span className="text-white/20 group-hover:text-white/50 transition-colors text-xs translate-x-[-4px] group-hover:translate-x-0 opacity-0 group-hover:opacity-100 duration-300">
+                          →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </motion.div>
         )}
