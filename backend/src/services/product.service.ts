@@ -1,11 +1,21 @@
-import { eq, and, asc, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, asc, desc, inArray, sql, like, or } from 'drizzle-orm';
 import { db } from '../lib/db';
 import { products, productSizes, type Product, type ProductSize } from '../lib/schema';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { CACHE_KEYS, CACHE_TTL, setCachedProducts, getCachedProducts, invalidateProductsCache } from '../lib/cache';
 import { logger } from '../lib/logger';
 
-export interface ProductWithSizes {
+export interface ProductVariantWithData {
+  id: string;
+  productId: string;
+  name: string;
+  color: string;
+  slug: string | null;
+  images: { id: string; imageUrl: string }[];
+  sizes: { id: string; size: string; stock: number }[];
+}
+
+export interface ProductWithVariants {
   id: string;
   name: string;
   slug: string;
@@ -15,7 +25,7 @@ export interface ProductWithSizes {
   category: string;
   featured: boolean;
   createdAt: string;
-  sizes: ProductSize[];
+  variants: ProductVariantWithData[];
 }
 
 export interface ProductFilters {
@@ -24,25 +34,88 @@ export interface ProductFilters {
   sort?: 'createdAt' | 'price-asc' | 'price-desc' | 'name';
   limit?: number;
   offset?: number;
+  search?: string;
 }
 
 export interface PaginatedProducts {
-  products: ProductWithSizes[];
+  products: ProductWithVariants[];
   total: number;
   limit: number;
   offset: number;
 }
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedProducts> {
-  const { category, featured, sort = 'createdAt', limit = 50, offset = 0 } = filters;
+  const { category, featured, sort = 'createdAt', limit = 50, offset = 0, search } = filters;
 
+  // Search queries skip cache — they are user-specific and low-frequency
   const cacheKey = `${CACHE_KEYS.PRODUCTS_LIST}:${JSON.stringify(filters)}`;
-  const cached = await getCachedProducts<PaginatedProducts>(cacheKey);
-  if (cached) return cached;
+  if (!search) {
+    const cached = await getCachedProducts<PaginatedProducts>(cacheKey);
+    if (cached) return cached;
+  }
 
   const conditions = [];
   if (category) conditions.push(eq(products.category, category));
   if (featured !== undefined) conditions.push(eq(products.featured, featured));
+
+  // --- Strict search: name only, with ranked results ---
+  // Ranking: exact match (3) > starts-with (2) > contains (1)
+  // We run a raw SQL query for search so we can ORDER BY relevance rank
+  if (search) {
+    const q = search.toLowerCase();
+    const exactPattern   = q;
+    const startsPattern  = `${q}%`;
+    const containsPattern = `%${q}%`;
+
+    // We cannot use Drizzle's relational API with custom ORDER BY rank,
+    // so we use a raw SQL query scoped strictly to the name column.
+    const rawResults = await db.all(sql`
+      SELECT
+        p.id,
+        CASE
+          WHEN LOWER(p.name) = ${exactPattern}   THEN 3
+          WHEN LOWER(p.name) LIKE ${startsPattern} THEN 2
+          WHEN LOWER(p.name) LIKE ${containsPattern} THEN 1
+          ELSE 0
+        END AS rank
+      FROM products p
+      WHERE LOWER(p.name) LIKE ${containsPattern}
+      ORDER BY rank DESC, p.name ASC
+      LIMIT ${limit} OFFSET ${offset}
+    `) as { id: string; rank: number }[];
+
+    if (rawResults.length === 0) {
+      return { products: [], total: 0, limit, offset };
+    }
+
+    const ids = rawResults.map((r) => r.id);
+
+    // Fetch full product data with variants for matched IDs
+    const fullProducts = await db.query.products.findMany({
+      where: inArray(products.id, ids),
+      with: {
+        variants: {
+          with: { images: true, sizes: true },
+        },
+      },
+    });
+
+    // Re-apply rank order from raw results
+    const rankMap = new Map(rawResults.map((r) => [r.id, r.rank]));
+    const sorted = fullProducts.sort(
+      (a, b) => (rankMap.get(b.id) ?? 0) - (rankMap.get(a.id) ?? 0)
+    );
+
+    // Count for pagination
+    const countResult = await db.all(sql`
+      SELECT COUNT(*) as count FROM products
+      WHERE LOWER(name) LIKE ${containsPattern}
+    `) as { count: number }[];
+    const total = Number(countResult[0]?.count ?? 0);
+
+    return { products: sorted as any[], total, limit, offset };
+  }
+  // --- End search block ---
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -54,14 +127,18 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     default: orderBy = desc(products.createdAt);
   }
 
-  // Use 'with' to fetch sizes in a single batch (Drizzle optimizes this)
   const allProducts = await db.query.products.findMany({
     where: whereClause,
     orderBy,
     limit,
     offset,
     with: {
-      sizes: true
+      variants: {
+        with: {
+          images: true,
+          sizes: true,
+        }
+      }
     }
   });
 
@@ -71,20 +148,20 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     .where(whereClause);
   const total = Number(countResult[0].count);
 
-  const paginated: PaginatedProducts = { 
-    products: allProducts as ProductWithSizes[], 
-    total, 
-    limit, 
-    offset 
+  const paginated: PaginatedProducts = {
+    products: allProducts as any[],
+    total,
+    limit,
+    offset
   };
-  
+
   await setCachedProducts(cacheKey, paginated, CACHE_TTL.PRODUCTS);
   return paginated;
 }
 
-export async function getFeaturedProducts(): Promise<ProductWithSizes[]> {
+export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
   const cacheKey = CACHE_KEYS.PRODUCTS_FEATURED;
-  const cached = await getCachedProducts<ProductWithSizes[]>(cacheKey);
+  const cached = await getCachedProducts<ProductWithVariants[]>(cacheKey);
   if (cached) return cached;
 
   const featuredProducts = await db.query.products.findMany({
@@ -92,191 +169,39 @@ export async function getFeaturedProducts(): Promise<ProductWithSizes[]> {
     orderBy: desc(products.createdAt),
     limit: 10,
     with: {
-      sizes: true
+      variants: {
+        with: {
+          images: true,
+          sizes: true,
+        }
+      }
     }
   });
 
-  await setCachedProducts(cacheKey, featuredProducts as ProductWithSizes[], CACHE_TTL.FEATURED);
-  return featuredProducts as ProductWithSizes[];
+  await setCachedProducts(cacheKey, featuredProducts as any[], CACHE_TTL.FEATURED);
+  return featuredProducts as any[];
 }
 
-export async function getProductBySlug(slug: string): Promise<ProductWithSizes> {
+export async function getProductBySlug(slug: string): Promise<ProductWithVariants> {
   const cacheKey = CACHE_KEYS.PRODUCT_BY_SLUG(slug);
-  const cached = await getCachedProducts<ProductWithSizes>(cacheKey);
+  const cached = await getCachedProducts<ProductWithVariants>(cacheKey);
   if (cached) return cached;
 
   const product = await db.query.products.findFirst({
     where: eq(products.slug, slug),
     with: {
-      sizes: true
-    }
-  });
-
-  if (!product) throw new NotFoundError('Product');
-
-  await setCachedProducts(cacheKey, product as ProductWithSizes, CACHE_TTL.PRODUCT_DETAIL);
-  return product as ProductWithSizes;
-}
-
-
-export async function createProduct(data: {
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  category: string;
-  featured: boolean;
-  sizes: { size: string; stock: number }[];
-}): Promise<ProductWithSizes> {
-  const existing = await db.query.products.findFirst({ where: eq(products.slug, data.slug) });
-  if (existing) {
-    throw new ConflictError('Product with this slug already exists');
-  }
-
-  if (!data.name || !data.slug || !data.price || data.sizes.length === 0) {
-    throw new ValidationError('Missing required fields');
-  }
-
-  const productId = crypto.randomUUID();
-
-  await db.transaction(async (tx) => {
-    await tx.insert(products).values({
-      id: productId,
-      name: data.name,
-      slug: data.slug,
-      description: data.description,
-      price: data.price,
-      imageUrl: data.imageUrl,
-      category: data.category,
-      featured: data.featured,
-    });
-
-    if (data.sizes.length > 0) {
-      await tx.insert(productSizes).values(
-        data.sizes.map((s) => ({
-          id: crypto.randomUUID(),
-          productId,
-          size: s.size,
-          stock: s.stock,
-        }))
-      );
-    }
-  });
-
-  await invalidateProductsCache();
-  logger.info({ productId, slug: data.slug }, 'Product created');
-
-  return getProductBySlug(data.slug);
-}
-
-export async function updateProduct(
-  slug: string,
-  data: {
-    name?: string;
-    description?: string;
-    price?: number;
-    imageUrl?: string;
-    category?: string;
-    featured?: boolean;
-    sizes?: { size: string; stock: number }[];
-  }
-): Promise<ProductWithSizes> {
-  const product = await db.query.products.findFirst({ where: eq(products.slug, slug) });
-  if (!product) throw new NotFoundError('Product');
-
-  await db.transaction(async (tx) => {
-    const updateData: Record<string, unknown> = { updatedAt: new Date().toISOString() };
-    if (data.name) updateData.name = data.name;
-    if (data.description) updateData.description = data.description;
-    if (data.price !== undefined) updateData.price = data.price;
-    if (data.imageUrl) updateData.imageUrl = data.imageUrl;
-    if (data.category) updateData.category = data.category;
-    if (data.featured !== undefined) updateData.featured = data.featured;
-
-    await tx.update(products).set(updateData).where(eq(products.slug, slug));
-
-    if (data.sizes) {
-      await tx.delete(productSizes).where(eq(productSizes.productId, product.id));
-      if (data.sizes.length > 0) {
-        await tx.insert(productSizes).values(
-          data.sizes.map((s) => ({
-            id: crypto.randomUUID(),
-            productId: product.id,
-            size: s.size,
-            stock: s.stock,
-          }))
-        );
+      variants: {
+        with: {
+          images: true,
+          sizes: true,
+        }
       }
     }
   });
 
-  await invalidateProductsCache();
-  logger.info({ productId: product.id }, 'Product updated');
-
-  return getProductBySlug(slug);
-}
-
-export async function deleteProduct(slug: string): Promise<void> {
-  const product = await db.query.products.findFirst({ where: eq(products.slug, slug) });
   if (!product) throw new NotFoundError('Product');
 
-  await db.delete(products).where(eq(products.slug, slug));
-  await invalidateProductsCache();
-  logger.info({ productId: product.id }, 'Product deleted');
+  await setCachedProducts(cacheKey, product as any, CACHE_TTL.PRODUCT_DETAIL);
+  return product as any;
 }
 
-export async function seedProducts(): Promise<{ count: number }> {
-  const result = await db.select({ count: sql<number>`count(*)` }).from(products);
-  if (Number(result[0].count) > 0) {
-    return { count: Number(result[0].count) };
-  }
-
-  const seedData = [
-    {
-      name: 'Obsidian Low',
-      slug: 'obsidian-low',
-      description: 'Silence made tangible. The Obsidian Low emerges from darkness.',
-      price: 425,
-      imageUrl: '/products/obsidian-low-1.png',
-      category: 'footwear',
-      featured: true,
-      sizes: [
-        { size: '7', stock: 10 }, { size: '8', stock: 15 }, { size: '9', stock: 20 },
-        { size: '10', stock: 20 }, { size: '11', stock: 15 }, { size: '12', stock: 10 },
-      ],
-    },
-    {
-      name: 'Phantom Runner',
-      slug: 'phantom-runner',
-      description: 'A shadow in motion. The Phantom Runner borrows from athletic heritage.',
-      price: 495,
-      imageUrl: '/products/phantom-runner-1.png',
-      category: 'footwear',
-      featured: true,
-      sizes: [
-        { size: '7', stock: 8 }, { size: '8', stock: 12 }, { size: '9', stock: 18 },
-        { size: '10', stock: 18 }, { size: '11', stock: 12 }, { size: '12', stock: 8 },
-      ],
-    },
-    {
-      name: 'Noir High',
-      slug: 'noir-high',
-      description: 'Elevation without announcement. The Noir High commands space.',
-      price: 550,
-      imageUrl: '/products/noir-high-1.png',
-      category: 'footwear',
-      featured: true,
-      sizes: [
-        { size: '7', stock: 5 }, { size: '8', stock: 10 }, { size: '9', stock: 15 },
-        { size: '10', stock: 15 }, { size: '11', stock: 10 }, { size: '12', stock: 5 },
-      ],
-    },
-  ];
-
-  for (const p of seedData) {
-    await createProduct(p);
-  }
-
-  return { count: seedData.length };
-}

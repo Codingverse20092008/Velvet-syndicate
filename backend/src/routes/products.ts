@@ -14,7 +14,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { allowed } = await checkRateLimit(`products:${ip}`);
   if (!allowed) throw new RateLimitError();
 
-  const { featured, category, sort, limit, offset } = req.query;
+  const { featured, category, sort, limit, offset, search } = req.query;
 
   // Function to map product from DB to standardized API format
   const mapProduct = (p: any) => ({
@@ -23,11 +23,19 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     slug: p.slug,
     description: p.description,
     price: p.price,
-    images: [p.imageUrl],
-    sizes: (p.sizes || []).map((s: any) => parseFloat(s.size)).filter((s: any) => !isNaN(s)).sort((a: number, b: number) => a - b),
     category: p.category,
     featured: p.featured,
-    stock: Object.fromEntries(p.sizes.map((s: any) => [s.size, s.stock])),
+    variants: (p.variants || []).map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      color: v.color,
+      slug: v.slug,
+      images: (v.images || []).map((img: any) => img.imageUrl),
+      sizes: (v.sizes || []).map((s: any) => ({
+        size: s.size,
+        stock: s.stock
+      })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
+    }))
   });
 
   if (featured === 'true') {
@@ -45,6 +53,7 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     sort: (sort as string) || 'createdAt',
     limit: parseInt((limit as string) || '50'),
     offset: parseInt((offset as string) || '0'),
+    search: (search as string) || undefined,
   };
 
   const parsed = productFiltersSchema.parse(filters);
@@ -65,28 +74,29 @@ router.get('/:slug', asyncHandler(async (req: Request, res: Response) => {
   const { slug } = req.params;
   const product = await getProductBySlug(slug);
 
-  const stock: Record<string, number> = {};
-  const sizes: number[] = [];
-
-  for (const s of product.sizes) {
-    stock[s.size] = s.stock;
-    const sizeNum = parseFloat(s.size);
-    if (!isNaN(sizeNum)) sizes.push(sizeNum);
-  }
+  const mapProduct = (p: any) => ({
+    id: p.id,
+    name: p.name,
+    slug: p.slug,
+    description: p.description,
+    price: p.price,
+    category: p.category,
+    featured: p.featured,
+    variants: (p.variants || []).map((v: any) => ({
+      id: v.id,
+      name: v.name,
+      color: v.color,
+      slug: v.slug,
+      images: (v.images || []).map((img: any) => img.imageUrl),
+      sizes: (v.sizes || []).map((s: any) => ({
+        size: s.size,
+        stock: s.stock
+      })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
+    }))
+  });
 
   return successResponse(res, {
-    product: {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      description: product.description,
-      price: product.price,
-      images: [product.imageUrl],
-      sizes: sizes.sort((a, b) => a - b),
-      category: product.category,
-      featured: product.featured,
-      stock,
-    },
+    product: mapProduct(product)
   });
 }));
 

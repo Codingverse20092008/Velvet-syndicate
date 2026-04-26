@@ -52,7 +52,8 @@ export const updateProductSchema = z.object({
 });
 
 export const addToCartSchema = z.object({
-  productId: z.string().uuid(),
+  productId: z.string().min(1),
+  variantId: z.string().min(1),
   size: z.string().min(1),
   quantity: z.number().int().positive().default(1),
 });
@@ -73,6 +74,8 @@ export const productFiltersSchema = z.object({
   sort: z.enum(['createdAt', 'price-asc', 'price-desc', 'name']).default('createdAt'),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   offset: z.coerce.number().int().min(0).default(0),
+  // Free-text search — validated: trimmed, max 100 chars, no injection surface
+  search: z.string().trim().max(100).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
