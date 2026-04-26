@@ -167,3 +167,13 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #4A7D9C;
 }
+
+@keyframes loading-bar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-loading-bar {
+  animation: loading-bar 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}

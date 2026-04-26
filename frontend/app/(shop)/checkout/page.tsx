@@ -10,12 +10,36 @@ import { Input } from '@/components/ui/Input'
 import { formatPrice } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 
-export default function CheckoutPage() {
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { trackEvent } from '@/lib/analytics'
+
+function CheckoutPage() {
   const router = useRouter()
-  const { items, totalPrice, clearCart } = useCartStore()
-  const { user } = useAuthStore()
+  const { items, totalPrice, clearCart, version } = useCartStore()
+  const { user, isLoading } = useAuthStore()
   const [isSubmitting, setIsSubmitting] = useState(false)
   
+  // 1. Generate Idempotency Key (persists across renders)
+  const [idempotencyKey] = useState(() => crypto.randomUUID())
+
+  // 2. Track Abandonment
+  useEffect(() => {
+    if (!isLoading && user && items.length > 0) {
+      trackEvent('checkout_started', { idempotencyKey })
+      
+      const handleBeforeUnload = () => {
+        trackEvent('checkout_abandoned', { 
+          idempotencyKey,
+          itemsCount: items.length,
+          total: totalPrice
+        })
+      }
+      
+      window.addEventListener('beforeunload', handleBeforeUnload)
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isLoading, user, items.length, idempotencyKey])
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -24,42 +48,82 @@ export default function CheckoutPage() {
     zip: '',
   })
 
+  // Sync user info if it loads later
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        name: prev.name || user.name || '',
+        email: prev.email || user.email || '',
+      }))
+    }
+  }, [user])
+
   // Protected route logic
   useEffect(() => {
+    if (isLoading) return
+
     if (!user) {
       router.replace('/login?message=authentication is required&redirect=/checkout')
+      return
     }
+    
     if (items.length === 0) {
       router.replace('/collection')
+      return
     }
-  }, [user, items, router])
+  }, [user, items, router, isLoading])
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
+    
     setIsSubmitting(true)
 
     try {
+      // 5. Order Confirmation Safety
+      localStorage.setItem('pending_order_key', idempotencyKey)
+      
+      trackEvent('checkout_order_attempt', { total: totalPrice, items: items.length, idempotencyKey })
+
       const res = await apiFetch('/orders', {
         method: 'POST',
         body: JSON.stringify({
           shippingAddress: `${formData.address}, ${formData.city}, ${formData.zip}`,
+          idempotencyKey,
+          version
         }),
       })
 
       const data = await res.json()
 
       if (res.ok) {
+        trackEvent('checkout_order_success', { orderId: data.data.order.id })
+        localStorage.removeItem('pending_order_key')
         alert('Order placed successfully. The Syndicate awaits.')
         clearCart()
         router.push('/collection')
       } else {
+        trackEvent('checkout_order_failure', { error: data.error })
         alert(data.error || 'Failed to place order')
       }
     } catch (error) {
-      alert('An unexpected error occurred')
+      console.error('Order placement error:', error)
+      trackEvent('checkout_order_error', { error: (error as Error).message })
+      alert('An unexpected error occurred. Please check your connection.')
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse font-heading text-velvet-muted tracking-widest uppercase italic">
+          Authenticating...
+        </div>
+      </div>
+    )
   }
 
   if (!user || items.length === 0) return null
@@ -170,5 +234,13 @@ export default function CheckoutPage() {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+export default function Checkout() {
+  return (
+    <ErrorBoundary>
+      <CheckoutPage />
+    </ErrorBoundary>
   )
 }

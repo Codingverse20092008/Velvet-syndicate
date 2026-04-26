@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -9,18 +9,10 @@ import { apiFetch } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
-export default function SignupPage() {
+function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectPath = searchParams.get('redirect') || '/collection'
-  const { user, setUser, setLoading } = useAuthStore()
-
-  useEffect(() => {
-    if (user) {
-      router.replace(redirectPath)
-    }
-  }, [user, router, redirectPath])
-
+  const { user, setUser, isAuthenticated, isLoading: authLoading } = useAuthStore()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,6 +21,17 @@ export default function SignupPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+
+  // Sanitize redirect path to prevent open redirect vulnerabilities
+  const rawRedirect = searchParams.get('redirect')
+  const redirectPath = rawRedirect?.startsWith('/') ? rawRedirect : '/'
+
+  useEffect(() => {
+    // If already authenticated, redirect immediately
+    if (isAuthenticated && !authLoading) {
+      router.replace(redirectPath)
+    }
+  }, [isAuthenticated, authLoading, router, redirectPath])
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -82,8 +85,9 @@ export default function SignupPage() {
         return
       }
 
+      setIsLoading(false)
       setUser(data.data.user)
-      router.push(redirectPath)
+      // Redirect is handled by the useEffect watching isAuthenticated
     } catch {
       setErrors({ form: 'An unexpected error occurred' })
       setIsLoading(false)
@@ -195,5 +199,13 @@ export default function SignupPage() {
         </motion.p>
       </motion.div>
     </div>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center animate-pulse uppercase tracking-widest text-velvet-muted">Loading Vault...</div>}>
+      <SignupContent />
+    </Suspense>
   )
 }

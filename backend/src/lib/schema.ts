@@ -78,6 +78,7 @@ export const productSizes = sqliteTable('product_sizes', {
 export const cart = sqliteTable('cart', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  version: integer('version').notNull().default(0),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
   userIdIdx: uniqueIndex('cart_user_id_idx').on(table.userId),
@@ -103,11 +104,13 @@ export const orders = sqliteTable('orders', {
   status: text('status', { enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] }).notNull().default('pending'),
   paymentStatus: text('payment_status', { enum: ['pending', 'paid', 'failed', 'refunded'] }).notNull().default('pending'),
   shippingAddress: text('shipping_address'),
+  idempotencyKey: text('idempotency_key'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
   userIdIdx: index('orders_user_id_idx').on(table.userId),
   statusIdx: index('orders_status_idx').on(table.status),
+  idempotencyKeyIdx: uniqueIndex('orders_idempotency_key_idx').on(table.idempotencyKey),
 }));
 
 export const orderItems = sqliteTable('order_items', {

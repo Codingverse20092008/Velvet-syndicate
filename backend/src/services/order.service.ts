@@ -7,8 +7,21 @@ import { logger } from '../lib/logger';
 
 export async function createOrder(
   userId: string,
-  shippingAddress: string
+  shippingAddress: string,
+  idempotencyKey?: string,
+  expectedVersion?: number
 ) {
+  // Check for existing order with the same idempotency key
+  if (idempotencyKey) {
+    const existingOrder = await db.query.orders.findFirst({
+      where: eq(orders.idempotencyKey, idempotencyKey)
+    });
+    if (existingOrder) {
+      logger.info({ idempotencyKey, orderId: existingOrder.id }, 'Returning existing order for idempotency key');
+      return { id: existingOrder.id, total: existingOrder.total, alreadyExists: true };
+    }
+  }
+
   return await db.transaction(async (tx) => {
     // 1. Get cart with items and products using relations
     const userCart = await tx.query.cart.findFirst({
@@ -24,6 +37,11 @@ export async function createOrder(
 
     if (!userCart || userCart.items.length === 0) {
       throw new ValidationError('Cart is empty');
+    }
+
+    // Version Check
+    if (expectedVersion !== undefined && userCart.version !== expectedVersion) {
+      throw new ValidationError('Cart has been modified. Please refresh and try again.');
     }
 
     let total = 0;
@@ -56,6 +74,7 @@ export async function createOrder(
       status: 'pending',
       paymentStatus: 'pending',
       shippingAddress,
+      idempotencyKey,
     });
 
     // 5. Create Order Items

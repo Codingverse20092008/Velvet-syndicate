@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/store/cartStore'
+import { useAuthStore } from '@/store/authStore'
 import { Button } from './Button'
 import { formatPrice } from '@/lib/utils'
 import { X } from 'lucide-react'
@@ -11,6 +12,7 @@ import { useRouter } from 'next/navigation'
 export function CartDrawer() {
   const router = useRouter()
   const { items, isOpen, totalItems, totalPrice, closeCart, removeItem, updateQuantity } = useCartStore()
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore()
 
   return (
     <AnimatePresence>
@@ -118,9 +120,14 @@ export function CartDrawer() {
                   <Button 
                     className="w-full" 
                     size="lg"
+                    isLoading={authLoading}
                     onClick={() => {
                       closeCart()
-                      router.push('/checkout')
+                      if (isAuthenticated) {
+                        router.push('/checkout')
+                      } else {
+                        router.push('/login?redirect=/checkout')
+                      }
                     }}
                   >
                     Proceed to Checkout

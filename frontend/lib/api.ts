@@ -13,5 +13,12 @@ export async function apiFetch(path: string, options?: RequestInit) {
       ...options?.headers,
     },
   })
+
+  // Global 401 handling: Clear session if unauthorized
+  if (res.status === 401 && !url.includes('/auth/me')) {
+    const { useAuthStore } = await import('@/store/authStore')
+    useAuthStore.getState().clearUser()
+  }
+
   return res
 }

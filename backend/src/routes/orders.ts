@@ -18,13 +18,13 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
 // POST /api/orders
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
-  const { shippingAddress } = req.body;
+  const { shippingAddress, idempotencyKey, version } = req.body;
 
   if (!shippingAddress || typeof shippingAddress !== 'string') {
     throw new ValidationError('Shipping address is required');
   }
 
-  const order = await createOrder(user.id, shippingAddress);
+  const order = await createOrder(user.id, shippingAddress, idempotencyKey, version);
 
   return successResponse(res, { order }, 201);
 }));

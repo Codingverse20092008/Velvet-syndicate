@@ -119,6 +119,11 @@ export async function addToCart(
       });
     }
 
+    // Increment Cart Version
+    await tx.update(cart)
+      .set({ version: userCart.version + 1 })
+      .where(eq(cart.id, userCart.id));
+
     // 5. Validate quantity limits
     if (newQuantity > MAX_ITEM_QUANTITY) {
       throw new ValidationError(`Total quantity cannot exceed ${MAX_ITEM_QUANTITY} units`);
@@ -155,6 +160,10 @@ export async function updateCartItemQuantity(
 
     if (quantity === 0) {
       await tx.delete(cartItems).where(eq(cartItems.id, cartItemId));
+      await tx.update(cart)
+        .set({ version: userCart.version + 1 })
+        .where(eq(cart.id, userCart.id));
+      await invalidateCartCache(userId);
       return { success: true, removed: true };
     }
 
@@ -172,6 +181,10 @@ export async function updateCartItemQuantity(
       .set({ quantity })
       .where(eq(cartItems.id, cartItemId));
 
+    await tx.update(cart)
+      .set({ version: userCart.version + 1 })
+      .where(eq(cart.id, userCart.id));
+
     await invalidateCartCache(userId);
     return { success: true };
   });
@@ -185,6 +198,10 @@ export async function removeFromCart(userId: string, cartItemId: string) {
     await tx.delete(cartItems).where(
       and(eq(cartItems.id, cartItemId), eq(cartItems.cartId, userCart.id))
     );
+
+    await tx.update(cart)
+      .set({ version: userCart.version + 1 })
+      .where(eq(cart.id, userCart.id));
   });
 
   await invalidateCartCache(userId);
@@ -195,5 +212,6 @@ export async function clearCart(userId: string) {
   if (!userCart) return;
 
   await db.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
+  await db.update(cart).set({ version: userCart.version + 1 }).where(eq(cart.id, userCart.id));
   await invalidateCartCache(userId);
 }

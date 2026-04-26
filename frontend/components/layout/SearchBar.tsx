@@ -63,17 +63,7 @@ export function SearchBar() {
             image: p.variants?.[0]?.images?.[0] ?? undefined,
           }));
 
-          // SECOND LAYER FILTER: Strict name or brand match
-          const filteredResults = rawResults.filter((p: any) => 
-            p.name.toLowerCase().includes(q.toLowerCase()) || 
-            p.brand.toLowerCase().includes(q.toLowerCase())
-          );
-
-          // MANDATORY LOGGING
-          console.log("SEARCH INPUT:", q);
-          console.log("RESULT COUNT:", filteredResults.length);
-
-          setResults(filteredResults);
+          setResults(rawResults);
           setIsOpen(true)
         } else {
           setResults([])
@@ -117,10 +107,10 @@ export function SearchBar() {
     <div ref={containerRef} className="relative w-full max-w-[220px] md:max-w-[280px]">
       {/* Luxury Minimal Input */}
       <div
-        className={`flex items-center gap-3 h-11 px-4 rounded-full bg-white/5 backdrop-blur-md border transition-all duration-500 ease-luxury ${
+        className={`flex items-center gap-3 h-11 px-4 rounded-full bg-white/10 backdrop-blur-md border transition-all duration-500 ease-luxury ${
           isFocused 
-            ? 'border-white/25 ring-1 ring-white/20' 
-            : 'border-white/10 hover:border-white/20'
+            ? 'border-white/40 ring-1 ring-white/20' 
+            : 'border-white/20 hover:border-white/30'
         }`}
       >
         <Search
