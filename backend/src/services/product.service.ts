@@ -5,6 +5,14 @@ import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { CACHE_KEYS, CACHE_TTL, setCachedProducts, getCachedProducts, invalidateProductsCache } from '../lib/cache';
 import { logger } from '../lib/logger';
 
+const BRAND_MAP: Record<string, string[]> = {
+  'nike': ['nike', 'jordan', 'nike sb'],
+  'jordan': ['jordan', 'nike'],
+  'adidas': ['adidas', 'yeezy'],
+  'yeezy': ['yeezy', 'adidas'],
+  'puma': ['puma'],
+};
+
 export interface ProductVariantWithData {
   id: string;
   productId: string;
@@ -63,31 +71,46 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   // Ranking: exact match (3) > starts-with (2) > contains (1)
   // We run a raw SQL query for search so we can ORDER BY relevance rank
   if (search) {
-    const q = search.toLowerCase();
-    const exactPattern   = q;
-    const startsPattern  = `${q}%`;
+    const q = search.toLowerCase().trim();
+    if (!q) return { products: [], total: 0, limit, offset };
+
+    const mappedBrands = BRAND_MAP[q] || [q];
+    const brandPlaceholders = mappedBrands.map(() => '?').join(', ');
+    
+    const startsPattern = `${q}%`;
     const containsPattern = `%${q}%`;
+    const searchLimit = 6; 
 
-    const searchLimit = limit === 50 ? 6 : limit; // Override to 6 if it's the default large limit, else respect request
-
-    // Use dbClient.execute() — the correct raw SQL API for Turso/libSQL
     const searchResult = await dbClient.execute({
       sql: `
         SELECT
           p.id,
           CASE
-            WHEN LOWER(COALESCE(p.brand, '')) = ? THEN 4
-            WHEN LOWER(p.name) = ?   THEN 3
+            WHEN LOWER(COALESCE(p.brand, '')) = ? THEN 1
             WHEN LOWER(p.name) LIKE ? THEN 2
-            WHEN LOWER(p.name) LIKE ? THEN 1
-            ELSE 0
+            WHEN LOWER(p.name) LIKE ? THEN 3
+            WHEN LOWER(COALESCE(p.brand, '')) IN (${brandPlaceholders}) THEN 4
+            ELSE 5
           END AS rank
         FROM products p
-        WHERE LOWER(p.name) LIKE ? OR LOWER(COALESCE(p.brand, '')) LIKE ?
-        ORDER BY rank DESC, p.name ASC
+        WHERE 
+          LOWER(p.name) LIKE ? 
+          OR LOWER(COALESCE(p.brand, '')) LIKE ?
+          OR LOWER(COALESCE(p.brand, '')) IN (${brandPlaceholders})
+        ORDER BY rank ASC, p.name ASC
         LIMIT ? OFFSET ?
       `,
-      args: [exactPattern, exactPattern, startsPattern, containsPattern, containsPattern, containsPattern, searchLimit, offset],
+      args: [
+        q,
+        startsPattern,
+        containsPattern,
+        ...mappedBrands,
+        containsPattern,
+        containsPattern,
+        ...mappedBrands,
+        searchLimit, 
+        offset
+      ],
     });
     const rawResults = searchResult.rows as unknown as { id: string; rank: number }[];
 
@@ -108,18 +131,21 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     });
 
     // Re-apply rank order from raw results
-    const rankMap = new Map(rawResults.map((r) => [r.id, r.rank]));
+    const rankMap = new Map(rawResults.map((r) => [r.id, Number(r.rank)]));
     const sorted = fullProducts.sort(
-      (a, b) => (rankMap.get(b.id) ?? 0) - (rankMap.get(a.id) ?? 0)
+      (a, b) => (rankMap.get(a.id) ?? 5) - (rankMap.get(b.id) ?? 5)
     );
 
     const countResult = await dbClient.execute({
-      sql: `SELECT COUNT(*) as count FROM products WHERE LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ?`,
-      args: [containsPattern, containsPattern],
+      sql: `
+        SELECT COUNT(*) as count FROM products 
+        WHERE LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ? OR LOWER(COALESCE(brand, '')) IN (${brandPlaceholders})
+      `,
+      args: [containsPattern, containsPattern, ...mappedBrands],
     });
     const total = Number((countResult.rows[0] as any)?.count ?? 0);
 
-    return { products: sorted as any[], total, limit, offset };
+    return { products: sorted as any[], total, limit: searchLimit, offset };
   }
   // --- End search block ---
 
