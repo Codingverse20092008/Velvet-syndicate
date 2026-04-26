@@ -32,6 +32,7 @@ interface CartState {
   toggleCart: () => void
   closeCart: () => void
   recalculate: () => void
+  setHasHydrated: (val: boolean) => void
 }
 
 export const useCartStore = create<CartState>()(
@@ -182,12 +183,13 @@ export const useCartStore = create<CartState>()(
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       closeCart: () => set({ isOpen: false }),
+      setHasHydrated: (val: boolean) => set({ hasHydrated: val }),
     }),
     {
       name: 'velvet-cart',
       partialize: (state) => ({ items: state.items }),
       onRehydrateStorage: () => (state) => {
-        state?.set({ hasHydrated: true })
+        state?.setHasHydrated(true)
         state?.recalculate()
       }
     }
