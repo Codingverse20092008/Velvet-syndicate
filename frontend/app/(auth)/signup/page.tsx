@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
 import { apiFetch } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
@@ -11,7 +11,16 @@ import { Button } from '@/components/ui/Button'
 
 export default function SignupPage() {
   const router = useRouter()
-  const { setUser, setLoading } = useAuthStore()
+  const searchParams = useSearchParams()
+  const redirectPath = searchParams.get('redirect') || '/collection'
+  const { user, setUser, setLoading } = useAuthStore()
+
+  useEffect(() => {
+    if (user) {
+      router.replace(redirectPath)
+    }
+  }, [user, router, redirectPath])
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -74,7 +83,7 @@ export default function SignupPage() {
       }
 
       setUser(data.data.user)
-      router.push('/collection')
+      router.push(redirectPath)
     } catch {
       setErrors({ form: 'An unexpected error occurred' })
       setIsLoading(false)
@@ -180,7 +189,7 @@ export default function SignupPage() {
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           Already a member?{' '}
-          <Link href="/login" className="text-velvet-white hover:text-velvet-accent transition-colors cursor-none interactive">
+          <Link href={`/login?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors cursor-none interactive">
             Enter Syndicate
           </Link>
         </motion.p>

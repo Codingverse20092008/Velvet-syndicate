@@ -118,27 +118,9 @@ export function CartDrawer() {
                   <Button 
                     className="w-full" 
                     size="lg"
-                    onClick={async () => {
-                      try {
-                        const res = await fetch('/api/orders', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ shippingAddress: 'Default Address' }) // Mock address for now
-                        })
-                        const data = await res.json()
-                        if (data.success) {
-                          alert('Order placed successfully. Silence is yours.')
-                          useCartStore.getState().clearCart()
-                          closeCart()
-                        } else if (res.status === 401 || data.error?.toLowerCase().includes('authentication')) {
-                          closeCart()
-                          router.push('/login?message=authentication is required')
-                        } else {
-                          alert(data.error || 'Failed to place order')
-                        }
-                      } catch (error) {
-                        alert('An error occurred during checkout')
-                      }
+                    onClick={() => {
+                      closeCart()
+                      router.push('/checkout')
                     }}
                   >
                     Proceed to Checkout

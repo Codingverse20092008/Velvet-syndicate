@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -13,7 +13,15 @@ export default function LoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
-  const { setUser, setLoading } = useAuthStore()
+  const redirectPath = searchParams.get('redirect') || '/collection'
+  const { user, setUser, setLoading } = useAuthStore()
+
+  useEffect(() => {
+    if (user) {
+      router.replace(redirectPath)
+    }
+  }, [user, router, redirectPath])
+
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -38,7 +46,7 @@ export default function LoginPage() {
       }
 
       setUser(data.data.user)
-      router.push('/collection')
+      router.push(redirectPath)
     } catch {
       setErrors({ form: 'An unexpected error occurred' })
       setIsLoading(false)
@@ -134,7 +142,7 @@ export default function LoginPage() {
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           New to Velvet Syndicate?{' '}
-          <Link href="/signup" className="text-velvet-white hover:text-velvet-accent transition-colors cursor-none interactive">
+          <Link href={`/signup?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors cursor-none interactive">
             Create Account
           </Link>
         </motion.p>
