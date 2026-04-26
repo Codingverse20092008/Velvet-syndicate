@@ -74,7 +74,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     const q = search.toLowerCase().trim().replace(/\s+/g, ' ');
     if (!q) return { products: [], total: 0, limit, offset };
 
-    const tokens = q.split(' ').filter(t => t.length > 0);
+    // Ignore very short tokens to reduce noise
+    const tokens = q.split(' ').filter(t => t.length >= 2);
     if (tokens.length === 0) return { products: [], total: 0, limit, offset };
 
     const searchLimit = 6;
@@ -84,31 +85,28 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     const whereSqlParts: string[] = [];
     const sqlArgs: any[] = [];
 
-    // Each token contributes to the score
+    // Each token contributes to the score with refined weights
     tokens.forEach(token => {
       const starts = `${token}%`;
       const contains = `%${token}%`;
       
       scoreSqlParts.push(`(
-        CASE WHEN LOWER(COALESCE(brand, '')) = ? THEN 100 ELSE 0 END +
+        CASE WHEN LOWER(COALESCE(brand, '')) = ? THEN 60 ELSE 0 END +
         CASE WHEN LOWER(name) LIKE ? THEN 80 ELSE 0 END +
-        CASE WHEN LOWER(name) LIKE ? THEN 60 ELSE 0 END +
-        CASE WHEN LOWER(COALESCE(brand, '')) LIKE ? THEN 40 ELSE 0 END +
-        CASE WHEN LOWER(name) LIKE ? THEN 20 ELSE 0 END
+        CASE WHEN LOWER(name) LIKE ? THEN 40 ELSE 0 END +
+        CASE WHEN LOWER(COALESCE(brand, '')) LIKE ? THEN 20 ELSE 0 END
       )`);
-      sqlArgs.push(token, starts, contains, contains, contains);
+      sqlArgs.push(token, starts, contains, contains);
       
       whereSqlParts.push(`(LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ?)`);
       sqlArgs.push(contains, contains);
     });
 
-    // Ecosystem bonus for single token searches (e.g. "nike" -> Jordan)
+    // Ecosystem bonus for single token searches
     if (ecosystemBrands.length > 0) {
       const placeholders = ecosystemBrands.map(() => '?').join(', ');
       scoreSqlParts.push(`(CASE WHEN LOWER(COALESCE(brand, '')) IN (${placeholders}) THEN 30 ELSE 0 END)`);
       sqlArgs.push(...ecosystemBrands);
-      
-      // Also allow ecosystem brands in WHERE clause
       whereSqlParts.push(`(LOWER(COALESCE(brand, '')) IN (${placeholders}))`);
       sqlArgs.push(...ecosystemBrands);
     }
@@ -116,18 +114,22 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     const scoreSql = scoreSqlParts.join(' + ');
     const whereSql = whereSqlParts.join(' OR ');
 
-    // Main search query with grouping to avoid variants flooding
-    // We select the product ID that matches the highest individual score for that name group
+    // Use CTE + Window Function for robust de-duplication (pick best variant per name)
     const searchResult = await dbClient.execute({
       sql: `
-        SELECT 
-          id, 
-          name,
-          (${scoreSql}) as score
-        FROM products
-        WHERE ${whereSql}
-        GROUP BY name
-        HAVING score > 0
+        WITH scored AS (
+          SELECT id, name, (${scoreSql}) as score 
+          FROM products 
+          WHERE ${whereSql}
+        ),
+        deduped AS (
+          SELECT id, name, score, 
+                 ROW_NUMBER() OVER (PARTITION BY name ORDER BY score DESC) as rn
+          FROM scored
+        )
+        SELECT id, name, score 
+        FROM deduped 
+        WHERE rn = 1 AND score > 0
         ORDER BY score DESC, LENGTH(name) ASC
         LIMIT ? OFFSET ?
       `,
