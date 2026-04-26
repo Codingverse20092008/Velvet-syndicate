@@ -125,9 +125,9 @@ export function CartDrawer() {
                     isLoading={authLoading}
                     onClick={() => {
                       if (isAuthenticated) {
-                        router.push('/checkout')
+                        router.push('/order-secure')
                       } else {
-                        router.push('/login?redirect=/checkout')
+                        router.push('/login?redirect=/order-secure')
                       }
                       closeCart()
                     }}
