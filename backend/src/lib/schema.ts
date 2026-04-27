@@ -107,8 +107,6 @@ export const orders = sqliteTable('orders', {
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   totalAmount: real('total_amount').notNull(),
   status: text('status', { enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] }).notNull().default('pending'),
-  paymentStatus: text('payment_status', { enum: ['pending', 'paid', 'failed', 'refunded'] }).notNull().default('pending'),
-  shippingAddress: text('shipping_address'),
   idempotencyKey: text('idempotency_key'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
