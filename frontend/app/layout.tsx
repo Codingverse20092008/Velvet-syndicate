@@ -10,12 +10,12 @@ import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
 import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 
 export const metadata: Metadata = {
-  title: 'Velvet Syndicate | Wear the Unspoken',
+  title: 'VELVET TEST BUILD - DEPLOY CHECK',
   description: 'Premium footwear designed for silent luxury. The unspoken presence.',
   keywords: ['luxury footwear', 'premium sneakers', 'minimal fashion', 'streetwear'],
   authors: [{ name: 'Velvet Syndicate' }],
   openGraph: {
-    title: 'Velvet Syndicate | Wear the Unspoken',
+    title: 'VELVET TEST BUILD - DEPLOY CHECK',
     description: 'Premium footwear designed for silent luxury.',
     type: 'website',
     locale: 'en_US',
