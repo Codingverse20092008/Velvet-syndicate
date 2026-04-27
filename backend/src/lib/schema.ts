@@ -122,7 +122,7 @@ export const orders = sqliteTable('orders', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   totalAmount: real('total_amount').notNull(),
-  status: text('status', { enum: ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'FAILED'] }).notNull().default('PENDING'),
+  status: text('status', { enum: ['PENDING', 'CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'FAILED'] }).notNull().default('PENDING'),
   paymentStatus: text('payment_status', { enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'] }).notNull().default('PENDING'),
   paymentMethod: text('payment_method').notNull().default('COD'),
   shippingAddress: text('shipping_address').notNull(), // This will store the JSON snapshot
@@ -171,6 +171,12 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   product: one(products, { fields: [orderItems.productId], references: [products.id] }),
 }));
 
+export const productsRelations = relations(products, ({ many }) => ({
+  variants: many(productVariants),
+  cartItems: many(cartItems),
+  orderItems: many(orderItems),
+}));
+
 export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
   product: one(products, { fields: [productVariants.productId], references: [products.id] }),
   images: many(productVariantImages),
@@ -211,3 +217,18 @@ export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type Address = typeof addresses.$inferSelect;
 export type NewAddress = typeof addresses.$inferInsert;
+
+// Events Table (Analytics)
+export const events = sqliteTable('events', {
+  id: text('id').primaryKey(),
+  userId: text('user_id'), // nullable - anonymous tracking
+  eventType: text('event_type').notNull(),
+  metadata: text('metadata'), // JSON string
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  userIdx: index('events_user_id_idx').on(table.userId),
+  eventTypeIdx: index('events_event_type_idx').on(table.eventType),
+  createdAtIdx: index('events_created_at_idx').on(table.createdAt),
+}));
+
+export type Event = typeof events.$inferSelect;

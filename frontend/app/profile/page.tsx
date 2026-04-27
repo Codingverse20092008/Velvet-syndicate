@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ProfileForm } from '@/components/profile/ProfileForm'
+import { UserStats } from '@/components/profile/UserStats'
 import { useAuthStore } from '@/store/authStore'
 import { LogoutButton } from '@/components/profile/LogoutButton'
 
@@ -50,6 +52,18 @@ export default function ProfilePage() {
           <p className="text-sm text-velvet-muted mt-3">
             Manage your personal information and preferences
           </p>
+          <p className="text-xs text-velvet-accent/90 mt-3 uppercase tracking-[0.25em]">
+            Welcome back
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.05, ease: EASE }}
+          className="mb-8"
+        >
+          <UserStats />
         </motion.div>
 
         {/* Profile Form */}
@@ -79,6 +93,14 @@ export default function ProfilePage() {
               <p className="text-xs text-velvet-muted mt-1">
                 Member since {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
               </p>
+              {user.role === 'admin' && (
+                <Link
+                  href="/admin"
+                  className="inline-flex mt-4 text-[10px] uppercase tracking-[0.3em] text-velvet-accent hover:text-velvet-white transition-colors"
+                >
+                  Open Admin
+                </Link>
+              )}
             </div>
             <LogoutButton />
           </div>

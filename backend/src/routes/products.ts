@@ -11,22 +11,22 @@ const router = Router();
 // Function to map product from DB to standardized API format
 const mapProduct = (p: any) => ({
   id: p.id,
-  name: p.name,
-  brand: p.brand,
-  slug: p.slug,
-  description: p.description,
-  price: p.price,
-  category: p.category,
-  featured: p.featured,
+  name: p.name ?? '',
+  brand: p.brand ?? '',
+  slug: p.slug ?? '',
+  description: p.description ?? '',
+  price: Number(p.price ?? 0),
+  category: p.category ?? 'footwear',
+  featured: Boolean(p.featured),
   variants: (p.variants || []).map((v: any) => ({
     id: v.id,
-    name: v.name,
-    color: v.color,
+    name: v.name ?? '',
+    color: v.color ?? '',
     slug: v.slug,
     images: (v.images || []).map((img: any) => img.imageUrl),
     sizes: (v.sizes || []).map((s: any) => ({
       size: s.size,
-      stock: s.stock
+      stock: Number(s.stock ?? 0)
     })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
   }))
 });
@@ -40,7 +40,8 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { featured, category, sort, limit, offset, search } = req.query;
 
   if (featured === 'true') {
-    const limitNum = parseInt((limit as string) || '10');
+    const parsedLimit = Number.parseInt((limit as string) || '10', 10);
+    const limitNum = Number.isFinite(parsedLimit) ? parsedLimit : 10;
     const featuredResult = await getFeaturedProducts();
     const slicedResult = featuredResult.slice(0, limitNum);
     return successResponse(res, { 
@@ -53,8 +54,8 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
       category: category as string | undefined,
       featured: featured as string | undefined,
       sort: (sort as string) || 'createdAt',
-      limit: parseInt((limit as string) || '50'),
-      offset: parseInt((offset as string) || '0'),
+      limit: Number.parseInt((limit as string) || '50', 10),
+      offset: Number.parseInt((offset as string) || '0', 10),
       search: (search as string) || undefined,
     };
 

@@ -12,6 +12,10 @@ export async function createOrder(
   idempotencyKey?: string,
   expectedVersion?: number
 ) {
+  if (paymentMethod !== 'COD') {
+    throw new ValidationError('Only Cash on Delivery is available right now');
+  }
+
   // Check for existing order with the same idempotency key
   if (idempotencyKey) {
     const existingOrder = await db.query.orders.findFirst({
@@ -19,7 +23,15 @@ export async function createOrder(
     });
     if (existingOrder) {
       logger.info({ idempotencyKey, orderId: existingOrder.id }, 'Returning existing order for idempotency key');
-      return { id: existingOrder.id, total: existingOrder.totalAmount, alreadyExists: true };
+      return {
+        id: existingOrder.id,
+        total: existingOrder.totalAmount,
+        status: existingOrder.status,
+        paymentStatus: existingOrder.paymentStatus,
+        paymentMethod: existingOrder.paymentMethod,
+        phoneVerificationRequired: false,
+        alreadyExists: true
+      };
     }
   }
 
@@ -49,11 +61,7 @@ export async function createOrder(
       with: {
         items: {
           with: {
-            product: {
-              with: {
-                variants: true
-              }
-            }
+            product: true
           }
         }
       }
@@ -72,6 +80,10 @@ export async function createOrder(
 
     // 2. Validate stock and calculate total
     for (const item of userCart.items) {
+      if (!item.product) {
+        throw new ValidationError(`Product not found for cart item ${item.productId}`);
+      }
+
       const sizeRecord = await tx.query.productSizes.findFirst({
         where: and(eq(productSizes.variantId, item.variantId), eq(productSizes.size, item.size)),
       });
@@ -94,9 +106,9 @@ export async function createOrder(
       id: orderId,
       userId,
       totalAmount,
-      status: 'PENDING',
+      status: 'CONFIRMED',
       paymentStatus: 'PENDING',
-      paymentMethod,
+      paymentMethod: 'COD',
       shippingAddress: addressSnapshot, // Store snapshot
       idempotencyKey,
     });
@@ -120,9 +132,16 @@ export async function createOrder(
     await tx.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
 
     await invalidateCartCache(userId);
-    logger.info({ orderId, userId, totalAmount }, 'Order created successfully');
+    logger.info({ userId, orderId, total: totalAmount }, 'orderCreated');
 
-    return { id: orderId, total: totalAmount };
+    return {
+      id: orderId,
+      total: totalAmount,
+      status: 'CONFIRMED' as const,
+      paymentStatus: 'PENDING' as const,
+      paymentMethod: 'COD' as const,
+      phoneVerificationRequired: false,
+    };
   });
 }
 
@@ -147,7 +166,7 @@ export async function getOrderById(orderId: string, userId?: string) {
 
 export async function updateOrderStatus(
   orderId: string,
-  status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'FAILED',
+  status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED',
   paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
 ) {
   const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) });
@@ -161,6 +180,6 @@ export async function updateOrderStatus(
     })
     .where(eq(orders.id, orderId));
 
-  logger.info({ orderId, status }, 'Order status updated');
+  logger.info({ orderId, newStatus: status }, 'orderStatusUpdated');
   return getOrderById(orderId);
 }

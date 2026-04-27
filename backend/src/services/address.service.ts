@@ -101,14 +101,22 @@ export async function deleteAddress(addressId: string, userId: string) {
 }
 
 export async function setDefaultAddress(addressId: string, userId: string) {
+  const existing = await db.query.addresses.findFirst({
+    where: and(eq(addresses.id, addressId), eq(addresses.userId, userId)),
+  });
+
+  if (!existing) throw new NotFoundError('Address not found');
+
   await db.update(addresses)
     .set({ isDefault: false })
     .where(eq(addresses.userId, userId));
 
   const [updated] = await db.update(addresses)
     .set({ isDefault: true })
-    .where(eq(addresses.id, addressId))
+    .where(and(eq(addresses.id, addressId), eq(addresses.userId, userId)))
     .returning();
+
+  if (!updated) throw new NotFoundError('Address not found');
 
   logger.info({ addressId, userId }, 'Default address updated');
   return updated;

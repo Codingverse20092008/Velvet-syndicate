@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
@@ -10,7 +10,7 @@ import { useOrderStore } from '@/store/orderStore'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
-import { trackEvent } from '@/lib/analytics'
+import { events } from '@/lib/analytics'
 import { MapPin, Plus, Check, Loader2, AlertCircle } from 'lucide-react'
 import { AddressModal } from '@/components/address/AddressModal'
 
@@ -24,8 +24,10 @@ function CheckoutPage() {
   const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   
   const [idempotencyKey] = useState(() => crypto.randomUUID())
+  const submitLockRef = useRef(false)
 
   useEffect(() => {
     if (user) {
@@ -53,20 +55,27 @@ function CheckoutPage() {
   }, [user, items, router, authLoading])
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddressId || isSubmitting) return
+    if (!selectedAddressId || isSubmitting || submitLockRef.current) return
+    submitLockRef.current = true
+    setErrorMessage(null)
     
     try {
-      trackEvent('checkout_order_attempt', { total: totalPrice, items: items.length, idempotencyKey })
+      events.checkoutStarted(idempotencyKey)
 
-      const orderId = await createOrder(selectedAddressId)
+      const order = await createOrder(selectedAddressId, 'COD', {
+        idempotencyKey,
+        expectedVersion: version,
+      })
       
-      trackEvent('checkout_order_success', { orderId })
+      events.orderCreated(order.id, totalPrice)
       clearCart()
-      router.push(`/orders/${orderId}`)
+      router.push(`/order-success?orderId=${encodeURIComponent(order.id)}`)
     } catch (error) {
       console.error('Order placement error:', error)
-      trackEvent('checkout_order_error', { error: (error as Error).message })
-      alert((error as Error).message || 'Failed to place order')
+      events.orderFailed((error as Error).message)
+      setErrorMessage((error as Error).message || 'Failed to place order. Please try again.')
+    } finally {
+      submitLockRef.current = false
     }
   }
 
@@ -90,7 +99,12 @@ function CheckoutPage() {
           className="lg:col-span-3"
         >
           <div className="flex items-center justify-between mb-12">
-            <h1 className="font-heading text-4xl tracking-widest uppercase text-velvet-white">Shipping</h1>
+            <div>
+              <h1 className="font-heading text-4xl tracking-widest uppercase text-velvet-white">Shipping</h1>
+              <div className="mt-3 inline-flex items-center px-3 py-1 rounded-full border border-amber-300/30 bg-amber-400/10 text-amber-200 text-[10px] uppercase tracking-widest">
+                Cash on Delivery Only
+              </div>
+            </div>
             <button
               onClick={() => setIsAddressModalOpen(true)}
               className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold text-velvet-accent hover:text-velvet-white transition-colors"
@@ -154,11 +168,19 @@ function CheckoutPage() {
               size="lg" 
               isLoading={isSubmitting}
             >
-              {isSubmitting ? 'Processing Order...' : `Pay ${formatPrice(totalPrice)}`}
+              {isSubmitting ? 'Placing Order...' : `Place Order - ${formatPrice(totalPrice)}`}
             </Button>
+            <p className="text-center text-xs text-velvet-muted mt-4">
+              We will contact you shortly to confirm your order.
+            </p>
             {!selectedAddressId && !addressesLoading && addresses.length > 0 && (
               <p className="text-center text-xs text-red-400 mt-4 flex items-center justify-center gap-2">
                 <AlertCircle size={14} /> Please select a shipping address
+              </p>
+            )}
+            {errorMessage && (
+              <p className="text-center text-xs text-red-400 mt-4 flex items-center justify-center gap-2">
+                <AlertCircle size={14} /> {errorMessage}
               </p>
             )}
           </div>

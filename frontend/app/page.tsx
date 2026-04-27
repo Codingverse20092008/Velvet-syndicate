@@ -6,6 +6,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { ProductCard } from '@/components/product/ProductCard'
 import { AboutPreview } from '@/components/home/AboutPreview'
+import { Recommendations } from '@/components/home/Recommendations'
 import { ProductGridSkeleton } from '@/components/product/ProductSkeleton'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { apiFetch } from '@/lib/api'
@@ -77,6 +78,9 @@ export default function HomePage() {
 
       {/* 3. Featured Products */}
       <FeaturedProductsSection />
+
+      {/* 3.5 Growth Recommendations */}
+      <Recommendations />
 
       {/* 4. Brand Statement */}
       <section className="py-28 flex items-center justify-center bg-velvet-black px-6">

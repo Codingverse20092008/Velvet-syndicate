@@ -14,7 +14,7 @@ export function Navigation() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { items, toggleCart, hasHydrated } = useCartStore()
   const totalItems = hasHydrated ? items.reduce((sum, item) => sum + item.quantity, 0) : 0
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore()
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -111,6 +111,14 @@ export function Navigation() {
             <div className={`${isSearchOpen ? 'hidden md:flex' : 'flex'} items-center gap-4`}>
               {isAuthenticated ? (
                 <div className="flex items-center gap-4">
+                  {user?.role === 'admin' && (
+                    <Link
+                      href="/admin"
+                      className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive hidden md:block"
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <Link
                     href="/account"
                     className="text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive"

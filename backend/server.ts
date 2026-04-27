@@ -12,6 +12,8 @@ import ordersRoutes from './src/routes/orders';
 import productsRoutes from './src/routes/products';
 import userRoutes from './src/routes/user';
 import addressRoutes from './src/routes/address';
+import eventsRoutes from './src/routes/events';
+import adminRoutes from './src/routes/admin';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -41,6 +43,8 @@ app.use('/api/orders', ordersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/user/addresses', addressRoutes);
+app.use('/api/events', eventsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error handling
 app.use(errorHandler);

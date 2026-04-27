@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Home, Phone, MapPin, Hash } from 'lucide-react'
 import { useAddressStore, Address } from '@/store/addressStore'
+import { events } from '@/lib/analytics'
 
 interface AddressModalProps {
   isOpen: boolean
@@ -37,6 +38,7 @@ export function AddressModal({ isOpen, onClose, address }: AddressModalProps) {
         await updateAddress(address.id, data)
       } else {
         await addAddress(data)
+        events.addressAdded()
       }
       onClose()
     } catch (err) {

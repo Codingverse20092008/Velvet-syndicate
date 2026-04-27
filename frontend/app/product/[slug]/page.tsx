@@ -12,6 +12,7 @@ import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { VariantSelector } from '@/components/product/VariantSelector'
 import { AnimatePresence } from 'framer-motion'
 import { formatPrice } from '@/lib/utils'
+import { events } from '@/lib/analytics'
 
 interface Variant {
   id: string
@@ -32,6 +33,8 @@ interface Product {
   featured: boolean
   variants: Variant[]
 }
+
+const RECENTLY_VIEWED_KEY = 'velvet_recently_viewed'
 
 export default function ProductPage() {
   const params = useParams()
@@ -73,6 +76,31 @@ export default function ProductPage() {
 
   const selectedVariant = product?.variants.find(v => v.id === selectedVariantId) || product?.variants[0]
 
+  useEffect(() => {
+    if (!product) return
+    events.viewProduct(product.id)
+    const primaryImage = product.variants?.[0]?.images?.[0] || ''
+    const entry = {
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      imageUrl: primaryImage,
+      viewedAt: Date.now(),
+    }
+
+    try {
+      const existingRaw = localStorage.getItem(RECENTLY_VIEWED_KEY)
+      const existing = existingRaw ? JSON.parse(existingRaw) : []
+      const next = [entry, ...(Array.isArray(existing) ? existing : [])]
+        .filter((item, index, arr) => index === arr.findIndex((x: any) => x.id === item.id))
+        .slice(0, 12)
+      localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(next))
+    } catch {
+      // Ignore local storage failures silently.
+    }
+  }, [product])
+
   const handleAddToCart = () => {
     if (!product || !selectedVariant || !selectedSize) return
 
@@ -90,6 +118,7 @@ export default function ProductPage() {
         image: selectedVariant.images[0] || '',
         size: selectedSize,
       })
+      events.addToCart(product.id, 1)
       setIsAdding(false)
       toggleCart()
     }, 600)

@@ -5,6 +5,8 @@ import { Navigation } from '@/components/layout/Navigation'
 import { Footer } from '@/components/layout/Footer'
 import { CartDrawer } from '@/components/ui/CartDrawer'
 import { AuthProvider } from './providers'
+import { ActiveOrderBanner } from '@/components/user/ActiveOrderBanner'
+import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
 
 export const metadata: Metadata = {
   title: 'Velvet Syndicate | Wear the Unspoken',
@@ -39,6 +41,8 @@ export default function RootLayout({
         <AuthProvider>
           <Cursor />
           <Navigation />
+          <ActiveOrderBanner />
+          <ReturnVisitTracker />
           <main>{children}</main>
           <Footer />
           <CartDrawer />

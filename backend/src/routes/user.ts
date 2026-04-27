@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { asyncHandler } from '../lib/api-handler-express';
 import { successResponse } from '../lib/api-response-express';
 import { getUserFromRequest } from '../lib/auth-express';
-import { updateUserProfile } from '../services/user.service';
+import { getActiveOrder, getRecommendations, getUserStats, updateUserProfile } from '../services/user.service';
 
 const router = Router();
 
@@ -52,6 +52,31 @@ router.get('/profile', asyncHandler(async (req: Request, res: Response) => {
       createdAt: user.createdAt,
     }
   });
+}));
+
+// GET /api/user/stats - Retention and loyalty stats
+router.get('/stats', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const stats = await getUserStats(user.id);
+
+  return successResponse(res, { stats });
+}));
+
+// GET /api/user/active-order - Latest active order for banner/tracking
+router.get('/active-order', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const activeOrder = await getActiveOrder(user.id);
+
+  return successResponse(res, { activeOrder });
+}));
+
+// GET /api/user/recommendations - Buy again + may also like
+router.get('/recommendations', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const limit = Math.min(Math.max(Number(req.query.limit ?? 6), 1), 12);
+  const recommendations = await getRecommendations(user.id, limit);
+
+  return successResponse(res, { recommendations });
 }));
 
 export default router;

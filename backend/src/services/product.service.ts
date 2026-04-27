@@ -64,6 +64,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   }
 
   const conditions = [];
+  conditions.push(eq(products.isVisible, true));
   if (category) conditions.push(eq(products.category, category));
   if (featured !== undefined) conditions.push(eq(products.featured, featured));
 
@@ -121,7 +122,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
         WITH scored AS (
           SELECT id, name, (${scoreSql}) as score 
           FROM products 
-          WHERE ${whereSql}
+          WHERE is_visible = 1 AND (${whereSql})
         ),
         deduped AS (
           SELECT id, name, score, 
@@ -166,7 +167,7 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
       sql: `
         SELECT COUNT(DISTINCT name) as count 
         FROM products 
-        WHERE ${whereSql}
+        WHERE is_visible = 1 AND (${whereSql})
       `,
       args: whereArgs,
     });
@@ -224,7 +225,7 @@ export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
   if (cached) return cached;
 
   const featuredProducts = await db.query.products.findMany({
-    where: eq(products.featured, true),
+    where: and(eq(products.featured, true), eq(products.isVisible, true)),
     orderBy: desc(products.createdAt),
     limit: 10,
     with: {
@@ -247,7 +248,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithVariant
   if (cached) return cached;
 
   const product = await db.query.products.findFirst({
-    where: eq(products.slug, slug),
+    where: and(eq(products.slug, slug), eq(products.isVisible, true)),
     with: {
       variants: {
         with: {
@@ -263,4 +264,3 @@ export async function getProductBySlug(slug: string): Promise<ProductWithVariant
   await setCachedProducts(cacheKey, product as any, CACHE_TTL.PRODUCT_DETAIL);
   return product as any;
 }
-
