@@ -8,11 +8,11 @@
 import { readdir } from 'fs/promises';
 import { join, extname } from 'path';
 import { existsSync } from 'fs';
-import { db } from '../lib/db';
-import { products } from '../lib/schema';
+import { db } from '../backend/src/lib/db';
+import { products } from '../backend/src/lib/schema';
 import { eq } from 'drizzle-orm';
-import { logger } from '../lib/logger';
-import { invalidateProductsCache } from '../lib/cache';
+import { logger } from '../backend/src/lib/logger';
+import { invalidateProductsCache } from '../backend/src/lib/cache';
 
 const REAL_IMAGES_DIR = join(process.cwd(), 'Real Images');
 const VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.jfif'];
