@@ -3,6 +3,7 @@ import { asyncHandler } from '../../lib/api-handler-express';
 import { successResponse } from '../../lib/api-response-express';
 import { getUserFromRequest } from '../../lib/auth-express';
 import * as analyticsService from '../../services/analytics.service';
+import * as feedbackService from '../../services/feedback.service';
 
 const router = Router();
 
@@ -46,6 +47,15 @@ router.get('/product-insights', asyncHandler(async (req: Request, res: Response)
 
   const insights = await analyticsService.getProductInsights();
   return successResponse(res, { productInsights: insights });
+}));
+
+// GET /api/admin/analytics/feedback-summary
+router.get('/feedback-summary', asyncHandler(async (req: Request, res: Response) => {
+  const isAdmin = await requireAdmin(req, res);
+  if (!isAdmin) return;
+
+  const summary = await feedbackService.getFeedbackSummary();
+  return successResponse(res, { feedbackSummary: summary });
 }));
 
 export default router;

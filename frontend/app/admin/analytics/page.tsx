@@ -7,7 +7,7 @@ import {
   TrendingUp, Repeat, Loader2, ArrowUpRight,
   Eye, MousePointerClick, ShoppingCart, Package,
   AlertTriangle, CheckCircle2, TrendingDown, Star,
-  Lightbulb
+  Lightbulb, MessageCircle
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
@@ -52,6 +52,13 @@ interface ProductInsights {
   }[]
 }
 
+interface FeedbackSummary {
+  total: number
+  avgRating: number
+  ratingDistribution: { 1: number; 2: number; 3: number; 4: number; 5: number }
+  recentFeedback: { id: string; message: string; rating: string | null; page: string | null; createdAt: string }[]
+}
+
 const EVENT_ICONS: Record<string, any> = {
   VIEW_PRODUCT: Eye,
   ADD_TO_CART: ShoppingCart,
@@ -64,27 +71,31 @@ export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [funnel, setFunnel] = useState<FunnelData | null>(null)
   const [productInsights, setProductInsights] = useState<ProductInsights | null>(null)
+  const [feedbackSummary, setFeedbackSummary] = useState<FeedbackSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchAllAnalytics = async () => {
       try {
-        const [overviewRes, funnelRes, productRes] = await Promise.all([
+        const [overviewRes, funnelRes, productRes, feedbackRes] = await Promise.all([
           apiFetch('/admin/analytics/overview'),
           apiFetch('/admin/analytics/funnel'),
           apiFetch('/admin/analytics/product-insights'),
+          apiFetch('/admin/analytics/feedback-summary'),
         ])
 
-        const [overviewResult, funnelResult, productResult] = await Promise.all([
+        const [overviewResult, funnelResult, productResult, feedbackResult] = await Promise.all([
           overviewRes.json(),
           funnelRes.json(),
           productRes.json(),
+          feedbackRes.json(),
         ])
 
         if (overviewResult.success) setData(overviewResult.analytics)
         if (funnelResult.success) setFunnel(funnelResult.funnel)
         if (productResult.success) setProductInsights(productResult.productInsights)
+        if (feedbackResult.success) setFeedbackSummary(feedbackResult.feedbackSummary)
       } catch (err) {
         setError((err as Error).message)
       } finally {
@@ -421,6 +432,91 @@ export default function AdminAnalyticsPage() {
             )}
           </motion.div>
         </div>
+
+        {/* User Feedback */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
+          className="bg-velvet-dark border border-white/10 rounded-2xl p-8"
+        >
+          <h2 className="text-lg font-heading text-velvet-white tracking-wide mb-6 flex items-center gap-2">
+            <MessageCircle size={18} className="text-velvet-accent" /> User Feedback
+          </h2>
+          {feedbackSummary ? (
+            <div className="space-y-6">
+              {/* Rating Summary */}
+              <div className="flex items-center gap-8">
+                <div className="text-center">
+                  <div className="text-4xl font-heading text-velvet-white mb-1">
+                    {feedbackSummary.avgRating.toFixed(1)}
+                  </div>
+                  <div className="text-xs text-velvet-muted">Average Rating</div>
+                </div>
+                <div className="flex-1 space-y-1">
+                  {[5, 4, 3, 2, 1].map((num) => {
+                    const count = feedbackSummary.ratingDistribution[num as keyof typeof feedbackSummary.ratingDistribution]
+                    const maxCount = Math.max(...Object.values(feedbackSummary.ratingDistribution))
+                    const width = maxCount > 0 ? (count / maxCount) * 100 : 0
+                    return (
+                      <div key={num} className="flex items-center gap-2">
+                        <span className="text-xs text-velvet-muted w-4">{num}</span>
+                        <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-velvet-accent/60 rounded-full transition-all duration-500"
+                            style={{ width: `${width}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-velvet-muted w-6 text-right">{count}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Recent Feedback */}
+              {feedbackSummary.recentFeedback.length > 0 ? (
+                <div className="border-t border-white/10 pt-6">
+                  <div className="text-xs text-velvet-muted mb-4">
+                    {feedbackSummary.total} total feedback • {feedbackSummary.recentFeedback.length} recent
+                  </div>
+                  <div className="space-y-3">
+                    {feedbackSummary.recentFeedback.map((fb) => (
+                      <div key={fb.id} className="bg-black/40 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-1">
+                            {fb.rating && Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                size={12}
+                                className={i < parseInt(fb.rating || '0') ? 'fill-velvet-accent text-velvet-accent' : 'text-velvet-muted'}
+                              />
+                            ))}
+                          </div>
+                          <div className="text-[10px] text-velvet-muted">
+                            {new Date(fb.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <p className="text-sm text-velvet-white">{fb.message}</p>
+                        {fb.page && (
+                          <div className="text-[10px] text-velvet-muted mt-2">
+                            From: {fb.page}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="border-t border-white/10 pt-6 text-center">
+                  <p className="text-velvet-muted text-sm">No feedback yet. Users can submit via the floating button.</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="text-velvet-muted text-sm">Loading feedback data...</p>
+          )}
+        </motion.div>
       </div>
     </div>
   )

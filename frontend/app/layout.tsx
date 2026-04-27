@@ -7,6 +7,7 @@ import { CartDrawer } from '@/components/ui/CartDrawer'
 import { AuthProvider } from './providers'
 import { ActiveOrderBanner } from '@/components/user/ActiveOrderBanner'
 import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
+import { FeedbackButton } from '@/components/feedback/FeedbackButton'
 
 export const metadata: Metadata = {
   title: 'Velvet Syndicate | Wear the Unspoken',
@@ -46,6 +47,7 @@ export default function RootLayout({
           <main>{children}</main>
           <Footer />
           <CartDrawer />
+          <FeedbackButton />
         </AuthProvider>
       </body>
     </html>

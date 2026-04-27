@@ -232,3 +232,19 @@ export const events = sqliteTable('events', {
 }));
 
 export type Event = typeof events.$inferSelect;
+
+// Feedback Table (User Feedback Collection)
+export const feedback = sqliteTable('feedback', {
+  id: text('id').primaryKey(),
+  userId: text('user_id'), // nullable - anonymous feedback
+  message: text('message').notNull(),
+  rating: text('rating'), // 1-5, nullable
+  page: text('page'), // URL where feedback was given
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  userIdx: index('feedback_user_id_idx').on(table.userId),
+  ratingIdx: index('feedback_rating_idx').on(table.rating),
+  createdAtIdx: index('feedback_created_at_idx').on(table.createdAt),
+}));
+
+export type Feedback = typeof feedback.$inferSelect;
