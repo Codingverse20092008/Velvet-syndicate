@@ -105,7 +105,7 @@ export const cartItems = sqliteTable('cart_items', {
 export const orders = sqliteTable('orders', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  total: real('total').notNull(),
+  totalAmount: real('total_amount').notNull(),
   status: text('status', { enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] }).notNull().default('pending'),
   paymentStatus: text('payment_status', { enum: ['pending', 'paid', 'failed', 'refunded'] }).notNull().default('pending'),
   shippingAddress: text('shipping_address'),
