@@ -18,7 +18,7 @@ export async function createOrder(
     });
     if (existingOrder) {
       logger.info({ idempotencyKey, orderId: existingOrder.id }, 'Returning existing order for idempotency key');
-      return { id: existingOrder.id, total: existingOrder.total, alreadyExists: true };
+      return { id: existingOrder.id, total: existingOrder.totalAmount, alreadyExists: true };
     }
   }
 
@@ -70,10 +70,8 @@ export async function createOrder(
     await tx.insert(orders).values({
       id: orderId,
       userId,
-      total,
+      totalAmount: total,
       status: 'pending',
-      paymentStatus: 'pending',
-      shippingAddress,
       idempotencyKey,
     });
 
@@ -121,16 +119,14 @@ export async function getOrderById(orderId: string, userId?: string) {
 
 export async function updateOrderStatus(
   orderId: string,
-  status: any,
-  paymentStatus?: any
+  status: any
 ) {
   const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) });
   if (!order) throw new NotFoundError('Order');
 
   await db.update(orders)
     .set({ 
-      status, 
-      paymentStatus: paymentStatus || order.paymentStatus,
+      status,
       updatedAt: new Date().toISOString() 
     })
     .where(eq(orders.id, orderId));
