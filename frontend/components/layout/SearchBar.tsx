@@ -28,7 +28,11 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced
 }
 
-export function SearchBar() {
+interface SearchBarProps {
+  autoFocus?: boolean
+}
+
+export function SearchBar({ autoFocus = false }: SearchBarProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -37,6 +41,13 @@ export function SearchBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const debouncedQuery = useDebounce(query, 300)
+
+  // Auto-focus when prop is true
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [autoFocus])
 
   // Fetch results when debounced query changes
   useEffect(() => {
