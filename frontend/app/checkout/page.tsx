@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { events } from '@/lib/analytics'
+import { getVariant, trackABConversion } from '@/lib/ab-testing'
 import { MapPin, Plus, Check, Loader2, AlertCircle } from 'lucide-react'
 import { AddressModal } from '@/components/address/AddressModal'
 
@@ -28,6 +29,7 @@ function CheckoutPage() {
   
   const [idempotencyKey] = useState(() => crypto.randomUUID())
   const submitLockRef = useRef(false)
+  const [ctaVariant] = useState(() => getVariant('checkout_cta', user?.id))
 
   useEffect(() => {
     if (user) {
@@ -68,6 +70,7 @@ function CheckoutPage() {
       })
       
       events.orderCreated(order.id, totalPrice)
+      trackABConversion('checkout_cta', ctaVariant, 'ORDER_CREATED')
       clearCart()
       router.push(`/order-success?orderId=${encodeURIComponent(order.id)}`)
     } catch (error) {

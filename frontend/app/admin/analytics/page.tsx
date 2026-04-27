@@ -5,7 +5,9 @@ import { motion } from 'framer-motion'
 import { 
   BarChart3, Users, ShoppingBag, IndianRupee, 
   TrendingUp, Repeat, Loader2, ArrowUpRight,
-  Eye, MousePointerClick, ShoppingCart, Package
+  Eye, MousePointerClick, ShoppingCart, Package,
+  AlertTriangle, CheckCircle2, TrendingDown, Star,
+  Lightbulb
 } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
@@ -23,6 +25,33 @@ interface AnalyticsData {
   eventBreakdown: { eventType: string; count: number }[]
 }
 
+interface FunnelData {
+  views: number
+  addToCart: number
+  checkoutStarted: number
+  orders: number
+  viewToCartRate: number
+  cartToCheckoutRate: number
+  checkoutToOrderRate: number
+  overallConversionRate: number
+  biggestDropoff: { stage: string; rate: number; dropoff: number }
+  insights: { stage: string; severity: 'critical' | 'warning' | 'good'; recommendations: string[] }[]
+}
+
+interface ProductInsights {
+  products: {
+    productId: string
+    productName: string | null
+    views: number
+    addToCart: number
+    orders: number
+    revenue: number
+    viewToCartRate: number
+    cartToOrderRate: number
+    tag: 'problem' | 'opportunity' | 'star' | 'neutral'
+  }[]
+}
+
 const EVENT_ICONS: Record<string, any> = {
   VIEW_PRODUCT: Eye,
   ADD_TO_CART: ShoppingCart,
@@ -33,26 +62,36 @@ const EVENT_ICONS: Record<string, any> = {
 
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null)
+  const [funnel, setFunnel] = useState<FunnelData | null>(null)
+  const [productInsights, setProductInsights] = useState<ProductInsights | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
+    const fetchAllAnalytics = async () => {
       try {
-        const res = await apiFetch('/admin/analytics/overview')
-        const result = await res.json()
-        if (result.success) {
-          setData(result.analytics)
-        } else {
-          throw new Error(result.error || 'Failed to load analytics')
-        }
+        const [overviewRes, funnelRes, productRes] = await Promise.all([
+          apiFetch('/admin/analytics/overview'),
+          apiFetch('/admin/analytics/funnel'),
+          apiFetch('/admin/analytics/product-insights'),
+        ])
+
+        const [overviewResult, funnelResult, productResult] = await Promise.all([
+          overviewRes.json(),
+          funnelRes.json(),
+          productRes.json(),
+        ])
+
+        if (overviewResult.success) setData(overviewResult.analytics)
+        if (funnelResult.success) setFunnel(funnelResult.funnel)
+        if (productResult.success) setProductInsights(productResult.productInsights)
       } catch (err) {
         setError((err as Error).message)
       } finally {
         setIsLoading(false)
       }
     }
-    fetchAnalytics()
+    fetchAllAnalytics()
   }, [])
 
   if (isLoading) {
@@ -124,8 +163,81 @@ export default function AdminAnalyticsPage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Top Products */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Funnel Visualization */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-velvet-dark border border-white/10 rounded-2xl p-8"
+          >
+            <h2 className="text-lg font-heading text-velvet-white tracking-wide mb-6 flex items-center gap-2">
+              <BarChart3 size={18} className="text-velvet-accent" /> Conversion Funnel
+            </h2>
+            {funnel ? (
+              <>
+                <div className="space-y-4 mb-6">
+                  {[
+                    { label: 'VIEW_PRODUCT', count: funnel.views, rate: 100, icon: Eye },
+                    { label: 'ADD_TO_CART', count: funnel.addToCart, rate: funnel.viewToCartRate, icon: ShoppingCart },
+                    { label: 'CHECKOUT_STARTED', count: funnel.checkoutStarted, rate: funnel.cartToCheckoutRate, icon: MousePointerClick },
+                    { label: 'ORDER_CREATED', count: funnel.orders, rate: funnel.checkoutToOrderRate, icon: Package },
+                  ].map((stage, idx) => {
+                    const Icon = stage.icon
+                    const prevCount = idx === 0 ? funnel.views : 
+                      idx === 1 ? funnel.views : 
+                      idx === 2 ? funnel.addToCart : funnel.checkoutStarted
+                    const dropoff = idx === 0 ? 0 : prevCount - stage.count
+                    const dropoffRate = prevCount > 0 ? ((dropoff / prevCount) * 100).toFixed(1) : '0'
+                    const width = idx === 0 ? 100 : stage.rate
+                    const isWorstDropoff = funnel.biggestDropoff.stage.includes(stage.label)
+                    
+                    return (
+                      <div key={stage.label} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <Icon size={14} className="text-velvet-muted" />
+                            <span className="text-velvet-white">{stage.label.replace(/_/g, ' ')}</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-velvet-muted">{stage.count}</span>
+                            {idx > 0 && (
+                              <span className={`text-xs ${isWorstDropoff ? 'text-red-400' : 'text-velvet-muted'}`}>
+                                -{dropoffRate}% drop
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="w-full h-8 bg-white/5 rounded-lg overflow-hidden relative">
+                          <div 
+                            className={`h-full bg-gradient-to-r ${isWorstDropoff ? 'from-red-500/20 to-red-500/40' : 'from-velvet-accent/20 to-velvet-accent/40'} rounded-lg transition-all duration-500`}
+                            style={{ width: `${width}%` }}
+                          />
+                          <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-velvet-white">
+                            {idx === 0 ? '100%' : `${stage.rate.toFixed(1)}%`}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                
+                <div className="border-t border-white/10 pt-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-velvet-muted">Overall Conversion</span>
+                    <span className="text-lg font-bold text-velvet-white">{funnel.overallConversionRate.toFixed(2)}%</span>
+                  </div>
+                  <div className="text-[10px] text-velvet-muted mt-1">
+                    From view to order
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-velvet-muted text-sm">Loading funnel data...</p>
+            )}
+          </motion.div>
+
+          {/* Actionable Insights */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -133,13 +245,118 @@ export default function AdminAnalyticsPage() {
             className="bg-velvet-dark border border-white/10 rounded-2xl p-8"
           >
             <h2 className="text-lg font-heading text-velvet-white tracking-wide mb-6 flex items-center gap-2">
+              <Lightbulb size={18} className="text-velvet-accent" /> Actionable Insights
+            </h2>
+            {funnel?.insights ? (
+              <div className="space-y-4">
+                {funnel.insights.map((insight, idx) => {
+                  const Icon = insight.severity === 'critical' ? AlertTriangle :
+                    insight.severity === 'warning' ? TrendingDown : CheckCircle2
+                  const color = insight.severity === 'critical' ? 'text-red-400' :
+                    insight.severity === 'warning' ? 'text-amber-400' : 'text-emerald-400'
+                  const bgColor = insight.severity === 'critical' ? 'bg-red-500/10 border-red-500/20' :
+                    insight.severity === 'warning' ? 'bg-amber-500/10 border-amber-500/20' : 'bg-emerald-500/10 border-emerald-500/20'
+                  
+                  return (
+                    <div key={idx} className={`p-4 rounded-xl border ${bgColor}`}>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Icon size={16} className={color} />
+                        <span className="text-sm font-medium text-velvet-white">{insight.stage}</span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {insight.recommendations.map((rec, rIdx) => (
+                          <li key={rIdx} className="text-xs text-velvet-muted flex items-start gap-2">
+                            <span className="text-velvet-accent">•</span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="text-velvet-muted text-sm">Loading insights...</p>
+            )}
+          </motion.div>
+        </div>
+
+        {/* Product Insights */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          className="bg-velvet-dark border border-white/10 rounded-2xl p-8"
+        >
+          <h2 className="text-lg font-heading text-velvet-white tracking-wide mb-6 flex items-center gap-2">
+            <Star size={18} className="text-velvet-accent" /> Product Insights
+          </h2>
+          {productInsights?.products && productInsights.products.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left py-3 text-velvet-muted text-[10px] uppercase tracking-widest">Product</th>
+                    <th className="text-right py-3 text-velvet-muted text-[10px] uppercase tracking-widest">Views</th>
+                    <th className="text-right py-3 text-velvet-muted text-[10px] uppercase tracking-widest">→ Cart</th>
+                    <th className="text-right py-3 text-velvet-muted text-[10px] uppercase tracking-widest">→ Order</th>
+                    <th className="text-right py-3 text-velvet-muted text-[10px] uppercase tracking-widest">Revenue</th>
+                    <th className="text-right py-3 text-velvet-muted text-[10px] uppercase tracking-widest">Tag</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {productInsights.products.map((p) => {
+                    const tagColors = {
+                      problem: 'bg-red-500/10 text-red-400 border-red-500/20',
+                      opportunity: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+                      star: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                      neutral: 'bg-white/5 text-velvet-muted border-white/10',
+                    }
+                    const tagLabels = {
+                      problem: 'Problem',
+                      opportunity: 'Opportunity',
+                      star: 'Star',
+                      neutral: 'Neutral',
+                    }
+                    return (
+                      <tr key={p.productId} className="border-b border-white/5 last:border-0">
+                        <td className="py-3 text-velvet-white">{p.productName || p.productId.slice(0, 8)}</td>
+                        <td className="py-3 text-right text-velvet-muted">{p.views}</td>
+                        <td className="py-3 text-right text-velvet-muted">{p.viewToCartRate.toFixed(1)}%</td>
+                        <td className="py-3 text-right text-velvet-muted">{p.cartToOrderRate.toFixed(1)}%</td>
+                        <td className="py-3 text-right text-velvet-accent">{formatPrice(p.revenue)}</td>
+                        <td className="py-3 text-right">
+                          <span className={`px-2 py-1 rounded-full text-[10px] uppercase tracking-widest border ${tagColors[p.tag]}`}>
+                            {tagLabels[p.tag]}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-velvet-muted text-sm">No product data yet. Need more views and orders.</p>
+          )}
+        </motion.div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          {/* Top Products */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="bg-velvet-dark border border-white/10 rounded-2xl p-8"
+          >
+            <h2 className="text-lg font-heading text-velvet-white tracking-wide mb-6 flex items-center gap-2">
               <ShoppingBag size={18} className="text-velvet-accent" /> Top Products
             </h2>
-            {data.topProducts.length === 0 ? (
+            {data?.topProducts.length === 0 ? (
               <p className="text-velvet-muted text-sm">No order data yet.</p>
             ) : (
               <div className="space-y-4">
-                {data.topProducts.map((product, idx) => (
+                {data?.topProducts.map((product, idx) => (
                   <div key={product.productId} className="flex items-center justify-between py-3 border-b border-white/5 last:border-0">
                     <div className="flex items-center gap-4">
                       <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-xs font-bold text-velvet-muted">
@@ -165,20 +382,20 @@ export default function AdminAnalyticsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
+            transition={{ delay: 0.9 }}
             className="bg-velvet-dark border border-white/10 rounded-2xl p-8"
           >
             <h2 className="text-lg font-heading text-velvet-white tracking-wide mb-6 flex items-center gap-2">
               <BarChart3 size={18} className="text-velvet-accent" /> Event Breakdown
             </h2>
             <div className="text-xs text-velvet-muted mb-4">
-              {data.recentEvents} events in the last 7 days
+              {data?.recentEvents} events in the last 7 days
             </div>
-            {data.eventBreakdown.length === 0 ? (
+            {data?.eventBreakdown.length === 0 ? (
               <p className="text-velvet-muted text-sm">No events tracked yet.</p>
             ) : (
               <div className="space-y-3">
-                {data.eventBreakdown.map((event) => {
+                {data?.eventBreakdown.map((event) => {
                   const Icon = EVENT_ICONS[event.eventType] || BarChart3
                   const maxCount = data.eventBreakdown[0]?.count || 1
                   const width = (event.count / maxCount) * 100

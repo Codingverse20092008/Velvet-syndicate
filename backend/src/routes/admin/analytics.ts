@@ -30,4 +30,22 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
   return successResponse(res, { analytics: overview });
 }));
 
+// GET /api/admin/analytics/funnel
+router.get('/funnel', asyncHandler(async (req: Request, res: Response) => {
+  const isAdmin = await requireAdmin(req, res);
+  if (!isAdmin) return;
+
+  const funnel = await analyticsService.getFunnelAnalytics();
+  return successResponse(res, { funnel });
+}));
+
+// GET /api/admin/analytics/product-insights
+router.get('/product-insights', asyncHandler(async (req: Request, res: Response) => {
+  const isAdmin = await requireAdmin(req, res);
+  if (!isAdmin) return;
+
+  const insights = await analyticsService.getProductInsights();
+  return successResponse(res, { productInsights: insights });
+}));
+
 export default router;
