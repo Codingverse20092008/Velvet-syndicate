@@ -65,7 +65,7 @@ export function Footer() {
           </p>
         </div>
 
-        {/* Social Icons */}
+        {/* Social Icons - Instagram & WhatsApp */}
         <div className="flex justify-center gap-6 mt-6">
           <a
             href="https://instagram.com/velvetsyndicate"
