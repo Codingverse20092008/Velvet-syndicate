@@ -1,13 +1,14 @@
 import { eq, and, desc } from 'drizzle-orm';
 import { db } from '../lib/db';
-import { orders, orderItems, cart, cartItems, productSizes } from '../lib/schema';
+import { orders, orderItems, cart, cartItems, productSizes, addresses } from '../lib/schema';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { invalidateCartCache } from '../lib/cache';
 import { logger } from '../lib/logger';
 
 export async function createOrder(
   userId: string,
-  shippingAddress: string,
+  addressId: string, // Changed from shippingAddress string to addressId
+  paymentMethod: string = 'COD',
   idempotencyKey?: string,
   expectedVersion?: number
 ) {
@@ -22,14 +23,37 @@ export async function createOrder(
     }
   }
 
+  // 0. Fetch the address to create a snapshot
+  const address = await db.query.addresses.findFirst({
+    where: and(eq(addresses.id, addressId), eq(addresses.userId, userId)),
+  });
+
+  if (!address) {
+    throw new ValidationError('Invalid shipping address selected');
+  }
+
+  // Create a snapshot of the address
+  const addressSnapshot = JSON.stringify({
+    name: address.name,
+    phone: address.phone,
+    street: address.street,
+    city: address.city,
+    state: address.state,
+    pincode: address.pincode
+  });
+
   return await db.transaction(async (tx) => {
-    // 1. Get cart with items and products using relations
+    // 1. Get cart with items and products
     const userCart = await tx.query.cart.findFirst({
       where: eq(cart.userId, userId),
       with: {
         items: {
           with: {
-            product: true
+            product: {
+              with: {
+                variants: true
+              }
+            }
           }
         }
       }
@@ -39,12 +63,11 @@ export async function createOrder(
       throw new ValidationError('Cart is empty');
     }
 
-    // Version Check
     if (expectedVersion !== undefined && userCart.version !== expectedVersion) {
       throw new ValidationError('Cart has been modified. Please refresh and try again.');
     }
 
-    let total = 0;
+    let totalAmount = 0;
     const orderId = crypto.randomUUID();
 
     // 2. Validate stock and calculate total
@@ -63,19 +86,22 @@ export async function createOrder(
         .set({ stock: sizeRecord.stock - item.quantity })
         .where(eq(productSizes.id, sizeRecord.id));
 
-      total += item.product.price * item.quantity;
+      totalAmount += item.product.price * item.quantity;
     }
 
-    // 4. Create Order
+    // 4. Create Order with snapshot
     await tx.insert(orders).values({
       id: orderId,
       userId,
-      totalAmount: total,
-      status: 'pending',
+      totalAmount,
+      status: 'PENDING',
+      paymentStatus: 'PENDING',
+      paymentMethod,
+      shippingAddress: addressSnapshot, // Store snapshot
       idempotencyKey,
     });
 
-    // 5. Create Order Items
+    // 5. Create Order Items with snapshots
     await tx.insert(orderItems).values(
       userCart.items.map((item) => ({
         id: crypto.randomUUID(),
@@ -85,6 +111,8 @@ export async function createOrder(
         productPrice: item.product.price,
         quantity: item.quantity,
         size: item.size,
+        variantId: item.variantId,
+        imageUrl: item.product.imageUrl
       }))
     );
 
@@ -92,9 +120,9 @@ export async function createOrder(
     await tx.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
 
     await invalidateCartCache(userId);
-    logger.info({ orderId, userId, total }, 'Order created successfully');
+    logger.info({ orderId, userId, totalAmount }, 'Order created successfully');
 
-    return { id: orderId, total };
+    return { id: orderId, total: totalAmount };
   });
 }
 
@@ -119,7 +147,8 @@ export async function getOrderById(orderId: string, userId?: string) {
 
 export async function updateOrderStatus(
   orderId: string,
-  status: any
+  status: 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'FAILED',
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED'
 ) {
   const order = await db.query.orders.findFirst({ where: eq(orders.id, orderId) });
   if (!order) throw new NotFoundError('Order');
@@ -127,6 +156,7 @@ export async function updateOrderStatus(
   await db.update(orders)
     .set({ 
       status,
+      paymentStatus: paymentStatus || order.paymentStatus,
       updatedAt: new Date().toISOString() 
     })
     .where(eq(orders.id, orderId));

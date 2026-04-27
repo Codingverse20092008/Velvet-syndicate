@@ -101,12 +101,31 @@ export const cartItems = sqliteTable('cart_items', {
   uniqueCartItemIdx: uniqueIndex('cart_items_unique_idx').on(table.cartId, table.productId, table.variantId, table.size),
 }));
 
+// Address Table
+export const addresses = sqliteTable('addresses', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  phone: text('phone').notNull(),
+  street: text('street').notNull(),
+  city: text('city').notNull(),
+  state: text('state').notNull(),
+  pincode: text('pincode').notNull(),
+  isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(false),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  userIdIdx: index('addresses_user_id_idx').on(table.userId),
+}));
 
 export const orders = sqliteTable('orders', {
   id: text('id').primaryKey(),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   totalAmount: real('total_amount').notNull(),
-  status: text('status', { enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'] }).notNull().default('pending'),
+  status: text('status', { enum: ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'FAILED'] }).notNull().default('PENDING'),
+  paymentStatus: text('payment_status', { enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'] }).notNull().default('PENDING'),
+  paymentMethod: text('payment_method').notNull().default('COD'),
+  shippingAddress: text('shipping_address').notNull(), // This will store the JSON snapshot
   idempotencyKey: text('idempotency_key'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
@@ -124,6 +143,8 @@ export const orderItems = sqliteTable('order_items', {
   productPrice: real('product_price').notNull(),
   quantity: integer('quantity').notNull(),
   size: text('size').notNull(),
+  variantId: text('variant_id'),
+  imageUrl: text('image_url'),
 }, (table) => ({
   orderIdIdx: index('order_items_order_id_idx').on(table.orderId),
 }));
@@ -131,18 +152,23 @@ export const orderItems = sqliteTable('order_items', {
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
-  cart: one(cart, { fields: [users.id], references: [cart.userId] }),
+  addresses: many(addresses),
   orders: many(orders),
+  cart: one(cart, { fields: [users.id], references: [cart.userId] }),
 }));
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, { fields: [sessions.userId], references: [users.id] }),
+export const addressesRelations = relations(addresses, ({ one }) => ({
+  user: one(users, { fields: [addresses.userId], references: [users.id] }),
 }));
 
-export const productsRelations = relations(products, ({ many }) => ({
-  variants: many(productVariants),
-  cartItems: many(cartItems),
-  orderItems: many(orderItems),
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  user: one(users, { fields: [orders.userId], references: [users.id] }),
+  items: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
+  product: one(products, { fields: [orderItems.productId], references: [products.id] }),
 }));
 
 export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
@@ -171,16 +197,6 @@ export const cartItemsRelations = relations(cartItems, ({ one }) => ({
   variant: one(productVariants, { fields: [cartItems.variantId], references: [productVariants.id] }),
 }));
 
-export const ordersRelations = relations(orders, ({ one, many }) => ({
-  user: one(users, { fields: [orders.userId], references: [users.id] }),
-  items: many(orderItems),
-}));
-
-export const orderItemsRelations = relations(orderItems, ({ one }) => ({
-  order: one(orders, { fields: [orderItems.orderId], references: [orders.id] }),
-  product: one(products, { fields: [orderItems.productId], references: [products.id] }),
-}));
-
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
@@ -193,3 +209,5 @@ export type Cart = typeof cart.$inferSelect;
 export type CartItem = typeof cartItems.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type Address = typeof addresses.$inferSelect;
+export type NewAddress = typeof addresses.$inferInsert;

@@ -65,9 +65,10 @@ export function ProfileForm() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setErrors(prev => ({ ...prev, avatar: 'Please upload a valid image file' }))
+    // Validate file type (only JPEG, PNG, WebP, AVIF)
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
+    if (!validTypes.includes(file.type)) {
+      setErrors(prev => ({ ...prev, avatar: 'Please upload a JPEG, PNG, WebP, or AVIF image' }))
       return
     }
 
@@ -162,8 +163,22 @@ export function ProfileForm() {
       setShowSuccess(true)
       setTimeout(() => setShowSuccess(false), 3000)
     } catch (error) {
+      let errorMessage = 'Failed to save changes'
+      
+      if (error instanceof Error) {
+        if (error.message.includes('fetch') || error.message.includes('network')) {
+          errorMessage = 'Network error. Please check your connection and try again.'
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request timed out. Please try again.'
+        } else if (error.message.includes('unique') || error.message.includes('already registered')) {
+          errorMessage = 'This phone number is already registered to another account'
+        } else {
+          errorMessage = error.message
+        }
+      }
+      
       setErrors({
-        name: error instanceof Error ? error.message : 'Failed to save changes',
+        name: errorMessage,
       })
     } finally {
       setIsSaving(false)
@@ -247,7 +262,7 @@ export function ProfileForm() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             onChange={handleImageUpload}
             className="hidden"
           />

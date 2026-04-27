@@ -1,11 +1,19 @@
 import { Router, Request, Response } from 'express';
-import { createOrder, getOrdersByUserId } from '../services/order.service';
+import { createOrder, getOrdersByUserId, getOrderById } from '../services/order.service';
 import { getUserFromRequest } from '../lib/auth-express';
 import { asyncHandler } from '../lib/api-handler-express';
-import { ValidationError } from '../lib/errors';
 import { successResponse } from '../lib/api-response-express';
+import { ValidationError } from '../lib/errors';
+import { z } from 'zod';
 
 const router = Router();
+
+const createOrderSchema = z.object({
+  addressId: z.string().uuid('Invalid address ID'),
+  paymentMethod: z.string().optional(),
+  idempotencyKey: z.string().optional(),
+  expectedVersion: z.number().optional(),
+});
 
 // GET /api/orders
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
@@ -15,18 +23,32 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   return successResponse(res, { orders });
 }));
 
+// GET /api/orders/:id
+router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const order = await getOrderById(req.params.id, user.id);
+  
+  if (!order) {
+    return res.status(404).json({ success: false, error: 'Order not found' });
+  }
+
+  return successResponse(res, { order });
+}));
+
 // POST /api/orders
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
-  const { shippingAddress, idempotencyKey, version } = req.body;
+  const data = createOrderSchema.parse(req.body);
+  
+  const order = await createOrder(
+    user.id,
+    data.addressId,
+    data.paymentMethod,
+    data.idempotencyKey,
+    data.expectedVersion
+  );
 
-  if (!shippingAddress || typeof shippingAddress !== 'string') {
-    throw new ValidationError('Shipping address is required');
-  }
-
-  const order = await createOrder(user.id, shippingAddress, idempotencyKey, version);
-
-  return successResponse(res, { order }, 201);
+  return successResponse(res, { order, message: 'Order placed successfully' }, 201);
 }));
 
 
