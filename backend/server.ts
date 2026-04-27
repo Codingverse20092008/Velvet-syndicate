@@ -10,6 +10,7 @@ import authRoutes from './src/routes/auth';
 import cartRoutes from './src/routes/cart';
 import ordersRoutes from './src/routes/orders';
 import productsRoutes from './src/routes/products';
+import userRoutes from './src/routes/user';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -37,6 +38,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/products', productsRoutes);
+app.use('/api/user', userRoutes);
 
 // Error handling
 app.use(errorHandler);

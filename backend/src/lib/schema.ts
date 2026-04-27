@@ -7,10 +7,14 @@ export const users = sqliteTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   role: text('role', { enum: ['user', 'admin'] }).notNull().default('user'),
+  phone: text('phone'),
+  address: text('address'),
+  avatar: text('avatar'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
   emailIdx: uniqueIndex('users_email_idx').on(table.email),
+  phoneIdx: uniqueIndex('users_phone_idx').on(table.phone),
 }));
 
 export const sessions = sqliteTable('sessions', {

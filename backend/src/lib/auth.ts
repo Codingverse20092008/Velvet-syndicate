@@ -177,9 +177,14 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
+  name?: string;
+  phone?: string | null;
+  address?: string | null;
+  avatar?: string | null;
+  createdAt?: string;
 }
 
-export function authenticateUser(payload: JWTPayload): AuthUser {
+export function authenticateUser(payload: JWTPayload, userData?: Partial<AuthUser>): AuthUser {
   if (!payload.userId || !payload.email || !payload.role) {
     throw new UnauthorizedError('Invalid token payload');
   }
@@ -187,6 +192,7 @@ export function authenticateUser(payload: JWTPayload): AuthUser {
     id: payload.userId,
     email: payload.email,
     role: payload.role,
+    ...userData,
   };
 }
 
