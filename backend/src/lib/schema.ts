@@ -39,6 +39,7 @@ export const products = sqliteTable('products', {
   brand: text('brand').notNull().default('Velvet'),
   category: text('category').notNull().default('footwear'),
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
+  isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
   features: text('features'),
   careInstructions: text('care_instructions'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
