@@ -112,16 +112,16 @@ export function FilterPanel({
                 </h3>
                 <div className="space-y-4">
                    <div className="flex justify-between text-[10px] tracking-widest text-velvet-muted uppercase">
-                      <span>$0</span>
-                      <span>${priceRange[1]}</span>
+                      <span>₹990</span>
+                      <span>₹{priceRange[1]}</span>
                    </div>
                    <input
                     type="range"
-                    min="0"
-                    max="2000"
+                    min="990"
+                    max="5000"
                     step="50"
                     value={priceRange[1]}
-                    onChange={(e) => onPriceRangeChange([0, Number(e.target.value)])}
+                    onChange={(e) => onPriceRangeChange([990, Number(e.target.value)])}
                     className="w-full h-px bg-neutral-800 appearance-none cursor-none interactive accent-velvet-white"
                   />
                 </div>
@@ -131,7 +131,7 @@ export function FilterPanel({
                 onClick={() => {
                   onSizeChange(null)
                   onCategoryChange(null)
-                  onPriceRangeChange([0, 2000])
+                  onPriceRangeChange([990, 5000])
                 }}
                 className="w-full py-6 text-[10px] tracking-[0.4em] uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive border border-white/5 hover:border-white/10"
               >

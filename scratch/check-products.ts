@@ -1,6 +1,6 @@
 
-import { db } from '../lib/db';
-import { products } from '../lib/schema';
+import { db } from '../backend/src/lib/db';
+import { products } from '../backend/src/lib/schema';
 
 async function checkProducts() {
   const allProducts = await db.select().from(products);

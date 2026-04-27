@@ -48,8 +48,8 @@ export function Navigation() {
             </div>
           </Link>
 
-          {/* Center Links — hidden on mobile */}
-          <div className="hidden md:flex items-center gap-10 flex-shrink-0">
+          {/* Center Links — Always visible */}
+          <div className="flex items-center gap-6 md:gap-10 flex-shrink-0">
             <Link
               href="/collection"
               className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors duration-300 cursor-none interactive"
@@ -65,10 +65,10 @@ export function Navigation() {
           </div>
 
           {/* Right side: Search + Actions */}
-          <div className="flex items-center gap-5 flex-1 justify-end">
+          <div className="flex items-center gap-3 md:gap-5 flex-1 justify-end">
 
-            {/* Search — visible desktop, collapses on mobile */}
-            <div className="hidden sm:block flex-1 max-w-[260px]">
+            {/* Search — Always rendered */}
+            <div className="flex-1 max-w-[180px] md:max-w-[260px]">
               <SearchBar />
             </div>
 
@@ -113,10 +113,6 @@ export function Navigation() {
 
         </div>
 
-        {/* Mobile search row — full width below nav items */}
-        <div className="sm:hidden mt-3 pb-1">
-          <SearchBar />
-        </div>
       </div>
     </motion.nav>
   )

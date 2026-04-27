@@ -11,6 +11,7 @@ import { useCartStore } from '@/store/cartStore'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { VariantSelector } from '@/components/product/VariantSelector'
 import { AnimatePresence } from 'framer-motion'
+import { formatPrice } from '@/lib/utils'
 
 interface Variant {
   id: string
@@ -159,7 +160,7 @@ export default function ProductPage() {
               {product.name}
             </h1>
             <p className="text-2xl text-velvet-accent mb-8">
-              ${product.price}
+              {formatPrice(product.price)}
             </p>
 
             <motion.div

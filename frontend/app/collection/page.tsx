@@ -32,7 +32,7 @@ export default function CollectionPage() {
   const [sortBy, setSortBy] = useState('createdAt')
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000])
+  const [priceRange, setPriceRange] = useState<[number, number]>([990, 5000])
 
   useEffect(() => {
     fetchProducts()
@@ -143,7 +143,7 @@ export default function CollectionPage() {
                 onClick={() => {
                   setSelectedSize(null)
                   setSelectedCategory(null)
-                  setPriceRange([0, 2000])
+                  setPriceRange([990, 5000])
                 }}
               >
                 Reset Filters
