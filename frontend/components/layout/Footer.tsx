@@ -68,7 +68,7 @@ export function Footer() {
         {/* Social Icons */}
         <div className="flex justify-center gap-6 mt-6">
           <a
-            href="https://www.instagram.com/_velvet.syndicate_?igsh=emZuYjNoNDl1d3Ux"
+            href="https://instagram.com/velvetsyndicate"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-pink-400 transition-all duration-300 hover:scale-110"
@@ -82,7 +82,7 @@ export function Footer() {
             </svg>
           </a>
           <a
-            href="https://chat.whatsapp.com/Ifnvy40b4yV87VikOTlaz6"
+            href="https://wa.me/919876543210"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-green-500 transition-all duration-300 hover:scale-110"
