@@ -160,7 +160,7 @@ export default function AboutPage() {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
                   <Image 
-                    src="/founders/soumojeet.jpeg" 
+                    src="/founders/soumojeet.png" 
                     alt="Soumojeet Das" 
                     fill 
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -207,7 +207,7 @@ export default function AboutPage() {
                   transition={{ duration: 0.4, ease: "easeOut" }}
                 >
                   <Image 
-                    src="/founders/mehefuz.png" 
+                    src="/founders/mehefuz.jpg" 
                     alt="Mehefuz Alam Khan" 
                     fill 
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
