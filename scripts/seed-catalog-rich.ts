@@ -12,7 +12,7 @@ const catalog = [
     "slug": "nike-dunk-low-city-pack",
     "category": "sneakers",
     "type": "Streetwear",
-    "price": 195,
+    "price": 3490,
     "description": "A vibrant series celebrating urban energy through bold color blocking and industrial-inspired textures. Designed for those who treat the city as their canvas.",
     "features": ["Vibrant neon accents", "Low-profile silhouette", "Reinforced stitching"],
     "variants": [
@@ -39,7 +39,7 @@ const catalog = [
     "slug": "jordan-retro-high-top",
     "category": "sneakers",
     "type": "Streetwear",
-    "price": 220,
+    "price": 4990,
     "description": "A technical high-top silhouette that merges athletic performance with high-street aesthetics. Offers exceptional support and a layered, multi-dimensional design.",
     "features": ["High-top ankle support", "Visible air cushioning", "Layered synthetic upper"],
     "variants": [
@@ -59,7 +59,7 @@ const catalog = [
     "slug": "brooks-dna-runner",
     "category": "sneakers",
     "type": "Performance Running",
-    "price": 165,
+    "price": 2890,
     "description": "Engineered for maximum energy return and adaptive support. Featuring a DNA Tuned midsole that adjusts to your stride.",
     "features": ["DNA Tuned cushioning", "Reinforced heel counter"],
     "variants": [
@@ -76,7 +76,7 @@ const catalog = [
     "slug": "adidas-lightstrike-pro",
     "category": "sneakers",
     "type": "Performance Running",
-    "price": 240,
+    "price": 3990,
     "description": "Built for speed and record-breaking performance. Featuring high-rebound Lightstrike Pro cushioning.",
     "features": ["Lightstrike Pro cushioning", "Carbon-infused energy return"],
     "variants": [
@@ -92,7 +92,7 @@ const catalog = [
     "slug": "puma-suede-xl",
     "category": "sneakers",
     "type": "Streetwear",
-    "price": 115,
+    "price": 1890,
     "description": "An exaggerated take on the iconic court sneaker. The Suede XL brings a bold, chunky aesthetic.",
     "features": ["Chunky XL silhouette", "Premium soft suede"],
     "variants": [
@@ -108,7 +108,7 @@ const catalog = [
     "slug": "court-low-navy-cream",
     "category": "sneakers",
     "type": "Streetwear",
-    "price": 95,
+    "price": 1490,
     "description": "A versatile and lightweight casual sneaker with a premium mesh upper and clean white midsole.",
     "features": ["Breathable mesh", "Lightweight sole"],
     "variants": [
@@ -123,7 +123,7 @@ const catalog = [
     "slug": "nike-air-force-1-low",
     "category": "sneakers",
     "type": "Streetwear",
-    "price": 145,
+    "price": 2490,
     "description": "A timeless classic that defines streetwear culture. Features premium leather overlays and encapsulated Air-Sole cushioning.",
     "features": ["Encapsulated Air-Sole", "Classic perforated toe"],
     "variants": [
@@ -140,7 +140,7 @@ const catalog = [
     "slug": "jordan-retro-low",
     "category": "sneakers",
     "type": "Streetwear",
-    "price": 160,
+    "price": 2990,
     "description": "A fusion of basketball heritage and high-street aesthetics in a low-cut silhouette.",
     "features": ["Low-profile design", "Multi-textured overlays"],
     "variants": [

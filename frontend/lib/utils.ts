@@ -5,15 +5,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatPrice(price: number): string {
-  // Normalize price: ensure it's within range ₹990 – ₹5000
-  const normalizedPrice = Math.min(Math.max(price, 990), 5000)
-
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(normalizedPrice)
+  }).format(price)
 }
 
 export function slugify(text: string): string {

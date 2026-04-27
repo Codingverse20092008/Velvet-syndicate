@@ -21,7 +21,7 @@ export function Hero3D() {
   const handleReady = useCallback(() => setCanvasReady(true), [])
 
   return (
-    <div className="relative w-full h-screen bg-[#060606] overflow-hidden">
+    <div className="relative w-full min-h-[85vh] bg-[#060606] overflow-hidden">
 
       {/* 3D Canvas */}
       <AnimatePresence>
@@ -78,13 +78,13 @@ export function Hero3D() {
           transition={{ duration: 1, delay: 0.8, ease: EASE }}
         >
           {/* Brand micro-label — Enlarged as requested */}
-          <p className="text-[14px] uppercase tracking-[0.65em] text-velvet-white mb-8 pointer-events-none select-none font-medium opacity-90">
+          <p className="text-[12px] md:text-[14px] uppercase tracking-[0.65em] text-velvet-white mb-6 md:mb-8 pointer-events-none select-none font-medium opacity-90">
             Velvet Syndicate
           </p>
 
           {/* Primary headline — Enhanced visibility with premium color pattern */}
           <h1
-            className="font-heading text-5xl md:text-7xl lg:text-8xl text-white mb-10 tracking-tight leading-none pointer-events-none select-none"
+            className="font-heading text-4xl md:text-7xl lg:text-8xl text-white mb-8 md:mb-10 tracking-tight leading-none pointer-events-none select-none"
             style={{ 
               textShadow: '0 8px 64px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.4)',
               letterSpacing: '-0.02em'
