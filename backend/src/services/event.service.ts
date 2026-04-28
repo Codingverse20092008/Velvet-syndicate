@@ -1,6 +1,7 @@
 import { db } from '../lib/db';
 import { events } from '../lib/schema';
 import { logger } from '../lib/logger';
+import { sql } from 'drizzle-orm';
 
 const VALID_EVENT_TYPES = [
   'VIEW_PRODUCT',
@@ -60,17 +61,15 @@ function sanitizeMetadata(metadata: Record<string, any>): Record<string, any> {
 }
 
 export async function getEventsByUserId(userId: string, limit = 50) {
-  return await db.query.events.findMany({
-    where: (events, { eq }) => eq(events.userId, userId),
-    orderBy: (events, { desc }) => [desc(events.createdAt)],
-    limit,
-  });
+  return await db.select().from(events)
+    .where(sql`${events.userId} = ${userId}`)
+    .orderBy(sql`${events.createdAt} desc`)
+    .limit(limit);
 }
 
 export async function getEventsByType(eventType: string, limit = 100) {
-  return await db.query.events.findMany({
-    where: (events, { eq }) => eq(events.eventType, eventType),
-    orderBy: (events, { desc }) => [desc(events.createdAt)],
-    limit,
-  });
+  return await db.select().from(events)
+    .where(sql`${events.eventType} = ${eventType}`)
+    .orderBy(sql`${events.createdAt} desc`)
+    .limit(limit);
 }
