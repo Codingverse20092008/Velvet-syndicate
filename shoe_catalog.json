@@ -1,0 +1,282 @@
+[
+  {
+    "title": "ASIAN",
+    "brand": "Asian",
+    "category": "Men",
+    "subcategory": "Asian",
+    "image": "/Men shoes/ASIAN Men/ASIAN Casual Sneaker Shoes for Men.jpg",
+    "slug": "asian"
+  },
+  {
+    "title": "ASIAN MEXICO-11 - Beige Lef Green",
+    "brand": "Asian",
+    "category": "Men",
+    "subcategory": "Asian",
+    "image": "/Men shoes/ASIAN Men/ASIAN Men's MEXICO-11 Casual Sneaker Shoes (Beige Lef Green).jpg",
+    "color": "Beige Lef Green",
+    "slug": "asian-mexico-11-beige-lef-green"
+  },
+  {
+    "title": "ASIAN MEXICO-11 - navy red",
+    "brand": "Asian",
+    "category": "Men",
+    "subcategory": "Asian",
+    "image": "/Men shoes/ASIAN Men/ASIAN Men's MEXICO-11 Casual Sneaker Shoes (navy red).jpg",
+    "color": "navy red",
+    "slug": "asian-mexico-11-navy-red"
+  },
+  {
+    "title": "ASIAN MEXICO-11 - white navy",
+    "brand": "Asian",
+    "category": "Men",
+    "subcategory": "Asian",
+    "image": "/Men shoes/ASIAN Men/ASIAN Men's MEXICO-11 Casual Sneaker Shoes (white navy).jpg",
+    "color": "white navy",
+    "slug": "asian-mexico-11-white-navy"
+  },
+  {
+    "title": "Boldfit s Man - NavyBlazer White CayenneRed",
+    "brand": "Boldfit",
+    "category": "Men",
+    "subcategory": "Boldfit",
+    "image": "/Men shoes/Boldfit men/Boldfit Sneakers for Man (NavyBlazer-White-CayenneRed).jpg",
+    "color": "NavyBlazer-White-CayenneRed",
+    "slug": "boldfit-s-man-navyblazer-white-cayennered"
+  },
+  {
+    "title": "Boldfit s Man - White Black",
+    "brand": "Boldfit",
+    "category": "Men",
+    "subcategory": "Boldfit",
+    "image": "/Men shoes/Boldfit men/Boldfit Sneakers for Man (White-Black).jpg",
+    "color": "White-Black",
+    "slug": "boldfit-s-man-white-black"
+  },
+  {
+    "title": "Nike Air ce 1 Low LX - Off NOIR",
+    "brand": "Nike",
+    "category": "Men",
+    "subcategory": "Nike",
+    "image": "/Men shoes/NIke shoes men/Nike Air Force 1 Low LX Off NOIR.png",
+    "color": "Off NOIR",
+    "slug": "nike-air-ce-1-low-lx-off-noir"
+  },
+  {
+    "title": "Nike Air ce 1",
+    "brand": "Nike",
+    "category": "Men",
+    "subcategory": "Nike",
+    "image": "/Men shoes/NIke shoes men/Nike Air Force 1.png",
+    "slug": "nike-air-ce-1"
+  },
+  {
+    "title": "Nike Air Jordan 1 Retro Low",
+    "brand": "Nike",
+    "category": "Men",
+    "subcategory": "Nike",
+    "image": "/Men shoes/NIke shoes men/Nike Air Jordan 1 Retro Low.png",
+    "slug": "nike-air-jordan-1-retro-low"
+  },
+  {
+    "title": "Nike Air Max 2090",
+    "brand": "Nike",
+    "category": "Men",
+    "subcategory": "Nike",
+    "image": "/Men shoes/NIke shoes men/Nike Air Max 2090.png",
+    "slug": "nike-air-max-2090"
+  },
+  {
+    "title": "Nike Dunk Low",
+    "brand": "Nike",
+    "category": "Men",
+    "subcategory": "Nike",
+    "image": "/Men shoes/NIke shoes men/Nike Dunk Low.png",
+    "slug": "nike-dunk-low"
+  },
+  {
+    "title": "Nike The Idor X Air Jordan 1 High",
+    "brand": "Nike",
+    "category": "Men",
+    "subcategory": "Nike",
+    "image": "/Men shoes/NIke shoes men/The Idor X Air Jordan 1 High.png",
+    "slug": "nike-the-idor-x-air-jordan-1-high"
+  },
+  {
+    "title": "PUMA Park Lifestyle OG",
+    "brand": "Puma",
+    "category": "Men",
+    "subcategory": "Puma",
+    "image": "/Men shoes/PUMA men/PUMA Park Lifestyle OG.png",
+    "slug": "puma-park-lifestyle-og"
+  },
+  {
+    "title": "PUMA Suede XL",
+    "brand": "Puma",
+    "category": "Men",
+    "subcategory": "Puma",
+    "image": "/Men shoes/PUMA men/PUMA Suede XL.png",
+    "slug": "puma-suede-xl"
+  },
+  {
+    "title": "ASIAN Mercury-31 Sports - black firozi white",
+    "brand": "Asian",
+    "category": "Women",
+    "subcategory": "Asian",
+    "image": "/Women Shoes/ASIAN Women's/ASIAN Mercury-31 Sports (black firozi white).jpg",
+    "color": "black firozi white",
+    "slug": "asian-mercury-31-sports-black-firozi-white"
+  },
+  {
+    "title": "ASIAN Mercury-31 Sports - off white navy sky",
+    "brand": "Asian",
+    "category": "Women",
+    "subcategory": "Asian",
+    "image": "/Women Shoes/ASIAN Women's/ASIAN Mercury-31 Sports (off white navy sky).jpg",
+    "color": "off white navy sky",
+    "slug": "asian-mercury-31-sports-off-white-navy-sky"
+  },
+  {
+    "title": "ASIAN Mercury-31 Sports - White purple pink",
+    "brand": "Asian",
+    "category": "Women",
+    "subcategory": "Asian",
+    "image": "/Women Shoes/ASIAN Women's/ASIAN Mercury-31 Sports (White purple pink).jpg",
+    "color": "White purple pink",
+    "slug": "asian-mercury-31-sports-white-purple-pink"
+  },
+  {
+    "title": "ASIAN FIREFLY-09 Sports - light grey mauve",
+    "brand": "Asian",
+    "category": "Women",
+    "subcategory": "Asian",
+    "image": "/Women Shoes/ASIAN Women's/ASIAN Women's FIREFLY-09 Sports (light grey mauve).jpg",
+    "color": "light grey mauve",
+    "slug": "asian-firefly-09-sports-light-grey-mauve"
+  },
+  {
+    "title": "ASIAN FIREFLY-09 Sports - pink",
+    "brand": "Asian",
+    "category": "Women",
+    "subcategory": "Asian",
+    "image": "/Women Shoes/ASIAN Women's/ASIAN Women's FIREFLY-09 Sports (pink).jpg",
+    "color": "pink",
+    "slug": "asian-firefly-09-sports-pink"
+  },
+  {
+    "title": "ASIAN FIREFLY-09 Sports - navy pink",
+    "brand": "Asian",
+    "category": "Women",
+    "subcategory": "Asian",
+    "image": "/Women Shoes/ASIAN Women's/ASIAN Women's FIREFLY-09 Sports( navy pink).jpg",
+    "color": "navy pink",
+    "slug": "asian-firefly-09-sports-navy-pink"
+  },
+  {
+    "title": "Boldfit Badminton - black pink",
+    "brand": "Boldfit",
+    "category": "Women",
+    "subcategory": "Boldfit",
+    "image": "/Women Shoes/Boldfit women/Boldfit Badminton Shoes for Women(black-pink).jpg",
+    "color": "black-pink",
+    "slug": "boldfit-badminton-black-pink"
+  },
+  {
+    "title": "Boldfit Badminton - Blue Black",
+    "brand": "Boldfit",
+    "category": "Women",
+    "subcategory": "Boldfit",
+    "image": "/Women Shoes/Boldfit women/Boldfit Badminton Shoes for Women(Blue-Black).jpg",
+    "color": "Blue-Black",
+    "slug": "boldfit-badminton-blue-black"
+  },
+  {
+    "title": "Boldfit Walking - black",
+    "brand": "Boldfit",
+    "category": "Women",
+    "subcategory": "Boldfit",
+    "image": "/Women Shoes/Boldfit women/Boldfit Walking Shoes for Women(black).jpg",
+    "color": "black",
+    "slug": "boldfit-walking-black"
+  },
+  {
+    "title": "Boldfit Walking - gray",
+    "brand": "Boldfit",
+    "category": "Women",
+    "subcategory": "Boldfit",
+    "image": "/Women Shoes/Boldfit women/Boldfit Walking Shoes for Women(gray).jpg",
+    "color": "gray",
+    "slug": "boldfit-walking-gray"
+  },
+  {
+    "title": "Boldfit Running - black",
+    "brand": "Boldfit",
+    "category": "Women",
+    "subcategory": "Boldfit",
+    "image": "/Women Shoes/Boldfit women/Boldfit Women Running Shoes(black).jpg",
+    "color": "black",
+    "slug": "boldfit-running-black"
+  },
+  {
+    "title": "Boldfit Running - pink",
+    "brand": "Boldfit",
+    "category": "Women",
+    "subcategory": "Boldfit",
+    "image": "/Women Shoes/Boldfit women/Boldfit Women Running Shoes(pink).jpg",
+    "color": "pink",
+    "slug": "boldfit-running-pink"
+  },
+  {
+    "title": "Campus Alice Running - Light purple Dark purple",
+    "brand": "Campus",
+    "category": "Women",
+    "subcategory": "Campus",
+    "image": "/Women Shoes/Campus women/Campus Women Alice Running Shoes(Light purple-Dark purple).jpg",
+    "color": "Light purple-Dark purple",
+    "slug": "campus-alice-running-light-purple-dark-purple"
+  },
+  {
+    "title": "Campus Alice Running - Mint green",
+    "brand": "Campus",
+    "category": "Women",
+    "subcategory": "Campus",
+    "image": "/Women Shoes/Campus women/Campus Women Alice Running Shoes(Mint green).jpg",
+    "color": "Mint green",
+    "slug": "campus-alice-running-mint-green"
+  },
+  {
+    "title": "Campus Alice Running - white see green",
+    "brand": "Campus",
+    "category": "Women",
+    "subcategory": "Campus",
+    "image": "/Women Shoes/Campus women/Campus Women Alice Running Shoes(white-see green).jpg",
+    "color": "white-see green",
+    "slug": "campus-alice-running-white-see-green"
+  },
+  {
+    "title": "Campus Siren Running - BLK PURPLE",
+    "brand": "Campus",
+    "category": "Women",
+    "subcategory": "Campus",
+    "image": "/Women Shoes/Campus women/Campus Women Siren Running Shoes(BLK-PURPLE).jpg",
+    "color": "BLK-PURPLE",
+    "slug": "campus-siren-running-blk-purple"
+  },
+  {
+    "title": "Campus Siren Running - MAUVE PINK",
+    "brand": "Campus",
+    "category": "Women",
+    "subcategory": "Campus",
+    "image": "/Women Shoes/Campus women/Campus Women Siren Running Shoes(MAUVE-PINK).jpg",
+    "color": "MAUVE-PINK",
+    "slug": "campus-siren-running-mauve-pink"
+  },
+  {
+    "title": "Campus Siren Running - NAVY PINK",
+    "brand": "Campus",
+    "category": "Women",
+    "subcategory": "Campus",
+    "image": "/Women Shoes/Campus women/Campus Women Siren Running Shoes(NAVY-PINK).jpg",
+    "color": "NAVY-PINK",
+    "slug": "campus-siren-running-navy-pink"
+  }
+]

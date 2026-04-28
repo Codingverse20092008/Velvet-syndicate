@@ -1,7 +1,6 @@
 
-import { seedProducts } from '../lib/services/product.service';
-import { db } from '../lib/db';
-import { users, products, sessions } from '../lib/schema';
+import { db } from '../backend/src/lib/db';
+import { users, products, sessions } from '../backend/src/lib/schema';
 import { eq } from 'drizzle-orm';
 
 async function testAuth() {

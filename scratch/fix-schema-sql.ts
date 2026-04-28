@@ -13,14 +13,14 @@ async function run() {
   try {
     await client.execute('ALTER TABLE products ADD COLUMN features TEXT');
     console.log('- Added features column');
-  } catch (e) {
+  } catch (e: any) {
     console.log('- features column might already exist or error:', e.message);
   }
 
   try {
     await client.execute('ALTER TABLE products ADD COLUMN care_instructions TEXT');
     console.log('- Added care_instructions column');
-  } catch (e) {
+  } catch (e: any) {
     console.log('- care_instructions column might already exist or error:', e.message);
   }
 

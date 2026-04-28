@@ -6,11 +6,11 @@ import { readdir, stat } from 'fs/promises';
 import { join, extname } from 'path';
 import { existsSync } from 'fs';
 import { randomUUID } from 'crypto';
-import { db } from '../lib/db';
-import { products, productVariants, productVariantImages, productSizes } from '../lib/schema';
+import { db } from '../backend/src/lib/db';
+import { products, productVariants, productVariantImages, productSizes } from '../backend/src/lib/schema';
 import { eq } from 'drizzle-orm';
-import { logger } from '../lib/logger';
-import { invalidateProductsCache } from '../lib/cache';
+import { logger } from '../backend/src/lib/logger';
+import { invalidateProductsCache } from '../backend/src/lib/cache';
 
 const REAL_IMAGES_DIR = join(process.cwd(), 'Real Images');
 const VALID_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.jfif'];
@@ -60,7 +60,7 @@ async function createProductsFromImages() {
     const slug = generateSlug(folder.name);
     
     // Skip if already exists
-    const existing = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
+    const existing = await db.select().from(products).where(eq(products.slug as any, slug as any) as any).limit(1);
     if (existing.length > 0) {
       logger.info({ folder: folder.name }, 'Product exists, skipping');
       continue;
@@ -101,7 +101,7 @@ async function createProductsFromImages() {
       if (variants.length === 0) continue;
 
       const productId = randomUUID();
-      await db.transaction(async (tx) => {
+      await db.transaction(async (tx: any) => {
         // Insert product
         await tx.insert(products).values({
           id: productId,
