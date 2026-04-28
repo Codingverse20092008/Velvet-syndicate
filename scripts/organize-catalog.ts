@@ -5,8 +5,8 @@ import { db } from '../backend/src/lib/db';
 import { products } from '../backend/src/lib/schema';
 import { eq } from 'drizzle-orm';
 
-const MEN_DIR = join(process.cwd(), 'Men shoes');
-const WOMEN_DIR = join(process.cwd(), 'Women Shoes');
+const MEN_DIR = join(process.cwd(), 'frontend', 'public', 'Men shoes');
+const WOMEN_DIR = join(process.cwd(), 'frontend', 'public', 'Women Shoes');
 
 const BRANDS = ['Nike', 'Adidas', 'Puma', 'Asian', 'Boldfit', 'Campus', 'Reebok', 'New Balance', 'Asics', 'Vans', 'Converse', 'Jordan'];
 
@@ -64,6 +64,17 @@ function cleanTitle(filename: string, brand: string): { title: string; color?: s
   return { title: displayTitle, color, slug };
 }
 
+function detectProductType(filename: string): string {
+  const name = filename.toLowerCase();
+  if (name.includes('running')) return 'running';
+  if (name.includes('sports')) return 'sports';
+  if (name.includes('casual')) return 'casual';
+  if (name.includes('sneaker')) return 'sneakers';
+  if (name.includes('walking')) return 'walking';
+  if (name.includes('badminton')) return 'badminton';
+  return 'sneakers'; // Default
+}
+
 function extractBrand(folderName: string, filename: string): string {
   // First check folder name
   for (const brand of BRANDS) {
@@ -83,8 +94,9 @@ function extractBrand(folderName: string, filename: string): string {
 interface ProductData {
   title: string;
   brand: string;
-  category: 'Men' | 'Women';
-  subcategory: string;
+  category: string;
+  gender: string;
+  productType: string;
   image: string;
   color?: string;
   slug: string;
@@ -106,12 +118,14 @@ async function processFolder(dir: string, category: 'Men' | 'Women'): Promise<Pr
       
       const brand = extractBrand(brandFolder.name, file);
       const { title, color, slug } = cleanTitle(file, brand);
+      const productType = detectProductType(file);
       
       results.push({
         title,
         brand,
-        category,
-        subcategory: brand,
+        category: 'footwear',
+        gender: category.toLowerCase(),
+        productType,
         image: `/${category === 'Men' ? 'Men shoes' : 'Women Shoes'}/${brandFolder.name}/${file}`,
         color,
         slug
@@ -144,7 +158,9 @@ async function run() {
         .set({
           name: p.title,
           brand: p.brand,
-          category: p.category.toLowerCase(), // Store as 'men' or 'women'
+          category: p.category,
+          gender: p.gender,
+          productType: p.productType,
         })
         .where(eq(products.id as any, existing[0].id as any) as any);
     }

@@ -68,6 +68,10 @@ export const createOrderSchema = z.object({
 
 export const productFiltersSchema = z.object({
   category: z.enum(['footwear', 'accessories', 'apparel']).optional(),
+  // Strict gender filter: only men or women
+  gender: z.enum(['men', 'women']).optional(),
+  // Strict subcategory filter: matches title keywords
+  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
   featured: z.enum(['true', 'false']).optional().transform((v) =>
     v === 'true' ? true : v === 'false' ? false : undefined
   ),

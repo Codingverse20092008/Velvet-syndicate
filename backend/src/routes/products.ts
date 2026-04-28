@@ -17,6 +17,8 @@ const mapProduct = (p: any) => ({
   description: p.description ?? '',
   price: Number(p.price ?? 0),
   category: p.category ?? 'footwear',
+  gender: p.gender ?? 'unisex',
+  productType: p.productType ?? 'sneakers',
   featured: Boolean(p.featured),
   variants: (p.variants || []).map((v: any) => ({
     id: v.id,
@@ -37,21 +39,23 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { allowed } = await checkRateLimit(`products:${ip}`);
   if (!allowed) throw new RateLimitError();
 
-  const { featured, category, sort, limit, offset, search } = req.query;
+  const { featured, category, gender, subcategory, sort, limit, offset, search } = req.query;
 
   if (featured === 'true') {
     const parsedLimit = Number.parseInt((limit as string) || '10', 10);
     const limitNum = Number.isFinite(parsedLimit) ? parsedLimit : 10;
     const featuredResult = await getFeaturedProducts();
     const slicedResult = featuredResult.slice(0, limitNum);
-    return successResponse(res, { 
-      products: slicedResult.map(mapProduct) 
+    return successResponse(res, {
+      products: slicedResult.map(mapProduct)
     });
   }
 
   try {
     const filters = {
       category: category as string | undefined,
+      gender: gender as 'men' | 'women' | undefined,
+      subcategory: subcategory as 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | undefined,
       featured: featured as string | undefined,
       sort: (sort as string) || 'createdAt',
       limit: Number.parseInt((limit as string) || '50', 10),

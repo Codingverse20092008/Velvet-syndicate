@@ -11,12 +11,17 @@ import { apiFetch } from '@/lib/api'
 
 const EASE = [0.22, 1, 0.36, 1]
 
+type Gender = 'men' | 'women'
+type Subcategory = 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers'
+
 interface Product {
   id: string
   name: string
   slug: string
   price: number
   category: string
+  gender: string
+  productType: string
   variants: {
     id: string
     color: string
@@ -31,17 +36,25 @@ export default function CollectionPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [sortBy, setSortBy] = useState('createdAt')
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedGender, setSelectedGender] = useState<Gender | null>(null)
+  const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null)
   const [priceRange, setPriceRange] = useState<[number, number]>([990, 5000])
 
   useEffect(() => {
     fetchProducts()
-  }, [sortBy])
+  }, [sortBy, selectedGender, selectedSubcategory])
 
   const fetchProducts = async () => {
     setIsLoading(true)
     try {
-      const res = await apiFetch(`/products?sort=${sortBy}&limit=100`)
+      const params = new URLSearchParams({
+        sort: sortBy,
+        limit: '100',
+      })
+      if (selectedGender) params.set('gender', selectedGender)
+      if (selectedSubcategory) params.set('subcategory', selectedSubcategory)
+
+      const res = await apiFetch(`/products?${params.toString()}`)
       const json = await res.json()
       if (json.success) {
         setProducts(json.data.products)
@@ -53,16 +66,15 @@ export default function CollectionPage() {
     }
   }
 
+  // Client-side filtering for size and price (gender + subcategory done server-side)
   const filteredProducts = products.filter((product) => {
     // Check if any variant has the selected size and stock
     if (selectedSize) {
-      const hasSize = product.variants.some(v => 
+      const hasSize = product.variants.some(v =>
         v.sizes.some(s => s.size === selectedSize && s.stock > 0)
       )
       if (!hasSize) return false
     }
-    
-    if (selectedCategory && product.category.toLowerCase() !== selectedCategory.toLowerCase()) return false
     if (product.price < priceRange[0] || product.price > priceRange[1]) return false
     return true
   })
@@ -111,7 +123,7 @@ export default function CollectionPage() {
       <div className="max-w-7xl mx-auto px-6">
         <AnimatePresence mode="wait">
           {isLoading ? (
-            <motion.div 
+            <motion.div
               key="loading"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -142,7 +154,8 @@ export default function CollectionPage() {
                 className="text-[10px] uppercase tracking-[0.3em] text-velvet-white border-b border-white/20 pb-1"
                 onClick={() => {
                   setSelectedSize(null)
-                  setSelectedCategory(null)
+                  setSelectedGender(null)
+                  setSelectedSubcategory(null)
                   setPriceRange([990, 5000])
                 }}
               >
@@ -150,7 +163,7 @@ export default function CollectionPage() {
               </button>
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="grid"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-24"
               initial={{ opacity: 0 }}
@@ -179,10 +192,12 @@ export default function CollectionPage() {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         selectedSize={selectedSize}
-        selectedCategory={selectedCategory}
+        selectedGender={selectedGender}
+        selectedSubcategory={selectedSubcategory}
         priceRange={priceRange}
         onSizeChange={setSelectedSize}
-        onCategoryChange={setSelectedCategory}
+        onGenderChange={setSelectedGender}
+        onSubcategoryChange={setSelectedSubcategory}
         onPriceRangeChange={setPriceRange}
       />
     </div>

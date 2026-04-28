@@ -5,28 +5,38 @@ import { X } from 'lucide-react'
 
 const EASE = [0.22, 1, 0.36, 1]
 
+// Strict category system (only these allowed)
+const GENDERS = ['men', 'women'] as const
+const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const
+
+type Gender = typeof GENDERS[number]
+type Subcategory = typeof SUBCATEGORIES[number]
+
 interface FilterPanelProps {
   isOpen: boolean
   onClose: () => void
   selectedSize: string | null
-  selectedCategory: string | null
+  selectedGender: Gender | null
+  selectedSubcategory: Subcategory | null
   priceRange: [number, number]
   onSizeChange: (size: string | null) => void
-  onCategoryChange: (category: string | null) => void
+  onGenderChange: (gender: Gender | null) => void
+  onSubcategoryChange: (subcategory: Subcategory | null) => void
   onPriceRangeChange: (range: [number, number]) => void
 }
 
 const sizes = ['7', '8', '9', '10', '11', '12']
-const categories = ['All', 'Footwear', 'Accessories', 'Apparel']
 
 export function FilterPanel({
   isOpen,
   onClose,
   selectedSize,
-  selectedCategory,
+  selectedGender,
+  selectedSubcategory,
   priceRange,
   onSizeChange,
-  onCategoryChange,
+  onGenderChange,
+  onSubcategoryChange,
   onPriceRangeChange,
 }: FilterPanelProps) {
   return (
@@ -61,23 +71,45 @@ export function FilterPanel({
                 </button>
               </div>
 
-              {/* Category */}
+              {/* Gender - Main Category (Strict: Men/Women only) */}
               <div className="mb-12">
                 <h3 className="text-[10px] tracking-[0.4em] uppercase text-velvet-muted mb-8">
                   Category
                 </h3>
                 <div className="grid grid-cols-2 gap-2">
-                  {categories.map((category) => (
+                  {GENDERS.map((gender) => (
                     <button
-                      key={category}
-                      onClick={() => onCategoryChange(category === 'All' ? null : category.toLowerCase())}
+                      key={gender}
+                      onClick={() => onGenderChange(selectedGender === gender ? null : gender)}
                       className={`text-left px-6 py-4 text-[10px] tracking-[0.2em] uppercase transition-all duration-500 cursor-none interactive ${
-                        selectedCategory === category.toLowerCase() || (category === 'All' && !selectedCategory)
+                        selectedGender === gender
                           ? 'bg-white text-black'
                           : 'bg-neutral-900 text-velvet-muted hover:text-velvet-white'
                       }`}
                     >
-                      {category}
+                      {gender}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subcategory - Type (Strict: 6 types only) */}
+              <div className="mb-12">
+                <h3 className="text-[10px] tracking-[0.4em] uppercase text-velvet-muted mb-8">
+                  Type
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {SUBCATEGORIES.map((subcategory) => (
+                    <button
+                      key={subcategory}
+                      onClick={() => onSubcategoryChange(selectedSubcategory === subcategory ? null : subcategory)}
+                      className={`text-left px-6 py-4 text-[10px] tracking-[0.2em] uppercase transition-all duration-500 cursor-none interactive ${
+                        selectedSubcategory === subcategory
+                          ? 'bg-white text-black'
+                          : 'bg-neutral-900 text-velvet-muted hover:text-velvet-white'
+                      }`}
+                    >
+                      {subcategory}
                     </button>
                   ))}
                 </div>
@@ -130,7 +162,8 @@ export function FilterPanel({
               <button
                 onClick={() => {
                   onSizeChange(null)
-                  onCategoryChange(null)
+                  onGenderChange(null)
+                  onSubcategoryChange(null)
                   onPriceRangeChange([990, 5000])
                 }}
                 className="w-full py-6 text-[10px] tracking-[0.4em] uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive border border-white/5 hover:border-white/10"

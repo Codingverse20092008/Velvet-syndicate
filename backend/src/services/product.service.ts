@@ -13,6 +13,22 @@ const BRAND_MAP: Record<string, string[]> = {
   'puma': ['puma'],
 };
 
+// Subcategory to title keyword mapping (case-insensitive partial match)
+const SUBCATEGORY_KEYWORDS: Record<string, string[]> = {
+  'casual': ['casual'],
+  'walking': ['walking', 'walk'],
+  'jogging': ['jogging', 'jog'],
+  'running': ['running', 'run'],
+  'sports': ['sports', 'sport', 'badminton'],
+  'sneakers': ['sneakers', 'sneaker'],
+};
+
+// Valid genders and subcategories (strict rule)
+export const VALID_GENDERS = ['men', 'women'] as const;
+export const VALID_SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const;
+export type Gender = typeof VALID_GENDERS[number];
+export type Subcategory = typeof VALID_SUBCATEGORIES[number];
+
 export interface ProductVariantWithData {
   id: string;
   productId: string;
@@ -39,12 +55,16 @@ export interface ProductWithVariants {
 
 export interface ProductFilters {
   category?: string;
+  gender?: Gender;
+  subcategory?: Subcategory;
   featured?: boolean;
   sort?: 'createdAt' | 'price-asc' | 'price-desc' | 'name';
   limit?: number;
   offset?: number;
   search?: string;
 }
+
+// Removed title-based subcategory matching in favor of database fields
 
 export interface PaginatedProducts {
   products: ProductWithVariants[];
@@ -54,7 +74,7 @@ export interface PaginatedProducts {
 }
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedProducts> {
-  const { category, featured, sort = 'createdAt', limit = 50, offset = 0, search } = filters;
+  const { category, gender, subcategory, featured, sort = 'createdAt', limit = 50, offset = 0, search } = filters;
 
   // Search queries skip cache — they are user-specific and low-frequency
   const cacheKey = `${CACHE_KEYS.PRODUCTS_LIST}:${JSON.stringify(filters)}`;
@@ -66,6 +86,8 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   const conditions = [];
   conditions.push(eq(products.isVisible, true));
   if (category) conditions.push(eq(products.category, category));
+  if (gender) conditions.push(eq(products.gender, gender));
+  if (subcategory) conditions.push(eq(products.productType, subcategory));
   if (featured !== undefined) conditions.push(eq(products.featured, featured));
 
   // --- Strict search: name only, with ranked results ---
@@ -206,11 +228,10 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
     .select({ count: sql<number>`count(*)` })
     .from(products)
     .where(whereClause);
-  const total = Number(countResult[0].count);
 
   const paginated: PaginatedProducts = {
     products: allProducts as any[],
-    total,
+    total: Number(countResult[0].count),
     limit,
     offset
   };

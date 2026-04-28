@@ -38,6 +38,8 @@ export const products = sqliteTable('products', {
   imageUrl: text('image_url').notNull(),
   brand: text('brand').notNull().default('Velvet'),
   category: text('category').notNull().default('footwear'),
+  gender: text('gender').notNull().default('unisex'),
+  productType: text('product_type').notNull().default('sneakers'),
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
   isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
   features: text('features'),
@@ -48,6 +50,8 @@ export const products = sqliteTable('products', {
   slugIdx: uniqueIndex('products_slug_idx').on(table.slug),
   brandIdx: index('products_brand_idx').on(table.brand),
   categoryIdx: index('products_category_idx').on(table.category),
+  genderIdx: index('products_gender_idx').on(table.gender),
+  productTypeIdx: index('products_product_type_idx').on(table.productType),
   featuredIdx: index('products_featured_idx').on(table.featured),
 }));
 
