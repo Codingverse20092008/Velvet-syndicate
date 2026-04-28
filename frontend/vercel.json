@@ -2,11 +2,11 @@
   "version": 2,
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://backend-three-nu-76.vercel.app"
+    "NEXT_PUBLIC_API_URL": "https://velvet-syndicate.onrender.com"
   },
   "build": {
     "env": {
-      "NEXT_PUBLIC_API_URL": "https://backend-three-nu-76.vercel.app"
+      "NEXT_PUBLIC_API_URL": "https://velvet-syndicate.onrender.com"
     }
   }
 }
