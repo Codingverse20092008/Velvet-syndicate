@@ -4,6 +4,7 @@ import { existsSync, writeFileSync, statSync } from 'fs';
 import { db } from '../backend/src/lib/db';
 import { products } from '../backend/src/lib/schema';
 import { eq } from 'drizzle-orm';
+import { invalidateProductsCache } from '../backend/src/lib/cache';
 
 const MEN_DIR = join(process.cwd(), 'frontend', 'public', 'Men shoes');
 const WOMEN_DIR = join(process.cwd(), 'frontend', 'public', 'Women Shoes');
@@ -165,6 +166,10 @@ async function run() {
         .where(eq(products.id as any, existing[0].id as any) as any);
     }
   }
+
+  // Invalidate cache after batch update
+  console.log('Invalidating products cache...');
+  await invalidateProductsCache();
 
   // Final Output
   const output = JSON.stringify(allProducts, null, 2);

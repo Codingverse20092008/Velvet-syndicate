@@ -1,4 +1,4 @@
-import { eq, and, asc, desc, inArray, sql } from 'drizzle-orm';
+import { eq, and, asc, desc, inArray, sql, gte, lte } from 'drizzle-orm';
 import { db, dbClient } from '../lib/db';
 import { products, productSizes, type Product, type ProductSize } from '../lib/schema';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
@@ -57,6 +57,9 @@ export interface ProductFilters {
   category?: string;
   gender?: Gender;
   subcategory?: Subcategory;
+  brand?: string;
+  minPrice?: number;
+  maxPrice?: number;
   featured?: boolean;
   sort?: 'createdAt' | 'price-asc' | 'price-desc' | 'name';
   limit?: number;
@@ -74,7 +77,19 @@ export interface PaginatedProducts {
 }
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedProducts> {
-  const { category, gender, subcategory, featured, sort = 'createdAt', limit = 50, offset = 0, search } = filters;
+  const { 
+    category, 
+    gender, 
+    subcategory, 
+    brand,
+    minPrice,
+    maxPrice,
+    featured, 
+    sort = 'createdAt', 
+    limit = 50, 
+    offset = 0, 
+    search 
+  } = filters;
 
   // Search queries skip cache — they are user-specific and low-frequency
   const cacheKey = `${CACHE_KEYS.PRODUCTS_LIST}:${JSON.stringify(filters)}`;
@@ -88,6 +103,9 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
   if (category) conditions.push(eq(products.category, category));
   if (gender) conditions.push(eq(products.gender, gender));
   if (subcategory) conditions.push(eq(products.productType, subcategory));
+  if (brand) conditions.push(eq(products.brand, brand));
+  if (minPrice !== undefined) conditions.push(gte(products.price, minPrice));
+  if (maxPrice !== undefined) conditions.push(lte(products.price, maxPrice));
   if (featured !== undefined) conditions.push(eq(products.featured, featured));
 
   // --- Strict search: name only, with ranked results ---

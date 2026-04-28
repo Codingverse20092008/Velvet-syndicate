@@ -53,6 +53,11 @@ export const products = sqliteTable('products', {
   genderIdx: index('products_gender_idx').on(table.gender),
   productTypeIdx: index('products_product_type_idx').on(table.productType),
   featuredIdx: index('products_featured_idx').on(table.featured),
+  // Enterprise Composite Indexes
+  genderTypeIdx: index('products_gender_type_idx').on(table.gender, table.productType),
+  brandTypeIdx: index('products_brand_type_idx').on(table.brand, table.productType),
+  priceIdx: index('products_price_idx').on(table.price),
+  createdAtIdx: index('products_created_at_idx').on(table.createdAt),
 }));
 
 export const productVariants = sqliteTable('product_variants', {

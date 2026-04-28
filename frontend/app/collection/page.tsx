@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { SlidersHorizontal } from 'lucide-react'
 import { ProductGridSkeleton } from '@/components/product/ProductSkeleton'
 import { apiFetch } from '@/lib/api'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 const EASE = [0.22, 1, 0.36, 1]
 
@@ -40,11 +41,39 @@ export default function CollectionPage() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null)
   const [priceRange, setPriceRange] = useState<[number, number]>([990, 5000])
 
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Initialize state from URL on mount
   useEffect(() => {
-    fetchProducts()
+    const gender = searchParams.get('gender') as Gender
+    const subcategory = searchParams.get('subcategory') as Subcategory
+    const sort = searchParams.get('sort') || 'createdAt'
+    
+    if (gender) setSelectedGender(gender)
+    if (subcategory) setSelectedSubcategory(subcategory)
+    setSortBy(sort)
+  }, [])
+
+  // Update URL and fetch when filters change
+  useEffect(() => {
+    const controller = new AbortController()
+    
+    const params = new URLSearchParams()
+    if (selectedGender) params.set('gender', selectedGender)
+    if (selectedSubcategory) params.set('subcategory', selectedSubcategory)
+    if (sortBy !== 'createdAt') params.set('sort', sortBy)
+    
+    const queryString = params.toString()
+    const url = queryString ? `/collection?${queryString}` : '/collection'
+    router.replace(url, { scroll: false })
+    
+    fetchProducts(controller.signal)
+
+    return () => controller.abort()
   }, [sortBy, selectedGender, selectedSubcategory])
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (signal?: AbortSignal) => {
     setIsLoading(true)
     try {
       const params = new URLSearchParams({
@@ -54,7 +83,7 @@ export default function CollectionPage() {
       if (selectedGender) params.set('gender', selectedGender)
       if (selectedSubcategory) params.set('subcategory', selectedSubcategory)
 
-      const res = await apiFetch(`/products?${params.toString()}`)
+      const res = await apiFetch(`/products?${params.toString()}`, { signal })
       const json = await res.json()
       if (json.success) {
         setProducts(json.data.products)
