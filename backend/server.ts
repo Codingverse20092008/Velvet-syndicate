@@ -19,11 +19,16 @@ import adminRoutes from './src/routes/admin';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy (required for Render and secure cookies)
+app.set('trust proxy', 1);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
   origin: env.FRONTEND_URL,
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // Body parsing

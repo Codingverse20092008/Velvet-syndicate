@@ -136,25 +136,32 @@ export async function revokeAllSessions(): Promise<void> {
 // Web API Response versions (for Next.js compatibility)
 export function setAuthCookies(res: globalThis.Response, tokens: TokenPair): void {
   const isProduction = process.env.NODE_ENV === 'production';
+  // For cross-domain auth: sameSite must be 'none' and secure must be true
+  const sameSite = isProduction ? 'None' : 'Lax';
+  const secure = isProduction ? 'Secure' : '';
 
   res.headers.append(
     'Set-Cookie',
-    `access_token=${tokens.accessToken}; HttpOnly; Secure=${isProduction}; SameSite=Strict; Path=/; Max-Age=900`
+    `access_token=${tokens.accessToken}; HttpOnly; ${secure}; SameSite=${sameSite}; Path=/; Max-Age=900`
   );
   res.headers.append(
     'Set-Cookie',
-    `refresh_token=${tokens.refreshToken}; HttpOnly; Secure=${isProduction}; SameSite=Strict; Path=/; Max-Age=604800`
+    `refresh_token=${tokens.refreshToken}; HttpOnly; ${secure}; SameSite=${sameSite}; Path=/; Max-Age=604800`
   );
 }
 
 export function clearAuthCookies(res: globalThis.Response): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction ? 'None' : 'Lax';
+  const secure = isProduction ? 'Secure' : '';
+
   res.headers.append(
     'Set-Cookie',
-    'access_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+    `access_token=; HttpOnly; ${secure}; SameSite=${sameSite}; Path=/; Max-Age=0`
   );
   res.headers.append(
     'Set-Cookie',
-    'refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'
+    `refresh_token=; HttpOnly; ${secure}; SameSite=${sameSite}; Path=/; Max-Age=0`
   );
 }
 
@@ -199,25 +206,40 @@ export function authenticateUser(payload: JWTPayload, userData?: Partial<AuthUse
 // Express-compatible cookie functions
 export function setAuthCookiesExpress(res: ExpressResponse, tokens: TokenPair): void {
   const isProduction = process.env.NODE_ENV === 'production';
+  // For cross-domain auth: sameSite must be 'none' and secure must be true in production
+  const sameSite = isProduction ? 'none' : 'lax';
 
   res.cookie('access_token', tokens.accessToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
+    secure: true, // Must be true for cross-domain cookies
+    sameSite: sameSite,
     path: '/',
     maxAge: 15 * 60 * 1000 // 15 minutes
   });
 
   res.cookie('refresh_token', tokens.refreshToken, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
+    secure: true, // Must be true for cross-domain cookies
+    sameSite: sameSite,
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   });
 }
 
 export function clearAuthCookiesExpress(res: ExpressResponse): void {
-  res.clearCookie('access_token', { path: '/' });
-  res.clearCookie('refresh_token', { path: '/' });
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction ? 'none' : 'lax';
+
+  res.clearCookie('access_token', {
+    path: '/',
+    httpOnly: true,
+    secure: true,
+    sameSite: sameSite
+  });
+  res.clearCookie('refresh_token', {
+    path: '/',
+    httpOnly: true,
+    secure: true,
+    sameSite: sameSite
+  });
 }
