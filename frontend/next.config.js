@@ -17,7 +17,12 @@ const nextConfig = {
       },
     ]
   },
-
+  // Fix for routing issue where not-found shows alongside actual content
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
+  },
 }
 
 module.exports = nextConfig

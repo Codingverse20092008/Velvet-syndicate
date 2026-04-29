@@ -105,7 +105,7 @@ const runComprehensiveTest = async () => {
     { endpoint: '/api/health', name: 'Health Check' },
     { endpoint: '/api/products', name: 'Products' },
     { endpoint: '/api/products?limit=6', name: 'Featured Products' },
-    { endpoint: '/api/categories', name: 'Categories' },
+    { endpoint: '/api/products/categories/all', name: 'Categories' },
   ];
   
   const apiResults = [];

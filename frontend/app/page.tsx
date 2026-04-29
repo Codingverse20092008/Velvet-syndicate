@@ -37,7 +37,7 @@ export default function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await apiFetch('/products?limit=6')
+        const res = await apiFetch('/products?limit=4')
         const data = await res.json()
         if (data.success) {
           setProducts(data.data.products)
