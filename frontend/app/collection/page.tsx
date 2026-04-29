@@ -1,19 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { FilterPanel } from '@/components/product/FilterPanel'
-import { ProductCard } from '@/components/product/ProductCard'
-import { Button } from '@/components/ui/Button'
-import { SlidersHorizontal } from 'lucide-react'
-import { ProductGridSkeleton } from '@/components/product/ProductSkeleton'
-import { apiFetch } from '@/lib/api'
-import { useRouter, useSearchParams } from 'next/navigation'
-
-const EASE = [0.22, 1, 0.36, 1]
-
-type Gender = 'men' | 'women'
-type Subcategory = 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers'
+import Link from 'next/link'
+import Image from 'next/image'
 
 interface Product {
   id: string
@@ -23,6 +12,7 @@ interface Product {
   category: string
   gender: string
   productType: string
+  imageUrl?: string
   variants: {
     id: string
     color: string
@@ -34,201 +24,114 @@ interface Product {
 export default function CollectionPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [sortBy, setSortBy] = useState('createdAt')
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [selectedGender, setSelectedGender] = useState<Gender | null>(null)
-  const [selectedSubcategory, setSelectedSubcategory] = useState<Subcategory | null>(null)
-  const [priceRange, setPriceRange] = useState<[number, number]>([990, 5000])
 
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
-  // Initialize state from URL on mount
   useEffect(() => {
-    const gender = searchParams.get('gender') as Gender
-    const subcategory = searchParams.get('subcategory') as Subcategory
-    const sort = searchParams.get('sort') || 'createdAt'
-    
-    if (gender) setSelectedGender(gender)
-    if (subcategory) setSelectedSubcategory(subcategory)
-    setSortBy(sort)
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('/api/products')
+        const data = await response.json()
+        
+        if (data.success) {
+          setProducts(data.data.products || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch products:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchProducts()
   }, [])
 
-  // Update URL and fetch when filters change
-  useEffect(() => {
-    const controller = new AbortController()
-    
-    const params = new URLSearchParams()
-    if (selectedGender) params.set('gender', selectedGender)
-    if (selectedSubcategory) params.set('subcategory', selectedSubcategory)
-    if (sortBy !== 'createdAt') params.set('sort', sortBy)
-    
-    const queryString = params.toString()
-    const url = queryString ? `/collection?${queryString}` : '/collection'
-    router.replace(url, { scroll: false })
-    
-    fetchProducts(controller.signal)
-
-    return () => controller.abort()
-  }, [sortBy, selectedGender, selectedSubcategory])
-
-  const fetchProducts = async (signal?: AbortSignal) => {
-    setIsLoading(true)
-    try {
-      const params = new URLSearchParams({
-        sort: sortBy,
-        limit: '100',
-      })
-      if (selectedGender) params.set('gender', selectedGender)
-      if (selectedSubcategory) params.set('subcategory', selectedSubcategory)
-
-      const res = await apiFetch(`/products?${params.toString()}`, { signal })
-      const json = await res.json()
-      if (json.success) {
-        setProducts(json.data.products)
+  // Get product image - prioritize variants.images, then imageUrl, then fallback
+  const getProductImage = (product: Product): string => {
+    // First try variant images
+    if (product.variants && product.variants.length > 0) {
+      const firstVariant = product.variants[0]
+      if (firstVariant.images && firstVariant.images.length > 0) {
+        return firstVariant.images[0]
       }
-    } catch (error) {
-      console.error('Failed to fetch products:', error)
-    } finally {
-      setIsLoading(false)
     }
+    // Then try imageUrl
+    if (product.imageUrl) {
+      return product.imageUrl
+    }
+    // Fallback to placeholder
+    return '/images/placeholder-product.png'
   }
 
-  // Client-side filtering for size and price (gender + subcategory done server-side)
-  const filteredProducts = products.filter((product) => {
-    // Check if any variant has the selected size and stock
-    if (selectedSize) {
-      const hasSize = product.variants.some(v =>
-        v.sizes.some(s => s.size === selectedSize && s.stock > 0)
-      )
-      if (!hasSize) return false
-    }
-    if (product.price < priceRange[0] || product.price > priceRange[1]) return false
-    return true
-  })
-
   return (
-    <div className="min-h-screen pt-32 pb-24 bg-velvet-black">
-      {/* Header */}
-      <motion.div
-        className="max-w-7xl mx-auto px-6 mb-20"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: EASE }}
-      >
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-10">
-          <div>
-            <span className="text-[10px] uppercase tracking-[0.5em] text-velvet-muted mb-4 block">Archive</span>
-            <h1 className="font-heading text-5xl md:text-6xl text-velvet-white mb-2 tracking-tight">
-              Collection
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => setIsFilterOpen(true)}
-              className="flex items-center gap-3 text-[10px] uppercase tracking-[0.3em] text-velvet-white hover:text-velvet-white transition-colors cursor-none interactive px-4 py-2 border border-white/20 hover:border-white/40"
-            >
-              <SlidersHorizontal size={12} />
-              Filter
-            </button>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent border border-white/20 hover:border-white/40 px-4 py-2 text-[10px] uppercase tracking-[0.2em] text-velvet-white focus:outline-none focus:text-velvet-white cursor-none interactive transition-all"
-            >
-              <option value="createdAt" className="bg-neutral-900">Newest</option>
-              <option value="price-asc" className="bg-neutral-900">Price Low</option>
-              <option value="price-desc" className="bg-neutral-900">Price High</option>
-              <option value="name" className="bg-neutral-900">A - Z</option>
-            </select>
-          </div>
+    <div className="min-h-screen bg-velvet-black px-6 py-20">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="font-heading text-4xl md:text-5xl mb-6 uppercase tracking-wide text-white">
+            Collection
+          </h1>
+          <p className="text-velvet-muted max-w-2xl mx-auto">
+            Discover our complete collection of premium footwear
+          </p>
         </div>
-      </motion.div>
 
-      {/* Products Grid */}
-      <div className="max-w-7xl mx-auto px-6">
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <ProductGridSkeleton count={6} />
-            </motion.div>
-          ) : products.length === 0 ? (
-            <motion.div
-              key="empty-state"
-              className="text-center py-40 border border-white/5 rounded-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-            >
-              <p className="text-velvet-muted mb-8 italic tracking-[0.3em] uppercase text-[10px]">Collection coming soon</p>
-              <div className="h-px w-12 bg-white/10 mx-auto" />
-            </motion.div>
-          ) : filteredProducts.length === 0 ? (
-            <motion.div
-              key="no-filter-match"
-              className="text-center py-40"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <p className="text-velvet-muted mb-8 italic tracking-[0.3em] uppercase text-[10px]">No pieces match your selection</p>
-              <button
-                className="text-[10px] uppercase tracking-[0.3em] text-velvet-white border-b border-white/20 pb-1"
-                onClick={() => {
-                  setSelectedSize(null)
-                  setSelectedGender(null)
-                  setSelectedSubcategory(null)
-                  setPriceRange([990, 5000])
-                }}
-              >
-                Reset Filters
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="grid"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-24"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8 }}
-            >
-              {filteredProducts.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={product.price}
-                  image={product.variants[0]?.images[0]}
-                  variants={product.variants.map(v => ({ id: v.id, color: v.color }))}
-                  index={index}
-                />
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Results Header */}
+        <div className="mb-8 flex justify-between items-center">
+          <p className="text-velvet-muted">
+            {isLoading ? 'Loading...' : `${products.length} products found`}
+          </p>
+        </div>
+
+        {/* Products Grid */}
+        {isLoading ? (
+          <div className="text-center py-20">
+            <div className="w-12 h-[1px] bg-white/10 relative overflow-hidden mx-auto">
+              <div className="absolute inset-0 bg-velvet-white animate-loading-bar" />
+            </div>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-velvet-muted mb-4">No products found</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map((product, index) => {
+              const productImage = getProductImage(product)
+              return (
+                <div key={product.id} className="bg-velvet-dark border border-white/10 overflow-hidden group">
+                  {/* Product Image */}
+                  <div className="relative aspect-square bg-velvet-black overflow-hidden">
+                    <Image
+                      src={productImage}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      onError={(e) => {
+                        // Fallback if image fails to load
+                        const target = e.target as HTMLImageElement
+                        target.src = '/images/placeholder-product.png'
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Product Info */}
+                  <div className="p-6">
+                    <h3 className="text-xl font-heading mb-2 text-white">{product.name}</h3>
+                    <p className="text-velvet-muted mb-2 text-sm">{product.category}</p>
+                    <p className="text-white mb-4 font-medium">${product.price}</p>
+                    <Link
+                      href={`/product/${product.slug}`}
+                      className="inline-block px-4 py-2 border border-white/20 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors text-white"
+                    >
+                      View Details
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-
-      {/* Filter Panel */}
-      <FilterPanel
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        selectedSize={selectedSize}
-        selectedGender={selectedGender}
-        selectedSubcategory={selectedSubcategory}
-        priceRange={priceRange}
-        onSizeChange={setSelectedSize}
-        onGenderChange={setSelectedGender}
-        onSubcategoryChange={setSelectedSubcategory}
-        onPriceRangeChange={setPriceRange}
-      />
     </div>
   )
 }

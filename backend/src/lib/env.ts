@@ -19,6 +19,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW: z.coerce.number().default(60),
+  LOG_LEVEL: z.string().default('info'),
 });
 
 export const env = envSchema.parse(process.env);

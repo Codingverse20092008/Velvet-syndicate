@@ -4,7 +4,7 @@ import type { Response as ExpressResponse } from 'express';
 import { env } from './env';
 import { db } from './db';
 import { sessions, users } from './schema';
-import { eq, and, lt } from 'drizzle-orm';
+import { eq, and, gt } from 'drizzle-orm';
 import { logger } from './logger';
 import { UnauthorizedError } from './errors';
 import { redis } from './redis';
@@ -98,10 +98,11 @@ export async function createSession(
 export async function refreshSession(oldRefreshToken: string): Promise<TokenPair> {
   const payload = verifyRefreshToken(oldRefreshToken);
 
+  // FIXED: Check for VALID sessions (expiresAt > now), not expired ones
   const session = await db.query.sessions.findFirst({
     where: and(
       eq(sessions.userId, payload.userId),
-      lt(sessions.expiresAt, new Date().toISOString())
+      gt(sessions.expiresAt, new Date().toISOString())
     ),
   });
 
@@ -204,25 +205,34 @@ export function authenticateUser(payload: JWTPayload, userData?: Partial<AuthUse
 }
 
 // Express-compatible cookie functions
+// HYBRID AUTH: Only refresh token in cookie, access token returned in body + Authorization header
 export function setAuthCookiesExpress(res: ExpressResponse, tokens: TokenPair): void {
   const isProduction = process.env.NODE_ENV === 'production';
   // For cross-domain auth: sameSite must be 'none' and secure must be true in production
   const sameSite = isProduction ? 'none' : 'lax';
 
-  res.cookie('access_token', tokens.accessToken, {
-    httpOnly: true,
-    secure: true, // Must be true for cross-domain cookies
-    sameSite: sameSite,
-    path: '/',
-    maxAge: 15 * 60 * 1000 // 15 minutes
-  });
-
+  // Only set refresh token in HTTP-only cookie (access token goes in response body + Authorization header)
   res.cookie('refresh_token', tokens.refreshToken, {
     httpOnly: true,
     secure: true, // Must be true for cross-domain cookies
     sameSite: sameSite,
     path: '/',
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    domain: isProduction ? undefined : undefined, // Explicit domain for cross-domain
+  });
+}
+
+// Set access token in cookie only when needed (legacy support)
+export function setAccessTokenCookieExpress(res: ExpressResponse, accessToken: string): void {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction ? 'none' : 'lax';
+
+  res.cookie('access_token', accessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: sameSite,
+    path: '/',
+    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 }
 
@@ -230,13 +240,13 @@ export function clearAuthCookiesExpress(res: ExpressResponse): void {
   const isProduction = process.env.NODE_ENV === 'production';
   const sameSite = isProduction ? 'none' : 'lax';
 
-  res.clearCookie('access_token', {
+  res.clearCookie('refresh_token', {
     path: '/',
     httpOnly: true,
     secure: true,
     sameSite: sameSite
   });
-  res.clearCookie('refresh_token', {
+  res.clearCookie('access_token', {
     path: '/',
     httpOnly: true,
     secure: true,

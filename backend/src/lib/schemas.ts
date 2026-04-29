@@ -68,17 +68,18 @@ export const createOrderSchema = z.object({
 
 export const productFiltersSchema = z.object({
   category: z.enum(['footwear', 'accessories', 'apparel']).optional(),
-  // Strict gender filter: only men or women
   gender: z.enum(['men', 'women']).optional(),
-  // Strict subcategory filter: matches title keywords
   subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
+  brand: z.string().trim().max(50).optional(),
+  minPrice: z.coerce.number().min(0).optional(),
+  maxPrice: z.coerce.number().min(0).optional(),
   featured: z.enum(['true', 'false']).optional().transform((v) =>
     v === 'true' ? true : v === 'false' ? false : undefined
   ),
   sort: z.enum(['createdAt', 'price-asc', 'price-desc', 'name']).default('createdAt'),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   offset: z.coerce.number().int().min(0).default(0),
-  // Free-text search — validated: trimmed, max 100 chars, no injection surface
+  cursor: z.string().optional(),
   search: z.string().trim().max(100).optional(),
 });
 

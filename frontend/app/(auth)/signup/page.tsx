@@ -5,14 +5,13 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
-import { apiFetch } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
 function SignupContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user, setUser, isAuthenticated, isLoading: authLoading } = useAuthStore()
+  const { signup, isAuthenticated, isLoading: authLoading } = useAuthStore()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,31 +66,16 @@ function SignupContent() {
 
     setIsLoading(true)
 
-    try {
-      const res = await apiFetch('/auth/signup', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        }),
-      })
+    const result = await signup(formData.name, formData.email, formData.password)
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setErrors({ form: data.error || 'Failed to create account' })
-        setIsLoading(false)
-        return
-      }
-
+    if (!result.success) {
+      setErrors({ form: result.error || 'Failed to create account' })
       setIsLoading(false)
-      setUser(data.data.user)
-      // Redirect is handled by the useEffect watching isAuthenticated
-    } catch {
-      setErrors({ form: 'An unexpected error occurred' })
-      setIsLoading(false)
+      return
     }
+
+    // On successful signup, redirect to login
+    router.replace('/login?message=Account created successfully')
   }
 
   return (

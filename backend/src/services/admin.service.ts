@@ -11,6 +11,7 @@ import {
 } from '../lib/schema';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { logger } from '../lib/logger';
+import { invalidateProductsCache } from '../lib/cache';
 
 type AdminOrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED';
 
@@ -326,6 +327,10 @@ export async function createAdminProduct(data: {
     });
   });
 
+  // Invalidate cache after product creation
+  await invalidateProductsCache();
+  logger.info({ productId }, 'CACHE_INVALIDATED:product_created');
+
   const all = await getAdminProducts();
   const created = all.find((product) => product.id === productId);
   if (!created) throw new NotFoundError('Product');
@@ -451,6 +456,10 @@ export async function updateAdminProduct(
     }
   });
 
+  // Invalidate cache after product update
+  await invalidateProductsCache();
+  logger.info({ productId }, 'CACHE_INVALIDATED:product_updated');
+
   const all = await getAdminProducts();
   const updated = all.find((product) => product.id === productId);
   if (!updated) throw new NotFoundError('Product');
@@ -471,6 +480,10 @@ export async function deleteAdminProduct(productId: string): Promise<void> {
       updatedAt: new Date().toISOString(),
     })
     .where(eq(products.id, productId));
+
+  // Invalidate cache after product deletion
+  await invalidateProductsCache();
+  logger.info({ productId }, 'CACHE_INVALIDATED:product_deleted');
 }
 
 export async function toggleAdminProductStock(productId: string, inStock: boolean): Promise<AdminProductItem> {

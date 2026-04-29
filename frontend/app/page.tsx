@@ -1,147 +1,46 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import { ProductCard } from '@/components/product/ProductCard'
-import { AboutPreview } from '@/components/home/AboutPreview'
-import { Recommendations } from '@/components/home/Recommendations'
-import { ProductGridSkeleton } from '@/components/product/ProductSkeleton'
-import { ErrorBoundary } from '@/components/common/ErrorBoundary'
-import { apiFetch } from '@/lib/api'
 import Image from 'next/image'
+import dynamic from 'next/dynamic'
+import { apiFetch } from '@/lib/api'
 
-const EASE = [0.22, 1, 0.36, 1]
-
-// Hero3D already isolates all r3f code internally via its own dynamic import
-const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => mod.Hero3D), {
+// Hero3D with 3D rotating shoes
+const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => ({ default: mod.Hero3D })), {
   ssr: false,
-  loading: () => <div className="w-full h-screen bg-[#060606]" />,
+  loading: () => <div className="w-full h-screen bg-[#060606] flex items-center justify-center">
+    <div className="text-white text-xl">Loading 3D Experience...</div>
+  </div>,
 })
 
-function HeroFallback() {
-  return (
-    <div className="relative w-full h-screen bg-velvet-black flex items-center justify-center overflow-hidden">
-      <div
-        className="absolute inset-0 z-10 pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.72) 100%)' }}
-      />
-      <Image
-        src="/images/sneaker-fallback.png"
-        alt="Premium Velvet Sneaker"
-        fill
-        className="object-contain p-20 opacity-70"
-        priority
-      />
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
-        <div className="text-center px-6">
-          <p className="text-[10px] uppercase tracking-[0.55em] text-velvet-muted mb-6">
-            Velvet Syndicate
-          </p>
-          <h1
-            className="font-heading text-5xl md:text-7xl lg:text-8xl text-velvet-white mb-8 tracking-tight leading-none"
-            style={{ textShadow: '0 2px 40px rgba(0,0,0,0.6)' }}
-          >
-            Built Quiet.<br />
-            <span className="italic text-velvet-muted/80">Worn Loud.</span>
-          </h1>
-          <a
-            href="/collection"
-            className="inline-flex items-center gap-3 px-10 py-4 border border-white/15 text-velvet-white text-[10px] tracking-[0.42em] uppercase hover:bg-velvet-white hover:text-black transition-all duration-500"
-          >
-            Explore Collection
-          </a>
-        </div>
-      </div>
-    </div>
-  )
+interface Product {
+  id: string
+  name: string
+  slug: string
+  price: number
+  category: string
+  imageUrl?: string
+  variants: {
+    id: string
+    color: string
+    images: string[]
+    sizes: { size: string; stock: number }[]
+  }[]
 }
 
 export default function HomePage() {
-  return (
-    <div className="bg-velvet-black min-h-screen">
-
-      {/* 1. Hero Section */}
-      <ErrorBoundary fallback={<HeroFallback />}>
-        <Hero3D />
-      </ErrorBoundary>
-
-      {/* Divider: subtle hairline separating hero from story */}
-      <div className="h-px bg-white/5 mx-auto max-w-5xl" />
-
-      {/* 2. About Preview — brand story teaser directly below hero */}
-      <AboutPreview />
-
-      {/* Divider */}
-      <div className="h-px bg-white/5 mx-auto max-w-5xl" />
-
-      {/* 3. Featured Products */}
-      <FeaturedProductsSection />
-
-      {/* 3.5 Growth Recommendations */}
-      <Recommendations />
-
-      {/* 4. Brand Statement */}
-      <section className="py-28 flex items-center justify-center bg-velvet-black px-6">
-        <motion.div
-          className="max-w-2xl text-center"
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 1, ease: EASE }}
-        >
-          <p className="font-heading text-3xl md:text-5xl text-velvet-white leading-[1.2] tracking-tight">
-            Built in silence.<br />
-            <span className="italic text-velvet-muted/50">Revealed in presence.</span>
-          </p>
-        </motion.div>
-      </section>
-
-      {/* 5. CTA Section */}
-      <section className="py-28 flex items-center justify-center bg-velvet-dark px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: EASE }}
-          className="flex flex-col items-center gap-5 text-center"
-        >
-          <p className="text-[10px] uppercase tracking-[0.45em] text-velvet-muted">Ready to begin?</p>
-          <Link href="/collection">
-            <motion.button
-              className="px-12 py-[15px] border border-white/15 text-velvet-white text-[10px] tracking-[0.42em] uppercase
-                         hover:bg-velvet-white hover:text-black transition-all duration-[420ms] select-none"
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.18 }}
-            >
-              Enter the Collection
-            </motion.button>
-          </Link>
-        </motion.div>
-      </section>
-    </div>
-  )
-}
-
-function FeaturedProductsSection() {
-  const [products, setProducts] = useState<any[]>([])
+  const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchProducts() {
+    const fetchProducts = async () => {
       try {
-        const res = await apiFetch('/products?featured=true&limit=6')
-        const json = await res.json()
-
-        if (json.success && json.data?.products?.length > 0) {
-          setProducts(json.data.products)
-        } else {
-          const fallbackRes = await apiFetch('/products?limit=6')
-          const fallbackJson = await fallbackRes.json()
-          if (fallbackJson.success && fallbackJson.data?.products) {
-            setProducts(fallbackJson.data.products)
-          }
+        const res = await apiFetch('/products?limit=6')
+        const data = await res.json()
+        if (data.success) {
+          setProducts(data.data.products)
         }
       } catch (error) {
         console.error('Failed to fetch products:', error)
@@ -149,64 +48,116 @@ function FeaturedProductsSection() {
         setIsLoading(false)
       }
     }
+
     fetchProducts()
   }, [])
 
-  return (
-    <section className="py-24 bg-velvet-black px-6 md:px-10 lg:px-16">
-      <div className="max-w-7xl mx-auto">
-        <motion.div
-          className="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: EASE }}
-        >
-          <div>
-            <span className="text-[10px] uppercase tracking-[0.45em] text-velvet-muted mb-3 block">
-              Selected Pieces
-            </span>
-            <h2 className="font-heading text-3xl md:text-4xl text-velvet-white tracking-tight">
-              Featured
-            </h2>
-          </div>
-          <Link
-            href="/collection"
-            className="text-[9px] uppercase tracking-[0.38em] text-velvet-muted hover:text-velvet-white transition-colors duration-300 pb-px border-b border-white/20 hover:border-white/50 self-end md:self-auto"
-          >
-            View All
-          </Link>
-        </motion.div>
+  // Get product image - prioritize variants.images, then imageUrl, then fallback
+  const getProductImage = (product: Product): string => {
+    // First try variant images
+    if (product.variants && product.variants.length > 0) {
+      const firstVariant = product.variants[0]
+      if (firstVariant.images && firstVariant.images.length > 0) {
+        return firstVariant.images[0]
+      }
+    }
+    // Then try imageUrl
+    if (product.imageUrl) {
+      return product.imageUrl
+    }
+    // Fallback to placeholder
+    return '/images/placeholder-product.png'
+  }
 
-        <AnimatePresence mode="wait">
-          {isLoading ? (
-            <motion.div key="skeleton" exit={{ opacity: 0, transition: { duration: 0.3 } }}>
-              <ProductGridSkeleton count={3} />
-            </motion.div>
-          ) : (
+  return (
+    <div className="relative">
+      {/* Hero Section with 3D Rotating Shoes */}
+      <section className="relative h-screen">
+        <Hero3D />
+      </section>
+
+      {/* Featured Products */}
+      <section className="relative py-20 px-6 bg-velvet-black">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="font-heading text-4xl md:text-5xl mb-6 uppercase tracking-wide">
+              Featured Collection
+            </h2>
+            <p className="text-velvet-muted max-w-2xl mx-auto">
+              Discover our carefully curated selection of premium footwear, designed for those who appreciate the art of silence.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {isLoading ? (
+              <div className="col-span-full text-center py-12">
+                <div className="w-12 h-[1px] bg-white/10 relative overflow-hidden mx-auto">
+                  <div className="absolute inset-0 bg-velvet-white animate-loading-bar" />
+                </div>
+              </div>
+            ) : (
+              products.map((product, index) => {
+                const productImage = getProductImage(product)
+                return (
+                  <div key={product.id} className="bg-velvet-dark border border-white/10 overflow-hidden group">
+                    {/* Product Image */}
+                    <div className="relative aspect-square bg-velvet-black overflow-hidden">
+                      <Image
+                        src={productImage}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/images/placeholder-product.png'
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Product Info */}
+                    <div className="p-6">
+                      <h3 className="text-xl font-heading mb-2">{product.name}</h3>
+                      <p className="text-velvet-muted mb-2 text-sm">{product.category}</p>
+                      <p className="text-velvet-white mb-4 font-medium">${product.price}</p>
+                      <Link
+                        href={`/product/${product.slug}`}
+                        className="inline-block px-4 py-2 border border-white/20 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {!isLoading && products.length > 0 && (
             <motion.div
-              key="products"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, ease: EASE }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mt-16"
             >
-              {products.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  id={product.id}
-                  name={product.name}
-                  slug={product.slug}
-                  price={product.price}
-                  image={product.variants?.[0]?.images?.[0]}
-                  variants={product.variants?.map((v: any) => ({ id: v.id, color: v.color }))}
-                  index={index}
-                />
-              ))}
+              <Link
+                href="/collection"
+                className="inline-flex items-center gap-2 px-8 py-4 border border-white/20 text-[10px] tracking-[0.3em] uppercase hover:bg-white/5 transition-all duration-300"
+              >
+                View Full Collection
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
             </motion.div>
           )}
-        </AnimatePresence>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   )
 }

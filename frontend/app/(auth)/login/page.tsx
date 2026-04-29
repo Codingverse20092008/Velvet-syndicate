@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthStore } from '@/store/authStore'
-import { apiFetch } from '@/lib/api'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 
@@ -13,7 +12,7 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const message = searchParams.get('message')
-  const { user, setUser, isAuthenticated, isLoading: authLoading } = useAuthStore()
+  const { login, isAuthenticated, isLoading: authLoading } = useAuthStore()
   const [formData, setFormData] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -34,27 +33,16 @@ function LoginContent() {
     setIsLoading(true)
     setErrors({})
 
-    try {
-      const res = await apiFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(formData),
-      })
+    const result = await login(formData.email, formData.password)
 
-      const data = await res.json()
-
-      if (!res.ok) {
-        setErrors({ form: data.error || 'Failed to login' })
-        setIsLoading(false)
-        return
-      }
-
+    if (!result.success) {
+      setErrors({ form: result.error || 'Failed to login' })
       setIsLoading(false)
-      setUser(data.data.user)
-      // Redirect is handled by the useEffect watching isAuthenticated
-    } catch {
-      setErrors({ form: 'An unexpected error occurred' })
-      setIsLoading(false)
+      return
     }
+
+    // Redirect on success
+    router.replace(redirectPath)
   }
 
   return (

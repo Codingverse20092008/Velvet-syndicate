@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { apiFetch } from '@/lib/api'
+import { api, getStoredAccessToken, setStoredAccessToken, setStoredRefreshToken, clearStoredTokens } from '@/lib/api'
 
 interface User {
   id: string
@@ -21,6 +21,8 @@ interface AuthState {
   setLoading: (loading: boolean) => void
   checkAuth: () => Promise<void>
   logout: () => Promise<void>
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -33,6 +35,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearUser: () => {
+    clearStoredTokens()
     set({ user: null, isAuthenticated: false, isLoading: false })
   },
 
@@ -43,14 +46,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   checkAuth: async () => {
     set({ isLoading: true })
     try {
-      const res = await apiFetch('/auth/me')
+      const token = getStoredAccessToken()
+      if (!token) {
+        set({ user: null, isAuthenticated: false, isLoading: false })
+        return
+      }
+
+      const res = await api.get('/auth/me')
       const data = await res.json()
-      if (data.success) {
+      if (data.success && data.data.user) {
         set({ user: data.data.user, isAuthenticated: true })
       } else {
         set({ user: null, isAuthenticated: false })
       }
-    } catch {
+    } catch (err) {
+      console.warn('Auth check failed:', err)
       set({ user: null, isAuthenticated: false })
     } finally {
       set({ isLoading: false })
@@ -60,11 +70,61 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     set({ isLoading: true })
     try {
-      await apiFetch('/auth/logout', { method: 'POST' })
+      await api.post('/auth/logout')
     } catch (error) {
       console.error('Logout failed:', error)
     } finally {
-      set({ user: null, isAuthenticated: false, isLoading: false })
+      get().clearUser()
+    }
+  },
+
+  login: async (email: string, password: string) => {
+    set({ isLoading: true })
+    try {
+      const res = await api.post('/auth/login', { email, password })
+      const data = await res.json()
+
+      if (data.success && data.data?.accessToken) {
+        // Store tokens
+        setStoredAccessToken(data.data.accessToken)
+        if (data.data.refreshToken) {
+          setStoredRefreshToken(data.data.refreshToken)
+        }
+
+        // Fetch user data
+        const userRes = await api.get('/auth/me')
+        const userData = await userRes.json()
+
+        if (userData.success && userData.data.user) {
+          set({ user: userData.data.user, isAuthenticated: true, isLoading: false })
+          return { success: true }
+        }
+      }
+
+      set({ isLoading: false })
+      return { success: false, error: data?.error || 'Login failed' }
+    } catch (err) {
+      set({ isLoading: false })
+      return { success: false, error: (err as Error).message }
+    }
+  },
+
+  signup: async (name: string, email: string, password: string) => {
+    set({ isLoading: true })
+    try {
+      const res = await api.post('/auth/signup', { name, email, password })
+      const data = await res.json()
+
+      set({ isLoading: false })
+
+      if (data.success) {
+        return { success: true }
+      }
+
+      return { success: false, error: data?.error || 'Signup failed' }
+    } catch (err) {
+      set({ isLoading: false })
+      return { success: false, error: (err as Error).message }
     }
   },
 }))

@@ -39,46 +39,28 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const { allowed } = await checkRateLimit(`products:${ip}`);
   if (!allowed) throw new RateLimitError();
 
-  const { featured, category, gender, subcategory, sort, limit, offset, search } = req.query;
+  const validatedFilters = productFiltersSchema.parse(req.query);
 
-  if (featured === 'true') {
-    const parsedLimit = Number.parseInt((limit as string) || '10', 10);
-    const limitNum = Number.isFinite(parsedLimit) ? parsedLimit : 10;
+  if (validatedFilters.featured) {
     const featuredResult = await getFeaturedProducts();
-    const slicedResult = featuredResult.slice(0, limitNum);
+    const slicedResult = featuredResult.slice(0, validatedFilters.limit);
     return successResponse(res, {
       products: slicedResult.map(mapProduct)
     });
   }
 
-  try {
-    const filters = {
-      category: category as string | undefined,
-      gender: gender as 'men' | 'women' | undefined,
-      subcategory: subcategory as 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | undefined,
-      featured: featured as string | undefined,
-      sort: (sort as string) || 'createdAt',
-      limit: Number.parseInt((limit as string) || '50', 10),
-      offset: Number.parseInt((offset as string) || '0', 10),
-      search: (search as string) || undefined,
-    };
+  const result = await getProducts(validatedFilters as any);
 
-    const parsed = productFiltersSchema.parse(filters);
-    const result = await getProducts(parsed);
-
-    return successResponse(res, {
-      products: result.products.map(mapProduct),
-      pagination: {
-        total: result.total,
-        limit: result.limit,
-        offset: result.offset,
-      },
-    });
-  } catch (err) {
-    console.error("SEARCH ERROR:", err);
-    // @ts-ignore
-    return res.status(500).json({ success: false, message: "Search failed", error: err.message });
-  }
+  return successResponse(res, {
+    products: result.products.map(mapProduct),
+    pagination: {
+      total: result.total,
+      limit: result.limit,
+      offset: result.offset,
+      nextCursor: result.nextCursor,
+      hasNextPage: result.hasNextPage
+    },
+  });
 }));
 
 // GET /api/products/:slug
@@ -88,6 +70,14 @@ router.get('/:slug', asyncHandler(async (req: Request, res: Response) => {
 
   return successResponse(res, {
     product: mapProduct(product)
+  });
+}));
+
+// GET /api/categories
+router.get('/categories/all', asyncHandler(async (req: Request, res: Response) => {
+  const categories = ['sneakers', 'footwear', 'boots', 'sandals', 'slippers'];
+  return successResponse(res, {
+    categories
   });
 }));
 

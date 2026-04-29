@@ -1,5 +1,8 @@
 import { cacheGet, cacheSet, cacheDelete, cacheInvalidatePattern } from './redis';
 import { logger } from './logger';
+import { withTimeout } from './timeout';
+
+const CACHE_TIMEOUT_MS = 2000; // Never wait longer than 2s for cache
 
 export const CACHE_KEYS = {
   PRODUCTS_LIST: 'products:list',
@@ -17,34 +20,41 @@ export const CACHE_TTL = {
 
 export async function getCachedProducts<T>(key: string): Promise<T | null> {
   try {
-    return await cacheGet<T>(key);
+    return await withTimeout(cacheGet<T>(key), CACHE_TIMEOUT_MS, `cache:get:${key}`);
   } catch (err) {
-    logger.error({ err, key }, 'Cache get failed');
+    logger.error({ err, key }, 'Cache get failed (timeout or error)');
     return null;
   }
 }
 
 export async function setCachedProducts<T>(key: string, data: T, ttl = CACHE_TTL.PRODUCTS): Promise<void> {
   try {
-    await cacheSet(key, data, ttl);
+    await withTimeout(cacheSet(key, data, ttl), CACHE_TIMEOUT_MS, `cache:set:${key}`);
   } catch (err) {
-    logger.error({ err, key }, 'Cache set failed');
+    logger.error({ err, key }, 'Cache set failed (timeout or error)');
   }
 }
 
 export async function invalidateProductsCache(): Promise<void> {
   try {
-    await cacheInvalidatePattern('products:*');
-    await cacheInvalidatePattern('product:*');
+    await withTimeout(
+      Promise.all([
+        cacheInvalidatePattern('products:*'),
+        cacheInvalidatePattern('product:*'),
+      ]),
+      CACHE_TIMEOUT_MS,
+      'cache:invalidate:products'
+    );
+    logger.info('Products cache invalidated');
   } catch (err) {
-    logger.error({ err }, 'Cache invalidation failed');
+    logger.error({ err }, 'Cache invalidation failed (timeout or error)');
   }
 }
 
 export async function invalidateCartCache(userId: string): Promise<void> {
   try {
-    await cacheDelete(CACHE_KEYS.CART(userId));
+    await withTimeout(cacheDelete(CACHE_KEYS.CART(userId)), CACHE_TIMEOUT_MS, `cache:del:cart:${userId}`);
   } catch (err) {
-    logger.error({ err, userId }, 'Cart cache invalidation failed');
+    logger.error({ err, userId }, 'Cart cache invalidation failed (timeout or error)');
   }
 }

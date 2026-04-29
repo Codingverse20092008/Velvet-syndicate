@@ -1,57 +1,11 @@
-import { eq, and, asc, desc, inArray, sql, gte, lte } from 'drizzle-orm';
-import { db, dbClient } from '../lib/db';
-import { products, productSizes, type Product, type ProductSize } from '../lib/schema';
-import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
+import { ProductRepository, productRepository } from '../repositories/product.repository';
+import { NotFoundError } from '../lib/errors';
 import { CACHE_KEYS, CACHE_TTL, setCachedProducts, getCachedProducts, invalidateProductsCache } from '../lib/cache';
 import { logger } from '../lib/logger';
+import { isFeatureEnabled } from '../lib/feature-flags';
 
-const BRAND_MAP: Record<string, string[]> = {
-  'nike': ['nike', 'jordan', 'nike sb'],
-  'jordan': ['jordan', 'nike'],
-  'adidas': ['adidas', 'yeezy'],
-  'yeezy': ['yeezy', 'adidas'],
-  'puma': ['puma'],
-};
-
-// Subcategory to title keyword mapping (case-insensitive partial match)
-const SUBCATEGORY_KEYWORDS: Record<string, string[]> = {
-  'casual': ['casual'],
-  'walking': ['walking', 'walk'],
-  'jogging': ['jogging', 'jog'],
-  'running': ['running', 'run'],
-  'sports': ['sports', 'sport', 'badminton'],
-  'sneakers': ['sneakers', 'sneaker'],
-};
-
-// Valid genders and subcategories (strict rule)
-export const VALID_GENDERS = ['men', 'women'] as const;
-export const VALID_SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const;
-export type Gender = typeof VALID_GENDERS[number];
-export type Subcategory = typeof VALID_SUBCATEGORIES[number];
-
-export interface ProductVariantWithData {
-  id: string;
-  productId: string;
-  name: string;
-  color: string;
-  slug: string | null;
-  images: { id: string; imageUrl: string }[];
-  sizes: { id: string; size: string; stock: number }[];
-}
-
-export interface ProductWithVariants {
-  id: string;
-  name: string;
-  slug: string;
-  description: string;
-  price: number;
-  imageUrl: string;
-  brand: string;
-  category: string;
-  featured: boolean;
-  createdAt: string;
-  variants: ProductVariantWithData[];
-}
+export type Gender = 'men' | 'women';
+export type Subcategory = 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers';
 
 export interface ProductFilters {
   category?: string;
@@ -64,242 +18,93 @@ export interface ProductFilters {
   sort?: 'createdAt' | 'price-asc' | 'price-desc' | 'name';
   limit?: number;
   offset?: number;
+  cursor?: string;
   search?: string;
 }
 
-// Removed title-based subcategory matching in favor of database fields
-
 export interface PaginatedProducts {
-  products: ProductWithVariants[];
+  products: any[];
   total: number;
   limit: number;
   offset: number;
+  nextCursor?: string | null;
+  hasNextPage: boolean;
 }
 
 export async function getProducts(filters: ProductFilters = {}): Promise<PaginatedProducts> {
-  const { 
-    category, 
-    gender, 
-    subcategory, 
-    brand,
-    minPrice,
-    maxPrice,
-    featured, 
-    sort = 'createdAt', 
-    limit = 50, 
-    offset = 0, 
-    search 
-  } = filters;
+  const startTime = Date.now();
+  const { search, limit = 50, offset = 0 } = filters;
 
-  // Search queries skip cache — they are user-specific and low-frequency
+  // Search queries skip cache
   const cacheKey = `${CACHE_KEYS.PRODUCTS_LIST}:${JSON.stringify(filters)}`;
   if (!search) {
     const cached = await getCachedProducts<PaginatedProducts>(cacheKey);
-    if (cached) return cached;
+    if (cached) {
+      logger.info({ filters, duration: Date.now() - startTime, cache: 'hit' }, 'PRODUCT_FETCH');
+      return cached;
+    }
   }
 
-  const conditions = [];
-  conditions.push(eq(products.isVisible, true));
-  if (category) conditions.push(eq(products.category, category));
-  if (gender) conditions.push(eq(products.gender, gender));
-  if (subcategory) conditions.push(eq(products.productType, subcategory));
-  if (brand) conditions.push(eq(products.brand, brand));
-  if (minPrice !== undefined) conditions.push(gte(products.price, minPrice));
-  if (maxPrice !== undefined) conditions.push(lte(products.price, maxPrice));
-  if (featured !== undefined) conditions.push(eq(products.featured, featured));
-
-  // --- Strict search: name only, with ranked results ---
-  // Ranking: exact match (3) > starts-with (2) > contains (1)
-  // We run a raw SQL query for search so we can ORDER BY relevance rank
+  let result;
   if (search) {
     const q = search.toLowerCase().trim().replace(/\s+/g, ' ');
-    if (!q) return { products: [], total: 0, limit, offset };
-
-    // Ignore very short tokens to reduce noise
     const tokens = q.split(' ').filter(t => t.length >= 2);
-    if (tokens.length === 0) return { products: [], total: 0, limit, offset };
-
-    const searchLimit = 6;
-    const ecosystemBrands = tokens.length === 1 ? (BRAND_MAP[tokens[0]] || []) : [];
     
-    const scoreSqlParts: string[] = [];
-    const whereSqlParts: string[] = [];
-    const scoreArgs: any[] = [];
-    const whereArgs: any[] = [];
-
-    // Each token contributes to the score with refined weights
-    tokens.forEach(token => {
-      const starts = `${token}%`;
-      const contains = `%${token}%`;
-      
-      scoreSqlParts.push(`(
-        CASE WHEN LOWER(COALESCE(brand, '')) = ? THEN 60 ELSE 0 END +
-        CASE WHEN LOWER(name) LIKE ? THEN 80 ELSE 0 END +
-        CASE WHEN LOWER(name) LIKE ? THEN 40 ELSE 0 END +
-        CASE WHEN LOWER(COALESCE(brand, '')) LIKE ? THEN 20 ELSE 0 END
-      )`);
-      scoreArgs.push(token, starts, contains, contains);
-      
-      whereSqlParts.push(`(LOWER(name) LIKE ? OR LOWER(COALESCE(brand, '')) LIKE ?)`);
-      whereArgs.push(contains, contains);
-    });
-
-    // Ecosystem bonus for single token searches
-    if (ecosystemBrands.length > 0) {
-      const placeholders = ecosystemBrands.map(() => '?').join(', ');
-      scoreSqlParts.push(`(CASE WHEN LOWER(COALESCE(brand, '')) IN (${placeholders}) THEN 30 ELSE 0 END)`);
-      scoreArgs.push(...ecosystemBrands);
-      whereSqlParts.push(`(LOWER(COALESCE(brand, '')) IN (${placeholders}))`);
-      whereArgs.push(...ecosystemBrands);
+    // Enterprise Pattern: Feature Flagged experimental logic
+    if (isFeatureEnabled('RANKED_SEARCH')) {
+      result = await productRepository.searchRaw(q, tokens, limit, offset);
+    } else {
+      // Fallback to simple findMany with name filter if flag is off
+      result = await productRepository.findMany({ ...filters, search: q });
     }
-
-    const scoreSql = scoreSqlParts.join(' + ');
-    const whereSql = whereSqlParts.join(' OR ');
-
-    // Use CTE + Window Function for robust de-duplication (pick best variant per name)
-    const searchResult = await dbClient.execute({
-      sql: `
-        WITH scored AS (
-          SELECT id, name, (${scoreSql}) as score 
-          FROM products 
-          WHERE is_visible = 1 AND (${whereSql})
-        ),
-        deduped AS (
-          SELECT id, name, score, 
-                 ROW_NUMBER() OVER (PARTITION BY name ORDER BY score DESC) as rn
-          FROM scored
-        )
-        SELECT id, name, score 
-        FROM deduped 
-        WHERE rn = 1 AND score > 0
-        ORDER BY score DESC, LENGTH(name) ASC
-        LIMIT ? OFFSET ?
-      `,
-      args: [...scoreArgs, ...whereArgs, searchLimit, offset],
-    });
-
-    const rawResults = searchResult.rows as unknown as { id: string; score: number }[];
-
-    if (rawResults.length === 0) {
-      return { products: [], total: 0, limit, offset };
-    }
-
-    const ids = rawResults.map((r) => r.id);
-
-    // Fetch full product data with variants
-    const fullProducts = await db.query.products.findMany({
-      where: inArray(products.id, ids),
-      with: {
-        variants: {
-          with: { images: true, sizes: true },
-        },
-      },
-    });
-
-    // Re-apply score order
-    const scoreMap = new Map(rawResults.map((r) => [r.id, Number(r.score)]));
-    const sorted = fullProducts.sort(
-      (a, b) => (scoreMap.get(b.id) ?? 0) - (scoreMap.get(a.id) ?? 0)
-    );
-
-    // Count for pagination (accounting for GROUP BY name)
-    const countResult = await dbClient.execute({
-      sql: `
-        SELECT COUNT(DISTINCT name) as count 
-        FROM products 
-        WHERE is_visible = 1 AND (${whereSql})
-      `,
-      args: whereArgs,
-    });
-    const total = Number((countResult.rows[0] as any)?.count ?? 0);
-
-    return { products: sorted as any[], total, limit: searchLimit, offset };
-  }
-  // --- End search block ---
-
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-  let orderBy;
-  switch (sort) {
-    case 'price-asc': orderBy = asc(products.price); break;
-    case 'price-desc': orderBy = desc(products.price); break;
-    case 'name': orderBy = asc(products.name); break;
-    default: orderBy = desc(products.createdAt);
+  } else {
+    result = await productRepository.findMany(filters);
   }
 
-  const allProducts = await db.query.products.findMany({
-    where: whereClause,
-    orderBy,
+  const response: PaginatedProducts = {
+    products: result.items,
+    total: result.total,
     limit,
     offset,
-    with: {
-      variants: {
-        with: {
-          images: true,
-          sizes: true,
-        }
-      }
-    }
-  });
-
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(products)
-    .where(whereClause);
-
-  const paginated: PaginatedProducts = {
-    products: allProducts as any[],
-    total: Number(countResult[0].count),
-    limit,
-    offset
+    nextCursor: (result as any).nextCursor,
+    hasNextPage: (result as any).hasNextPage ?? false
   };
 
-  await setCachedProducts(cacheKey, paginated, CACHE_TTL.PRODUCTS);
-  return paginated;
+  if (!search) {
+    await setCachedProducts(cacheKey, response, CACHE_TTL.PRODUCTS);
+  }
+
+  logger.info({ 
+    filters, 
+    duration: Date.now() - startTime, 
+    cache: 'miss',
+    count: result.items.length,
+    total: result.total
+  }, 'PRODUCT_FETCH');
+
+  return response;
 }
 
-export async function getFeaturedProducts(): Promise<ProductWithVariants[]> {
+export async function getFeaturedProducts(): Promise<any[]> {
   const cacheKey = CACHE_KEYS.PRODUCTS_FEATURED;
-  const cached = await getCachedProducts<ProductWithVariants[]>(cacheKey);
+  const cached = await getCachedProducts<any[]>(cacheKey);
   if (cached) return cached;
 
-  const featuredProducts = await db.query.products.findMany({
-    where: and(eq(products.featured, true), eq(products.isVisible, true)),
-    orderBy: desc(products.createdAt),
-    limit: 10,
-    with: {
-      variants: {
-        with: {
-          images: true,
-          sizes: true,
-        }
-      }
-    }
-  });
-
-  await setCachedProducts(cacheKey, featuredProducts as any[], CACHE_TTL.FEATURED);
-  return featuredProducts as any[];
+  const products = await productRepository.findFeatured();
+  await setCachedProducts(cacheKey, products, CACHE_TTL.FEATURED);
+  return products;
 }
 
-export async function getProductBySlug(slug: string): Promise<ProductWithVariants> {
+export async function getProductBySlug(slug: string): Promise<any> {
   const cacheKey = CACHE_KEYS.PRODUCT_BY_SLUG(slug);
-  const cached = await getCachedProducts<ProductWithVariants>(cacheKey);
+  const cached = await getCachedProducts<any>(cacheKey);
   if (cached) return cached;
 
-  const product = await db.query.products.findFirst({
-    where: and(eq(products.slug, slug), eq(products.isVisible, true)),
-    with: {
-      variants: {
-        with: {
-          images: true,
-          sizes: true,
-        }
-      }
-    }
-  });
+  const product = await productRepository.findBySlug(slug);
+  if (!product) throw new NotFoundError('Product not found');
 
-  if (!product) throw new NotFoundError('Product');
-
-  await setCachedProducts(cacheKey, product as any, CACHE_TTL.PRODUCT_DETAIL);
-  return product as any;
+  await setCachedProducts(cacheKey, product, CACHE_TTL.PRODUCT_DETAIL);
+  return product;
 }
+
+export { invalidateProductsCache };
