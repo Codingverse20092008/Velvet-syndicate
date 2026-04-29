@@ -56,6 +56,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const data = await res.json()
       if (data.success && data.data.user) {
         set({ user: data.data.user, isAuthenticated: true })
+        // Sync local cart to backend after login
+        const { useCartStore } = await import('@/store/cartStore')
+        await useCartStore.getState().syncCart()
       } else {
         set({ user: null, isAuthenticated: false })
       }
@@ -97,6 +100,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         if (userData.success && userData.data.user) {
           set({ user: userData.data.user, isAuthenticated: true, isLoading: false })
+          // Sync local cart to backend after login
+          const { useCartStore } = await import('@/store/cartStore')
+          await useCartStore.getState().syncCart()
           return { success: true }
         }
       }
