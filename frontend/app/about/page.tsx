@@ -178,7 +178,7 @@ export default function AboutPage() {
                   Originated the idea. Defines the brand identity and vision.
                 </p>
                 <p className="text-xs text-[#6b7280] mt-4 tracking-widest uppercase pt-2 border-t border-white/5">
-                  Naray Forsadanga
+                  245/2 Road, Raninagar, P.O. Gora, India
                 </p>
               </div>
             </motion.div>
@@ -223,6 +223,9 @@ export default function AboutPage() {
                 </p>
                 <p className="text-[#9ca3af] font-light leading-relaxed">
                   Built the entire platform. Handles development, system, and UI execution.
+                </p>
+                <p className="text-xs text-[#6b7280] mt-4 tracking-widest uppercase pt-2 border-t border-white/5">
+                  47R7+JR, Murshidabad, Talgachi, West Bengal 742149
                 </p>
               </div>
             </motion.div>
