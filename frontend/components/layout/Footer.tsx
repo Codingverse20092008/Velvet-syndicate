@@ -68,7 +68,7 @@ export function Footer() {
         {/* Social Icons - Instagram & WhatsApp */}
         <div className="flex justify-center gap-6 mt-6">
           <a
-            href="https://instagram.com/velvetsyndicate"
+            href="https://www.instagram.com/_velvet.syndicate_?igsh=emZuYjNoNDl1d3Ux"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-400 hover:text-pink-400 transition-all duration-300 hover:scale-110"

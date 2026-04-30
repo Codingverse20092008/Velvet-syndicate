@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
-import { ShoppingBag, User, Search, X } from 'lucide-react'
+import { ShoppingBag, User, Search, X, Home } from 'lucide-react'
 import Image from 'next/image'
 import { SearchBar } from './SearchBar'
 
@@ -80,10 +80,11 @@ export function Navigation() {
               <AnimatePresence>
                 {isSearchOpen && (
                   <motion.div 
-                    className="md:hidden absolute inset-0 bg-velvet-black z-50 flex items-center px-4 gap-4"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
+                    className="md:hidden absolute inset-0 bg-velvet-black/95 backdrop-blur-xl z-50 flex items-center px-4 gap-3 border-b border-white/5"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
                   >
                     <div className="flex-1">
                       <SearchBar autoFocus />
@@ -106,6 +107,17 @@ export function Navigation() {
             >
               <Search size={17} />
             </button>
+
+            {/* Home */}
+            <div className={`${isSearchOpen ? 'hidden md:block' : 'block'} flex items-center`}>
+              <Link
+                href="/"
+                className="text-velvet-muted hover:text-velvet-white transition-colors interactive"
+                aria-label="Home"
+              >
+                <Home size={17} />
+              </Link>
+            </div>
 
             {/* Auth */}
             <div className={`${isSearchOpen ? 'hidden md:flex' : 'flex'} items-center gap-4`}>

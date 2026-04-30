@@ -115,7 +115,7 @@ export function SearchBar({ autoFocus = false }: SearchBarProps) {
   }, [])
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-[220px] md:max-w-[280px]">
+    <div ref={containerRef} className="relative w-full max-w-full md:max-w-[280px]">
       {/* Luxury Minimal Input */}
       <div
         className={`flex items-center gap-3 h-11 px-4 rounded-full bg-white/10 backdrop-blur-md border transition-all duration-500 ease-luxury ${
