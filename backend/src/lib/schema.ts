@@ -40,6 +40,7 @@ export const products = sqliteTable('products', {
   category: text('category').notNull().default('footwear'),
   gender: text('gender').notNull().default('unisex'),
   productType: text('product_type').notNull().default('sneakers'),
+  color: text('color').default(''),
   featured: integer('featured', { mode: 'boolean' }).notNull().default(false),
   isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
   features: text('features'),

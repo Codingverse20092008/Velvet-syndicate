@@ -39,18 +39,26 @@ const productCreateSchema = z.object({
   name: z.string().min(2).max(120),
   price: z.number().positive(),
   image: z.string().min(1),
+  images: z.array(z.string()).default([]),
   description: z.string().min(10).max(4000),
   stock: z.number().int().min(0),
   brand: z.string().min(2).max(120),
+  color: z.string().default(''),
+  gender: z.enum(['men', 'women', 'unisex']).default('unisex'),
+  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).default('sneakers'),
 });
 
 const productUpdateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   price: z.number().positive().optional(),
   image: z.string().min(1).optional(),
+  images: z.array(z.string()).optional(),
   description: z.string().min(10).max(4000).optional(),
   stock: z.number().int().min(0).optional(),
   brand: z.string().min(2).max(120).optional(),
+  color: z.string().optional(),
+  gender: z.enum(['men', 'women', 'unisex']).optional(),
+  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
   isVisible: z.boolean().optional(),
 });
 

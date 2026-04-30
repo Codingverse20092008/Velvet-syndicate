@@ -11,19 +11,30 @@ type ProductForm = {
   name: string
   price: string
   image: string
+  images: string[]
   description: string
   stock: string
   brand: string
+  color: string
+  gender: 'men' | 'women' | ''
+  subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | ''
 }
 
 const emptyForm: ProductForm = {
   name: '',
   price: '',
   image: '',
+  images: [],
   description: '',
   stock: '',
   brand: '',
+  color: '',
+  gender: '',
+  subcategory: '',
 }
+
+const GENDERS = ['men', 'women'] as const
+const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const
 
 export default function AdminProductsPage() {
   const {
@@ -40,6 +51,7 @@ export default function AdminProductsPage() {
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
   useEffect(() => {
     fetchProducts()
@@ -56,7 +68,6 @@ export default function AdminProductsPage() {
       const res = await apiFetch('/admin/upload', {
         method: 'POST',
         body: formData,
-        // Don't set Content-Type header - let browser set it with boundary
       })
       
       const data = await res.json()
@@ -75,10 +86,49 @@ export default function AdminProductsPage() {
     }
   }
 
+  const handleMultipleImageUpload = async (files: FileList) => {
+    if (form.images.length + files.length > 4) {
+      alert('Maximum 4 images allowed')
+      return
+    }
+    
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      Array.from(files).forEach(file => formData.append('images', file))
+      
+      const res = await apiFetch('/admin/upload/multiple', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      const data = await res.json()
+      if (data.success) {
+        const fullImageUrls = data.imageUrls.map((url: string) => `${process.env.NEXT_PUBLIC_API_URL}${url}`)
+        setForm((prev) => ({ ...prev, images: [...prev.images, ...fullImageUrls] }))
+        setImagePreviews(prev => [...prev, ...fullImageUrls])
+      } else {
+        throw new Error(data.error || 'Upload failed')
+      }
+    } catch (err) {
+      console.error('Multiple image upload failed:', err)
+      alert('Failed to upload images. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       handleImageUpload(file)
+    }
+  }
+
+  const handleMultipleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files && files.length > 0) {
+      handleMultipleImageUpload(files)
     }
   }
 
@@ -87,14 +137,23 @@ export default function AdminProductsPage() {
     setImagePreview(null)
   }
 
+  const removeImage = (index: number) => {
+    setForm((prev) => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
   const submit = async () => {
     const payload = {
       name: form.name.trim(),
       price: Number(form.price),
-      image: form.image.trim(),
+      image: form.image.trim() || (form.images[0] || ''),
+      images: form.images,
       description: form.description.trim(),
       stock: Number(form.stock),
       brand: form.brand.trim(),
+      color: form.color.trim(),
+      gender: form.gender || 'unisex',
+      subcategory: form.subcategory || 'sneakers',
     }
 
     if (editingProduct) {
@@ -105,6 +164,7 @@ export default function AdminProductsPage() {
     }
     setForm(emptyForm)
     setImagePreview(null)
+    setImagePreviews([])
   }
 
   const startEdit = (product: AdminProduct) => {
@@ -113,11 +173,16 @@ export default function AdminProductsPage() {
       name: product.name,
       price: String(product.price),
       image: product.image,
+      images: [],
       description: product.description,
       stock: String(product.stock),
       brand: product.brand,
+      color: '',
+      gender: '',
+      subcategory: '',
     })
     setImagePreview(product.image)
+    setImagePreviews([])
   }
 
   const handleDeactivate = async (product: AdminProduct) => {
@@ -144,11 +209,20 @@ export default function AdminProductsPage() {
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Brand" value={form.brand} onChange={(e) => setForm((prev) => ({ ...prev, brand: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Price" type="number" min="0" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Stock" type="number" min="0" value={form.stock} onChange={(e) => setForm((prev) => ({ ...prev, stock: e.target.value }))} />
+          <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Color" value={form.color} onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))} />
+          <select className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" value={form.gender} onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value as any }))}>
+            <option value="">Select Gender</option>
+            {GENDERS.map(g => <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</option>)}
+          </select>
+          <select className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" value={form.subcategory} onChange={(e) => setForm((prev) => ({ ...prev, subcategory: e.target.value as any }))}>
+            <option value="">Select Type</option>
+            {SUBCATEGORIES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+          </select>
           <input className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Image URL (optional - use upload instead)" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} />
           <div className="md:col-span-2">
             <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
               <Upload size={16} className="text-velvet-accent" />
-              <span className="text-sm text-velvet-white">Upload Image</span>
+              <span className="text-sm text-velvet-white">Upload Primary Image</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={uploadingImage} />
               {uploadingImage && <span className="text-xs text-velvet-muted ml-auto">Uploading...</span>}
             </label>
@@ -164,12 +238,35 @@ export default function AdminProductsPage() {
               </div>
             )}
           </div>
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+              <Upload size={16} className="text-velvet-accent" />
+              <span className="text-sm text-velvet-white">Upload Additional Images (up to 3 more)</span>
+              <input type="file" accept="image/*" multiple onChange={handleMultipleImageChange} className="hidden" disabled={uploadingImage || form.images.length >= 4} />
+              <span className="text-xs text-velvet-muted ml-auto">{form.images.length}/4</span>
+            </label>
+            {imagePreviews.length > 0 && (
+              <div className="mt-3 flex gap-2 flex-wrap">
+                {imagePreviews.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img src={img} alt={`Preview ${idx + 1}`} className="w-20 h-20 object-cover rounded-lg" />
+                    <button
+                      onClick={() => removeImage(idx)}
+                      className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600"
+                    >
+                      <X size={10} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <textarea className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white min-h-[110px]" placeholder="Description" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} />
         </div>
         <div className="flex gap-3 mt-4">
           <Button onClick={submit} isLoading={isLoading}>{editingProduct ? 'Update Product' : 'Create Product'}</Button>
           {editingProduct && (
-            <Button variant="secondary" onClick={() => { setEditingProduct(null); setForm(emptyForm); setImagePreview(null) }}>
+            <Button variant="secondary" onClick={() => { setEditingProduct(null); setForm(emptyForm); setImagePreview(null); setImagePreviews([]) }}>
               Cancel Edit
             </Button>
           )}

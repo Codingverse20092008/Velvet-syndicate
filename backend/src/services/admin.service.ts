@@ -282,14 +282,17 @@ export async function createAdminProduct(data: {
   name: string;
   price: number;
   image: string;
+  images: string[];
   description: string;
   stock: number;
   brand: string;
+  color: string;
+  gender: string;
+  subcategory: string;
 }): Promise<AdminProductItem> {
   const productId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
   const sizeId = crypto.randomUUID();
-  const imageId = crypto.randomUUID();
   const slug = await generateUniqueSlug(data.name);
 
   await db.transaction(async (tx) => {
@@ -302,6 +305,9 @@ export async function createAdminProduct(data: {
       imageUrl: data.image,
       brand: data.brand,
       category: 'footwear',
+      gender: data.gender || 'unisex',
+      productType: data.subcategory || 'sneakers',
+      color: data.color || '',
       featured: false,
       isVisible: true,
     });
@@ -310,15 +316,25 @@ export async function createAdminProduct(data: {
       id: variantId,
       productId,
       name: 'Standard',
-      color: 'Default',
+      color: data.color || 'Default',
       slug,
     });
 
+    // Insert primary image
     await tx.insert(productVariantImages).values({
-      id: imageId,
+      id: crypto.randomUUID(),
       variantId,
       imageUrl: data.image,
     });
+
+    // Insert additional images
+    for (const imgUrl of data.images || []) {
+      await tx.insert(productVariantImages).values({
+        id: crypto.randomUUID(),
+        variantId,
+        imageUrl: imgUrl,
+      });
+    }
 
     await tx.insert(productSizes).values({
       id: sizeId,
@@ -344,9 +360,13 @@ export async function updateAdminProduct(
     name: string;
     price: number;
     image: string;
+    images: string[];
     description: string;
     stock: number;
     brand: string;
+    color: string;
+    gender: string;
+    subcategory: string;
     isVisible: boolean;
   }>
 ): Promise<AdminProductItem> {
@@ -366,6 +386,9 @@ export async function updateAdminProduct(
     if (data.description !== undefined) patch.description = data.description;
     if (data.image !== undefined) patch.imageUrl = data.image;
     if (data.brand !== undefined) patch.brand = data.brand;
+    if (data.color !== undefined) patch.color = data.color;
+    if (data.gender !== undefined) patch.gender = data.gender;
+    if (data.subcategory !== undefined) patch.productType = data.subcategory;
     if (data.isVisible !== undefined) patch.isVisible = data.isVisible;
 
     if (data.name) {
@@ -386,7 +409,7 @@ export async function updateAdminProduct(
           id: variantId,
           productId,
           name: 'Standard',
-          color: 'Default',
+          color: data.color || 'Default',
           slug: existing.slug,
         });
         await tx.insert(productVariantImages).values({
@@ -396,24 +419,27 @@ export async function updateAdminProduct(
         });
       } else {
         const firstVariantId = variants[0].id;
-        const existingImage = await tx.query.productVariantImages.findFirst({
-          where: eq(productVariantImages.variantId, firstVariantId),
-          columns: { id: true },
+        // Delete existing images for this variant
+        await tx.delete(productVariantImages).where(eq(productVariantImages.variantId, firstVariantId));
+        // Insert primary image
+        await tx.insert(productVariantImages).values({
+          id: crypto.randomUUID(),
+          variantId: firstVariantId,
+          imageUrl: data.image,
         });
-
-        if (existingImage) {
-          await tx
-            .update(productVariantImages)
-            .set({ imageUrl: data.image })
-            .where(eq(productVariantImages.id, existingImage.id));
-        } else {
+        // Insert additional images
+        for (const imgUrl of data.images || []) {
           await tx.insert(productVariantImages).values({
             id: crypto.randomUUID(),
             variantId: firstVariantId,
-            imageUrl: data.image,
+            imageUrl: imgUrl,
           });
         }
       }
+    }
+
+    if (data.color !== undefined && variants.length > 0) {
+      await tx.update(productVariants).set({ color: data.color }).where(eq(productVariants.id, variants[0].id));
     }
 
     if (data.stock !== undefined) {
@@ -424,16 +450,13 @@ export async function updateAdminProduct(
           id: variantId,
           productId,
           name: 'Standard',
-          color: 'Default',
+          color: data.color || 'Default',
           slug: existing.slug,
         });
         variantIds = [variantId];
       }
 
-      await tx
-        .update(productSizes)
-        .set({ stock: 0 })
-        .where(inArray(productSizes.variantId, variantIds));
+      await tx.update(productSizes).set({ stock: 0 }).where(inArray(productSizes.variantId, variantIds));
 
       const firstVariantId = variantIds[0];
       const firstSize = await tx.query.productSizes.findFirst({
@@ -442,10 +465,7 @@ export async function updateAdminProduct(
       });
 
       if (firstSize) {
-        await tx
-          .update(productSizes)
-          .set({ stock: data.stock })
-          .where(eq(productSizes.id, firstSize.id));
+        await tx.update(productSizes).set({ stock: data.stock }).where(eq(productSizes.id, firstSize.id));
       } else {
         await tx.insert(productSizes).values({
           id: crypto.randomUUID(),
