@@ -307,7 +307,6 @@ export async function createAdminProduct(data: {
       category: 'footwear',
       gender: data.gender || 'unisex',
       productType: data.subcategory || 'sneakers',
-      color: data.color || '',
       featured: false,
       isVisible: true,
     });
@@ -386,7 +385,6 @@ export async function updateAdminProduct(
     if (data.description !== undefined) patch.description = data.description;
     if (data.image !== undefined) patch.imageUrl = data.image;
     if (data.brand !== undefined) patch.brand = data.brand;
-    if (data.color !== undefined) patch.color = data.color;
     if (data.gender !== undefined) patch.gender = data.gender;
     if (data.subcategory !== undefined) patch.productType = data.subcategory;
     if (data.isVisible !== undefined) patch.isVisible = data.isVisible;

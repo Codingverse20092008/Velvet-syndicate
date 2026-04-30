@@ -43,7 +43,7 @@ const productCreateSchema = z.object({
   description: z.string().min(10).max(4000),
   stock: z.number().int().min(0),
   brand: z.string().min(2).max(120),
-  color: z.string().default(''),
+  color: z.string().default('Default'),
   gender: z.enum(['men', 'women', 'unisex']).default('unisex'),
   subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).default('sneakers'),
 });
