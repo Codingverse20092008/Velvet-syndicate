@@ -33,8 +33,11 @@ export async function runReconciliation() {
       const data = JSON.parse(intent.data);
       
       try {
+        if (!orderQueue) {
+          log.warn({ intentId: intent.id }, 'Cannot re-queue: Order Queue is disabled');
+          continue;
+        }
         // Re-enqueue using the original idempotencyKey as jobId
-        // Redis unique constraint will handle cases where the job somehow exists now
         await orderQueue.add(`replayed-order-${intent.id}`, {
           ...data,
           idempotencyKey: intent.id,

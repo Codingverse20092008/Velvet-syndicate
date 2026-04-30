@@ -88,6 +88,10 @@ router.get('/status/:jobId', asyncHandler(async (req: Request, res: Response) =>
   const { jobId } = req.params;
   const { orderQueue } = await import('../lib/queue');
   
+  if (!orderQueue) {
+    return res.status(503).json({ success: false, error: 'Queue service is currently unavailable' });
+  }
+
   const job = await orderQueue.getJob(jobId);
   
   if (!job) {

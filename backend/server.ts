@@ -284,6 +284,7 @@ if (require.main === module) {
   // 2. Queue Health Monitor (Every 1 minute)
   setInterval(async () => {
     try {
+      if (!orderQueue) return;
       const counts = await orderQueue.getJobCounts('failed');
       if (counts.failed > 50) {
         await sendAlert('CRITICAL: High order failure rate detected!', { failedCount: counts.failed });

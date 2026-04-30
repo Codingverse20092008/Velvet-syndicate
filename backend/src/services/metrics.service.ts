@@ -10,6 +10,13 @@ import { logger } from '../lib/logger';
  */
 export async function getSystemMetrics() {
   try {
+    if (!orderQueue) {
+      return {
+        queue: { waiting: 0, active: 0, completed: 0, failed: 0, delayed: 0 },
+        checkouts: { lastHourTotal: 0, lastHourSuccessRate: '0%', lastHourFailed: 0 },
+        system: { uptime: process.uptime(), memory: process.memoryUsage().rss / 1024 / 1024 }
+      };
+    }
     const jobCounts = await orderQueue.getJobCounts();
     
     // Calculate checkout success rate in the last 1 hour
@@ -58,6 +65,7 @@ export async function getSystemMetrics() {
  */
 export async function runOrderRecovery() {
   logger.info('🩹 Starting order recovery scan...');
+  if (!orderQueue) return;
   const failedJobs = await orderQueue.getFailed();
   logger.info({ failedCount: failedJobs.length }, 'Recovery scan completed');
 }
@@ -67,6 +75,7 @@ export async function runOrderRecovery() {
  * Admin utility to bulk-retry jobs that exhausted all attempts.
  */
 export async function retryFailedJobs() {
+  if (!orderQueue) return { retried: 0 };
   const failedJobs = await orderQueue.getFailed();
   for (const job of failedJobs) {
     await job.retry();
