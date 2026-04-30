@@ -40,11 +40,11 @@ export default function LoyaltyPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'transactions'>('overview')
 
   const totals = {
-    totalPointsIssued: users.reduce((sum, u) => sum + u.totalPoints, 0),
-    totalPointsRedeemed: users.reduce((sum, u) => sum + u.redeemedPoints, 0),
-    totalPointsActive: users.reduce((sum, u) => sum + u.availablePoints, 0),
-    totalUsers: users.length,
-    activeUsers: users.filter(u => u.availablePoints > 0).length,
+    totalPointsIssued: (users || []).reduce((sum, u) => sum + u.totalPoints, 0),
+    totalPointsRedeemed: (users || []).reduce((sum, u) => sum + u.redeemedPoints, 0),
+    totalPointsActive: (users || []).reduce((sum, u) => sum + u.availablePoints, 0),
+    totalUsers: (users || []).length,
+    activeUsers: (users || []).filter(u => u.availablePoints > 0).length,
   }
 
   useEffect(() => {
