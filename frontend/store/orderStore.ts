@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiFetch } from '@/lib/api'
+import { enterpriseFetch, createOrderWithRetry } from '@/lib/api-enterprise'
 
 export interface OrderItem {
   id: string
@@ -90,36 +91,52 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   createOrder: async (addressId, paymentMethod = 'COD', options) => {
     set({ isLoading: true, error: null })
     try {
-      const res = await apiFetch('/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          addressId,
-          paymentMethod,
-          idempotencyKey: options?.idempotencyKey,
-          expectedVersion: options?.expectedVersion,
-        }),
+      if (!options?.idempotencyKey) {
+        throw new Error('Idempotency key is required for order creation')
+      }
+
+      const response = await createOrderWithRetry(addressId, paymentMethod, {
+        idempotencyKey: options.idempotencyKey,
+        expectedVersion: options.expectedVersion,
       })
-      const data = await res.json()
+      
+      const data = await response.json()
       const payload = data?.data ?? data
+      
       if (data.success) {
         set({ isLoading: false })
         const order = payload.order
         if (!order?.id) {
           throw new Error('Order created but response is invalid')
         }
+        
+        console.log('✅ ENTERPRISE ORDER CREATED', {
+          orderId: order.id,
+          total: order.totalAmount,
+          status: order.status,
+          alreadyExists: order.alreadyExists
+        })
+        
         return {
           id: order.id,
-          total: Number(order.total ?? 0),
+          total: Number(order.total ?? order.totalAmount ?? 0),
           status: order.status ?? 'CONFIRMED',
           paymentMethod: order.paymentMethod ?? 'COD',
           paymentStatus: order.paymentStatus ?? 'PENDING',
         }
       } else {
-        throw new Error(data.error || 'Failed to place order')
+        const error = new Error(data.error || 'Failed to place order') as any
+        error.status = response.status
+        throw error
       }
-    } catch (err) {
-      set({ error: (err as Error).message, isLoading: false })
+    } catch (err: any) {
+      console.error('❌ ENTERPRISE ORDER FAILED:', {
+        error: err.message,
+        status: err.status,
+        stack: err.stack
+      })
+      
+      set({ error: err.message, isLoading: false })
       throw err
     }
   },

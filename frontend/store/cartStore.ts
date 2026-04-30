@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { apiFetch } from '@/lib/api'
+import { checkoutLock } from '@/lib/checkout-lock'
 
 
 export interface CartItem {
@@ -23,6 +25,7 @@ interface CartState {
   totalItems: number
   totalPrice: number
   version: number
+  checkoutInProgress: boolean // NEW: Prevent mutations during checkout
   syncCart: () => Promise<void>
   fetchCart: () => Promise<void>
   addItem: (item: Omit<CartItem, 'quantity'>) => Promise<void>
@@ -33,6 +36,7 @@ interface CartState {
   closeCart: () => void
   recalculate: () => void
   setHasHydrated: (val: boolean) => void
+  setCheckoutInProgress: (inProgress: boolean) => void // NEW: Control checkout state
 }
 
 export const useCartStore = create<CartState>()(
@@ -46,6 +50,7 @@ export const useCartStore = create<CartState>()(
       totalItems: 0,
       totalPrice: 0,
       version: 0,
+      checkoutInProgress: false, // NEW: Initialize checkout state
 
       recalculate: () => {
         const items = get().items
@@ -56,34 +61,85 @@ export const useCartStore = create<CartState>()(
       },
 
       syncCart: async () => {
+        // 🛡️ GLOBAL SYNC LOCK CHECK (Synchronous)
+        if (checkoutLock.isLocked()) {
+          console.log('🚫 Cart sync blocked - global lock active')
+          return
+        }
+        
+        // 🛡️ STORE LOCK CHECK
+        const { checkoutInProgress, isProcessing } = get()
+        if (checkoutInProgress || isProcessing) {
+          console.log('🚫 Cart sync blocked - state locked')
+          return
+        }
+        
         const localItems = get().items
         if (localItems.length === 0) return
+        
         try {
-          for (const item of localItems) {
-            await fetch('/api/cart', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                productId: item.id,
-                variantId: item.variantId,
-                size: item.size,
-                quantity: item.quantity,
-              }),
-            })
+          set({ isProcessing: true })
+          const res = await apiFetch('/cart')
+          
+          // 🛡️ RE-CHECK LOCK: State might have changed during the network call
+          if (get().checkoutInProgress) {
+            console.log('🚫 Cart sync aborted - checkout started during fetch')
+            return
           }
-          set((state) => ({ version: state.version + 1 }))
+
+          const data = await res.json()
+          const payload = data?.data ?? data
+          
+          if (!data.success) {
+            throw new Error('Failed to fetch backend cart for sync')
+          }
+
+          const backendItems = payload.cart?.items || []
+
+          // 🔄 SMART SYNC - Only add missing items
+          for (const item of localItems) {
+            const exists = backendItems.find((bi: any) => 
+              bi.productId === item.id && bi.variantId === item.variantId && bi.size === item.size
+            )
+            
+            if (!exists) {
+              console.log(`🛒 Syncing missing item to backend: ${item.name}`)
+              await apiFetch('/cart', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  productId: item.id,
+                  variantId: item.variantId,
+                  size: item.size,
+                  quantity: item.quantity,
+                }),
+              })
+            }
+          }
+          
+          // Fetch final state from backend
+          await get().fetchCart()
         } catch (error) {
-          console.error('Failed to sync local cart:', error)
+          console.error('❌ Cart sync failed:', error)
+        } finally {
+          set({ isProcessing: false })
         }
       },
 
       fetchCart: async () => {
+        // 🛡️ GLOBAL LOCK CHECK
+        if (checkoutLock.isLocked() || get().checkoutInProgress) {
+          console.log('🚫 Cart fetch blocked - checkout in progress')
+          return
+        }
+        
         set({ isLoading: true })
         try {
-          const res = await fetch('/api/cart')
+          const res = await apiFetch('/cart')
           const data = await res.json()
+          const payload = data?.data ?? data
           if (data.success) {
-            const mappedItems = data.data.cart.items.map((item: any) => ({
+            const mappedItems = payload.cart?.items?.map((item: any) => ({
               id: item.productId,
               variantId: item.variantId,
               variantName: item.variant?.name !== 'Standard' ? item.variant?.name : undefined,
@@ -93,8 +149,11 @@ export const useCartStore = create<CartState>()(
               image: item.variant?.images?.[0]?.imageUrl || item.product.imageUrl,
               size: item.size,
               quantity: item.quantity,
-            }))
-            set({ items: mappedItems })
+            })) || []
+            set({ 
+              items: mappedItems,
+              version: payload.cart?.version || 0 
+            })
             get().recalculate()
           }
         } catch (error) {
@@ -105,7 +164,11 @@ export const useCartStore = create<CartState>()(
       },
 
       addItem: async (item) => {
-        if (get().isProcessing) return
+        // 🚫 BLOCK MUTATIONS DURING CHECKOUT
+        if (get().isProcessing || get().checkoutInProgress) {
+          console.log('🚫 Add item blocked - cart processing or checkout in progress')
+          return
+        }
         set({ isProcessing: true })
         try {
           const items = get().items
@@ -121,7 +184,7 @@ export const useCartStore = create<CartState>()(
 
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
-            await fetch('/api/cart', {
+            await apiFetch('/cart', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ ...item, quantity: 1, productId: item.id }),
@@ -133,7 +196,11 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: async (productId, variantId, size) => {
-        if (get().isProcessing) return
+        // 🚫 BLOCK MUTATIONS DURING CHECKOUT
+        if (get().isProcessing || get().checkoutInProgress) {
+          console.log('🚫 Remove item blocked - cart processing or checkout in progress')
+          return
+        }
         set({ isProcessing: true })
         try {
           set((state) => ({
@@ -142,7 +209,7 @@ export const useCartStore = create<CartState>()(
           get().recalculate()
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
-            await fetch(`/api/cart?productId=${productId}&variantId=${variantId}&size=${size}`, { method: 'DELETE' })
+            await apiFetch(`/cart?productId=${productId}&variantId=${variantId}&size=${size}`, { method: 'DELETE' })
           }
         } finally {
           set({ isProcessing: false })
@@ -150,7 +217,11 @@ export const useCartStore = create<CartState>()(
       },
 
       updateQuantity: async (productId, variantId, size, quantity) => {
-        if (get().isProcessing) return
+        // 🚫 BLOCK MUTATIONS DURING CHECKOUT
+        if (get().isProcessing || get().checkoutInProgress) {
+          console.log('🚫 Update quantity blocked - cart processing or checkout in progress')
+          return
+        }
         set({ isProcessing: true })
         try {
           if (quantity <= 0) {
@@ -166,7 +237,7 @@ export const useCartStore = create<CartState>()(
           get().recalculate()
           const { useAuthStore } = await import('@/store/authStore')
           if (useAuthStore.getState().isAuthenticated) {
-            await fetch('/api/cart', {
+            await apiFetch('/cart', {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ productId, variantId, size, quantity }),
@@ -178,12 +249,25 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: () => {
-        set({ items: [], totalItems: 0, totalPrice: 0 })
+        console.log('🧹 CLEARING CART STORE')
+        set({ 
+          items: [], 
+          totalItems: 0, 
+          totalPrice: 0, 
+          checkoutInProgress: false,
+          version: get().version + 1 // Increment version locally to ensure freshness
+        })
       },
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
       closeCart: () => set({ isOpen: false }),
       setHasHydrated: (val: boolean) => set({ hasHydrated: val }),
+      
+      // NEW: Control checkout state to prevent mutations
+      setCheckoutInProgress: (inProgress: boolean) => {
+        console.log(`🛒 Checkout state: ${inProgress ? 'IN PROGRESS' : 'COMPLETED'}`)
+        set({ checkoutInProgress: inProgress })
+      },
     }),
     {
       name: 'velvet-cart',

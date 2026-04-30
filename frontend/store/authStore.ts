@@ -56,9 +56,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const data = await res.json()
       if (data.success && data.data.user) {
         set({ user: data.data.user, isAuthenticated: true })
-        // Sync local cart to backend after login
+        // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
         const { useCartStore } = await import('@/store/cartStore')
-        await useCartStore.getState().syncCart()
+        if (!useCartStore.getState().checkoutInProgress) {
+          await useCartStore.getState().syncCart()
+        } else {
+          console.log('🚫 Cart sync blocked during checkout - auth check')
+        }
       } else {
         set({ user: null, isAuthenticated: false })
       }
@@ -100,9 +104,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         if (userData.success && userData.data.user) {
           set({ user: userData.data.user, isAuthenticated: true, isLoading: false })
-          // Sync local cart to backend after login
+          // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
           const { useCartStore } = await import('@/store/cartStore')
-          await useCartStore.getState().syncCart()
+          if (!useCartStore.getState().checkoutInProgress) {
+            await useCartStore.getState().syncCart()
+          } else {
+            console.log('🚫 Cart sync blocked during checkout - login')
+          }
           return { success: true }
         }
       }

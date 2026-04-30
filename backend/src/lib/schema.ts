@@ -134,14 +134,32 @@ export const orders = sqliteTable('orders', {
   status: text('status', { enum: ['PENDING', 'CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'FAILED'] }).notNull().default('PENDING'),
   paymentStatus: text('payment_status', { enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'] }).notNull().default('PENDING'),
   paymentMethod: text('payment_method').notNull().default('COD'),
-  shippingAddress: text('shipping_address').notNull(), // This will store the JSON snapshot
-  idempotencyKey: text('idempotency_key'),
+  shippingAddress: text('shipping_address').notNull(),
+  idempotencyKey: text('idempotency_key').notNull(),
+  // 🔍 DISTRIBUTED TRACING
+  jobId: text('job_id'),
+  requestId: text('request_id'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
   userIdIdx: index('orders_user_id_idx').on(table.userId),
   statusIdx: index('orders_status_idx').on(table.status),
+  createdAtIdx: index('orders_created_at_idx').on(table.createdAt),
   idempotencyKeyIdx: uniqueIndex('orders_idempotency_key_idx').on(table.idempotencyKey),
+}));
+
+// 🛡️ DUAL PERSISTENCE: Write-Ahead Log for Order Intents
+export const orderIntents = sqliteTable('order_intents', {
+  id: text('id').primaryKey(), // Usually same as idempotencyKey
+  userId: text('user_id').notNull().references(() => users.id),
+  data: text('data').notNull(), // JSON blob of order details
+  status: text('status', { enum: ['QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED'] }).notNull().default('QUEUED'),
+  error: text('error'),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  userIdIdx: index('order_intents_user_id_idx').on(table.userId),
+  statusIdx: index('order_intents_status_idx').on(table.status),
 }));
 
 export const orderItems = sqliteTable('order_items', {

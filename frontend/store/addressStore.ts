@@ -33,8 +33,9 @@ export const useAddressStore = create<AddressState>((set, get) => ({
     try {
       const res = await apiFetch('/user/addresses')
       const data = await res.json()
+      const payload = data?.data ?? data
       if (data.success) {
-        set({ addresses: data.addresses, isLoading: false })
+        set({ addresses: payload.addresses ?? [], isLoading: false })
       } else {
         throw new Error(data.error || 'Failed to fetch addresses')
       }
@@ -60,6 +61,8 @@ export const useAddressStore = create<AddressState>((set, get) => ({
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false })
       throw err
+    } finally {
+      set({ isLoading: false })
     }
   },
 
@@ -80,6 +83,8 @@ export const useAddressStore = create<AddressState>((set, get) => ({
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false })
       throw err
+    } finally {
+      set({ isLoading: false })
     }
   },
 
@@ -98,6 +103,8 @@ export const useAddressStore = create<AddressState>((set, get) => ({
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false })
       throw err
+    } finally {
+      set({ isLoading: false })
     }
   },
 
@@ -116,6 +123,8 @@ export const useAddressStore = create<AddressState>((set, get) => ({
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false })
       throw err
+    } finally {
+      set({ isLoading: false })
     }
   },
 }))

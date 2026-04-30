@@ -208,17 +208,29 @@ export function authenticateUser(payload: JWTPayload, userData?: Partial<AuthUse
 // HYBRID AUTH: Only refresh token in cookie, access token returned in body + Authorization header
 export function setAuthCookiesExpress(res: ExpressResponse, tokens: TokenPair): void {
   const isProduction = process.env.NODE_ENV === 'production';
-  // For cross-domain auth: sameSite must be 'none' and secure must be true in production
-  const sameSite = isProduction ? 'none' : 'lax';
+  // 🔴 CRITICAL FOR CROSS-DOMAIN: sameSite must be 'none' and secure must be true
+  const sameSite = 'none'; // Always 'none' for cross-domain (Vercel → Render)
+  const secure = true; // Always true when sameSite is 'none'
 
-  // Only set refresh token in HTTP-only cookie (access token goes in response body + Authorization header)
+  logger.info({ isProduction, sameSite, secure }, 'Setting auth cookies with cross-domain config');
+
+  // Set refresh token in HTTP-only cookie
   res.cookie('refresh_token', tokens.refreshToken, {
     httpOnly: true,
-    secure: true, // Must be true for cross-domain cookies
-    sameSite: sameSite,
+    secure: secure, // 🔴 MUST be true for cross-domain
+    sameSite: sameSite, // 🔴 MUST be 'none' for cross-domain
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    domain: isProduction ? undefined : undefined, // Explicit domain for cross-domain
+    domain: isProduction ? undefined : undefined,
+  });
+
+  // Also set access token in cookie for redundant auth (fallback)
+  res.cookie('access_token', tokens.accessToken, {
+    httpOnly: true,
+    secure: secure,
+    sameSite: sameSite,
+    path: '/',
+    maxAge: 15 * 60 * 1000, // 15 minutes
   });
 }
 

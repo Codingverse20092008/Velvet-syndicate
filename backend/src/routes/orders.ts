@@ -3,6 +3,9 @@ import { createOrder, getOrdersByUserId, getOrderById } from '../services/order.
 import { getUserFromRequest } from '../lib/auth-express';
 import { asyncHandler } from '../lib/api-handler-express';
 import { successResponse } from '../lib/api-response-express';
+import { db } from '../lib/db';
+import { orders } from '../lib/schema';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { checkRateLimit } from '../lib/rate-limit';
 import { RateLimitError } from '../lib/errors';
@@ -76,8 +79,40 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
   );
 
   const statusCode = ('alreadyExists' in order && order.alreadyExists) ? 200 : 201;
-  return successResponse(res, { order, message: 'Order placed successfully' }, statusCode);
+  return successResponse(res, { order, message: 'Order is being processed' }, statusCode);
 }));
 
+// GET /api/orders/status/:jobId
+// 🔍 JOB TRACKING: Allows clients to poll for completion of async checkout
+router.get('/status/:jobId', asyncHandler(async (req: Request, res: Response) => {
+  const { jobId } = req.params;
+  const { orderQueue } = await import('../lib/queue');
+  
+  const job = await orderQueue.getJob(jobId);
+  
+  if (!job) {
+    // Check if order already exists in DB (meaning it finished and was removed from queue)
+    const order = await db.query.orders.findFirst({
+      where: eq(orders.idempotencyKey, jobId),
+      with: { items: true }
+    });
+
+    if (order) {
+      return successResponse(res, { status: 'completed', order: mapOrderForClient(order) });
+    }
+    
+    return res.status(404).json({ success: false, error: 'Job not found' });
+  }
+
+  const state = await job.getState();
+  const result = job.returnvalue;
+  const error = job.failedReason;
+
+  return successResponse(res, { 
+    status: state, // 'waiting' | 'active' | 'completed' | 'failed'
+    order: result ? mapOrderForClient(result) : null,
+    error: error || null
+  });
+}));
 
 export default router;
