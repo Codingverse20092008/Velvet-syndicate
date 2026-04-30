@@ -3,27 +3,33 @@ import IORedis from 'ioredis';
 import { env } from './env';
 import { logger } from './logger';
 
-// 🛡️ Redis connection for BullMQ (TCP/IORedis based)
-const connection = new IORedis(env.REDIS_URL || 'redis://localhost:6379', {
-  maxRetriesPerRequest: null, // Required by BullMQ
-});
+const useRedis = env.REDIS_URL && (env.REDIS_URL.startsWith('redis://') || env.REDIS_URL.startsWith('rediss://'));
 
-connection.on('error', (err) => {
-  logger.error({ err }, 'Redis Queue Connection Error');
-});
+const connection = useRedis 
+  ? new IORedis(env.REDIS_URL!, { maxRetriesPerRequest: null }) 
+  : null;
 
-// 🎯 Order Processing Queue
-export const orderQueue = new Queue('order-processing', {
-  connection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: 'exponential',
-      delay: 5000,
-    },
-    removeOnComplete: true,
-    removeOnFail: false,
-  },
-});
+if (connection) {
+  connection.on('error', (err) => {
+    logger.error({ err }, 'Redis Queue Connection Error');
+  });
+}
 
-logger.info('🚀 Order Queue Initialized');
+// 🎯 Order Processing Queue (Optional)
+export const orderQueue = useRedis && connection 
+  ? new Queue('order-processing', {
+      connection,
+      defaultJobOptions: {
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 5000 },
+        removeOnComplete: true,
+        removeOnFail: false,
+      },
+    })
+  : null;
+
+if (orderQueue) {
+  logger.info('🚀 Order Queue Initialized (Redis-backed)');
+} else {
+  logger.warn('⚠️ Order Queue Disabled (Redis not configured) - Falling back to sync processing');
+}

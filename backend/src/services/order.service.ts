@@ -48,6 +48,27 @@ export async function createOrder(
     data: JSON.stringify({ addressId, paymentMethod, expectedVersion, requestId }),
   }).onConflictDoNothing();
 
+  // 3. PUSH TO DISTRIBUTED QUEUE WITH PRIORITY (Fallback to sync if Queue disabled)
+  if (!orderQueue) {
+    logger.info({ userId }, '🔄 Falling back to synchronous order processing (Redis Queue disabled)');
+    const result = await createOrderInDB(
+      userId,
+      addressId,
+      paymentMethod,
+      idempotencyKey,
+      expectedVersion,
+      'sync-processed',
+      requestId
+    );
+    return {
+      id: result.id,
+      status: 'CONFIRMED',
+      message: 'Order processed synchronously',
+      alreadyExists: result.alreadyExists || false,
+      fromQueue: false
+    };
+  }
+
   // 2. BACKPRESSURE GUARD: Check queue size to prevent system overload
   const jobCounts = await orderQueue.getJobCounts('waiting', 'active');
   const totalBacklog = jobCounts.waiting + jobCounts.active;
@@ -57,8 +78,7 @@ export async function createOrder(
     throw new Error('System is currently busy. Please try again in a moment.');
   }
 
-  // 3. PUSH TO DISTRIBUTED QUEUE WITH PRIORITY
-  // Pass the original requestId to maintain the trace across the async boundary
+  // 3. PUSH TO DISTRIBUTED QUEUE
   const job = await orderQueue.add(`order-${idempotencyKey}`, {
     userId,
     addressId,
@@ -68,7 +88,7 @@ export async function createOrder(
     requestId
   }, {
     jobId: idempotencyKey,
-    priority: 10, // Default priority (lower = higher priority)
+    priority: 10,
   });
 
   logger.info({ jobId: job.id, userId, totalBacklog }, '📥 Order queued for processing');
