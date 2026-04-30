@@ -20,6 +20,7 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   RATE_LIMIT_WINDOW: z.coerce.number().default(60),
   LOG_LEVEL: z.string().default('info'),
+  ALERT_WEBHOOK_URL: z.string().url().optional(),
 });
 
 export const env = envSchema.parse(process.env);

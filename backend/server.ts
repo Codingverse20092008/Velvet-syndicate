@@ -18,6 +18,10 @@ import userRoutes from './src/routes/user';
 import addressRoutes from './src/routes/address';
 import eventsRoutes from './src/routes/events';
 import feedbackRoutes from './src/routes/feedback';
+import metricsRoutes from './src/routes/metrics';
+import { runReconciliation } from './src/services/reconciliation.service';
+import { sendAlert } from './src/lib/alerts';
+import { orderQueue } from './src/lib/queue';
 import adminRoutes from './src/routes/admin';
 import { dbClient } from './src/lib/db';
 import { redis } from './src/lib/redis';
@@ -66,7 +70,7 @@ app.use((req: any, res, next) => {
 // 🚀 PERFORMANCE: Request Logging
 app.use(pinoHttp({
   logger,
-  customLogLevel: (res, err) => ((res.statusCode || 500) >= 500 || err ? 'error' : 'info'),
+  customLogLevel: (res: any, err: any) => ((res.statusCode || 500) >= 500 || err ? 'error' : 'info'),
 }));
 
 // 🚀 PERFORMANCE: Cache-Control for GET requests
@@ -246,8 +250,6 @@ app.get('/metrics', (req: Request, res: Response) => {
 // Import error handler
 import { errorHandler } from './src/lib/api-handler-express';
 
-import metricsRoutes from './src/routes/metrics';
-
 // API Routes - Apply stricter rate limiting to auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/cart', cartRoutes);
@@ -270,37 +272,26 @@ const server = app.listen(PORT, () => {
 
 // ─── BACKGROUND SERVICES + GRACEFUL SHUTDOWN (main process only) ───────────────
 if (require.main === module) {
-  // Use async IIFE — top-level await is illegal in CJS modules
-  (async () => {
+  // 1. Reconciliation Loop (Every 2 minutes)
+  setInterval(async () => {
     try {
-      // Note: import paths without .ts extension (runtime uses compiled JS)
-      const { runReconciliation } = await import('./src/services/reconciliation.service');
-      const { sendAlert } = await import('./src/lib/alerts');
-
-      // 1. Reconciliation Loop (Every 2 minutes)
-      setInterval(async () => {
-        try { await runReconciliation(); } catch (err) {
-          logger.error({ err }, 'Reconciliation failed');
-        }
-      }, 120000);
-
-      // 2. Queue Health Monitor (Every 1 minute)
-      setInterval(async () => {
-        try {
-          const { orderQueue } = await import('./src/lib/queue');
-          const counts = await orderQueue.getJobCounts('failed');
-          if (counts.failed > 50) {
-            await sendAlert('CRITICAL: High order failure rate detected!', { failedCount: counts.failed });
-          }
-        } catch (err) { /* Redis/queue optional — non-fatal */ }
-      }, 60000);
-
-      logger.info('Background monitoring services started');
+      await runReconciliation();
     } catch (err) {
-      // Non-fatal — reconciliation is optional
-      logger.error({ err }, 'Failed to initialize background services (non-fatal)');
+      logger.error({ err }, 'Reconciliation failed');
     }
-  })();
+  }, 120000);
+
+  // 2. Queue Health Monitor (Every 1 minute)
+  setInterval(async () => {
+    try {
+      const counts = await orderQueue.getJobCounts('failed');
+      if (counts.failed > 50) {
+        await sendAlert('CRITICAL: High order failure rate detected!', { failedCount: counts.failed });
+      }
+    } catch (err) { /* Redis/queue optional — non-fatal */ }
+  }, 60000);
+
+  logger.info('Background monitoring services started');
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────────
   const shutdown = async (signal: string) => {
