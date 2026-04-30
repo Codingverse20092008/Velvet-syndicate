@@ -59,7 +59,9 @@ export default function AdminProductsPage() {
 
   const title = useMemo(() => (editingProduct ? 'Edit Product' : 'Add Product'), [editingProduct])
 
-  const getFullImageUrl = (url: string): string => {
+  const getFullImageUrl = (url: string | undefined | null): string => {
+    // Handle undefined/null
+    if (!url) return ''
     // If URL is already absolute, return it
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url
@@ -86,12 +88,12 @@ export default function AdminProductsPage() {
       })
       
       const data = await res.json()
-      if (data.success) {
+      if (data.success && data.imageUrl) {
         const fullImageUrl = getFullImageUrl(data.imageUrl)
         setForm((prev) => ({ ...prev, image: fullImageUrl }))
         setImagePreview(fullImageUrl)
       } else {
-        throw new Error(data.error || 'Upload failed')
+        throw new Error(data.error || 'Upload failed - no image URL returned')
       }
     } catch (err) {
       console.error('Image upload failed:', err)
@@ -118,12 +120,12 @@ export default function AdminProductsPage() {
       })
       
       const data = await res.json()
-      if (data.success) {
-        const fullImageUrls = data.imageUrls.map((url: string) => getFullImageUrl(url))
+      if (data.success && data.imageUrls && Array.isArray(data.imageUrls)) {
+        const fullImageUrls = data.imageUrls.map((url: string) => getFullImageUrl(url)).filter(Boolean)
         setForm((prev) => ({ ...prev, images: [...prev.images, ...fullImageUrls] }))
         setImagePreviews(prev => [...prev, ...fullImageUrls])
       } else {
-        throw new Error(data.error || 'Upload failed')
+        throw new Error(data.error || 'Upload failed - no image URLs returned')
       }
     } catch (err) {
       console.error('Multiple image upload failed:', err)

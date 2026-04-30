@@ -46,7 +46,7 @@ export default function CollectionPage() {
   }, [])
 
   // Helper to get full image URL
-  const getFullImageUrl = (url: string): string => {
+  const getFullImageUrl = (url: string | undefined | null): string => {
     if (!url) return '/images/placeholder-product.png'
     // If URL is already absolute, return it
     if (url.startsWith('http://') || url.startsWith('https://')) {
