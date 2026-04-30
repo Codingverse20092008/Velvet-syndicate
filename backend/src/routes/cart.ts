@@ -37,12 +37,22 @@ router.patch('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
   const body = req.body;
 
-  const itemId = body.itemId;
-  if (!itemId) throw new ValidationError('Item ID is required');
+  const { itemId, productId, variantId, size, quantity } = req.body;
+  
+  let targetItemId = itemId;
 
-  const { quantity } = updateCartItemSchema.parse(body);
+  if (!targetItemId && productId && variantId && size) {
+    const cartData = await getCartWithItems(user.id);
+    const item = cartData.items.find((i: any) => 
+      i.productId === productId && i.variantId === variantId && i.size === size
+    );
+    if (item) targetItemId = item.id;
+  }
 
-  await updateCartItemQuantity(user.id, itemId, quantity);
+  if (!targetItemId) throw new ValidationError('Item ID or product identifiers required');
+
+  const parsed = updateCartItemSchema.parse({ quantity });
+  await updateCartItemQuantity(user.id, targetItemId, parsed.quantity);
 
   return successResponse(res, { message: 'Cart updated' });
 }));
