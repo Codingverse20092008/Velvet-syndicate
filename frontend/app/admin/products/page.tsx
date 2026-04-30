@@ -88,12 +88,16 @@ export default function AdminProductsPage() {
       })
       
       const data = await res.json()
-      if (data.success && data.imageUrl) {
-        const fullImageUrl = getFullImageUrl(data.imageUrl)
+      console.log('Upload response:', data)
+      // Backend wraps response in data.data property
+      const responseData = data.data || data
+      if (data.success && responseData.imageUrl) {
+        const fullImageUrl = getFullImageUrl(responseData.imageUrl)
         setForm((prev) => ({ ...prev, image: fullImageUrl }))
         setImagePreview(fullImageUrl)
       } else {
-        throw new Error(data.error || 'Upload failed - no image URL returned')
+        console.error('Upload failed - response:', data)
+        throw new Error(data.error || `Upload failed - ${!data.success ? 'success=false' : 'no imageUrl'}`)
       }
     } catch (err) {
       console.error('Image upload failed:', err)
@@ -120,11 +124,15 @@ export default function AdminProductsPage() {
       })
       
       const data = await res.json()
-      if (data.success && data.imageUrls && Array.isArray(data.imageUrls)) {
-        const fullImageUrls = data.imageUrls.map((url: string) => getFullImageUrl(url)).filter(Boolean)
+      console.log('Multiple upload response:', data)
+      // Backend wraps response in data.data property
+      const responseData = data.data || data
+      if (data.success && responseData.imageUrls && Array.isArray(responseData.imageUrls)) {
+        const fullImageUrls = responseData.imageUrls.map((url: string) => getFullImageUrl(url)).filter(Boolean)
         setForm((prev) => ({ ...prev, images: [...prev.images, ...fullImageUrls] }))
         setImagePreviews(prev => [...prev, ...fullImageUrls])
       } else {
+        console.error('Multiple upload failed - response:', data)
         throw new Error(data.error || 'Upload failed - no image URLs returned')
       }
     } catch (err) {
