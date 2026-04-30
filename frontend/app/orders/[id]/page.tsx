@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { 
   ChevronLeft, Loader2, MapPin, 
-  Calendar, CreditCard, Hash, Package, RefreshCcw, WifiOff
+  Calendar, CreditCard, Hash, Package, RefreshCcw, WifiOff, XCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -15,6 +15,7 @@ import { formatPrice } from '@/lib/utils'
 import { OrderItemsTable } from '@/components/orders/OrderDetails'
 import { OrderTimeline } from '@/components/orders/OrderTimeline'
 import { StatusMessage } from '@/components/orders/StatusMessage'
+import { apiFetch } from '@/lib/api'
 
 interface OrderDetailsPageProps {
   params: { id: string }
@@ -29,11 +30,28 @@ function safeParseAddress(raw?: string) {
   }
 }
 
+const CANCEL_REASONS = [
+  'Changed my mind',
+  'Ordered by mistake',
+  'Found a better price',
+  'Need to change size',
+  'Need to change address',
+  'Delivery will take too long',
+  'Payment issue',
+  'Duplicate order',
+  'Product no longer needed',
+  'Other reason',
+]
+
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const { id } = params
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
   const { currentOrder, fetchOrderById, isLoading: orderLoading, error } = useOrderStore()
   const router = useRouter()
+  const [isCancelOpen, setIsCancelOpen] = useState(false)
+  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0])
+  const [cancelMessage, setCancelMessage] = useState<string | null>(null)
+  const [isCancelSubmitting, setIsCancelSubmitting] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -101,6 +119,32 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const address = currentOrder.addressSnapshot ?? safeParseAddress(currentOrder.shippingAddress)
   const totalAmount = Number(currentOrder.total ?? currentOrder.totalAmount ?? 0)
   const isNetworkWarningVisible = Boolean(error)
+  const canRequestCancel = currentOrder.status === 'PENDING' || currentOrder.status === 'CONFIRMED'
+
+  const submitCancelRequest = async () => {
+    setIsCancelSubmitting(true)
+    setCancelMessage(null)
+
+    try {
+      const res = await apiFetch(`/orders/${currentOrder.id}/cancel-request`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: cancelReason }),
+      })
+      const data = await res.json()
+
+      if (!data.success) {
+        throw new Error(data.error || 'Could not submit cancellation request')
+      }
+
+      setCancelMessage('Cancellation request submitted.')
+      setIsCancelOpen(false)
+      await fetchOrderById(currentOrder.id)
+    } catch (err) {
+      setCancelMessage((err as Error).message)
+    } finally {
+      setIsCancelSubmitting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-black pt-32 pb-20">
@@ -142,6 +186,71 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
               <StatusMessage status={currentOrder.status} />
               <OrderTimeline status={currentOrder.status} />
             </div>
+
+            {canRequestCancel && (
+              <div className="bg-velvet-dark border border-white/10 rounded-2xl p-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-sm font-heading text-velvet-white tracking-wide uppercase">Need to cancel?</h2>
+                    <p className="mt-2 text-sm text-velvet-muted">
+                      You can request cancellation before the order is shipped.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setIsCancelOpen((value) => !value)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-rose-300/35 px-4 py-3 text-[10px] uppercase tracking-widest text-rose-100 transition-colors hover:bg-rose-400/10"
+                  >
+                    <XCircle size={14} /> Cancel Request
+                  </button>
+                </div>
+
+                {cancelMessage && (
+                  <p className="mt-4 text-sm text-amber-100">{cancelMessage}</p>
+                )}
+
+                <AnimatePresence>
+                  {isCancelOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      className="mt-6 border-t border-white/10 pt-6"
+                    >
+                      <label htmlFor="cancel-reason" className="text-[10px] uppercase tracking-widest text-velvet-muted">
+                        Select Reason
+                      </label>
+                      <select
+                        id="cancel-reason"
+                        value={cancelReason}
+                        onChange={(event) => setCancelReason(event.target.value)}
+                        className="mt-3 w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-velvet-white outline-none focus:border-rose-300/50"
+                      >
+                        {CANCEL_REASONS.map((reason) => (
+                          <option key={reason} value={reason}>
+                            {reason}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          onClick={submitCancelRequest}
+                          disabled={isCancelSubmitting}
+                          className="rounded-xl bg-rose-300 px-4 py-3 text-[10px] uppercase tracking-widest text-black disabled:opacity-60"
+                        >
+                          {isCancelSubmitting ? 'Submitting...' : 'Submit Request'}
+                        </button>
+                        <button
+                          onClick={() => setIsCancelOpen(false)}
+                          className="rounded-xl border border-white/10 px-4 py-3 text-[10px] uppercase tracking-widest text-velvet-muted hover:text-white"
+                        >
+                          Keep Order
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
 
             <div className="bg-velvet-dark border border-white/10 rounded-2xl p-6">
               <h2 className="text-sm font-heading text-velvet-white tracking-wide uppercase mb-6">Order Summary</h2>

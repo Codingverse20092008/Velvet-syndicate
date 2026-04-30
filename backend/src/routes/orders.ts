@@ -1,5 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { createOrder, getOrdersByUserId, getOrderById, getOrderIntentStatus } from '../services/order.service';
+import {
+  createOrder,
+  getOrdersByUserId,
+  getOrderById,
+  getOrderIntentStatus,
+  requestOrderCancellation,
+} from '../services/order.service';
 import { getUserFromRequest } from '../lib/auth-express';
 import { asyncHandler } from '../lib/api-handler-express';
 import { successResponse } from '../lib/api-response-express';
@@ -14,6 +20,21 @@ const createOrderSchema = z.object({
   paymentMethod: z.literal('COD').optional().default('COD'),
   idempotencyKey: z.string().min(8, 'Idempotency key is required'),
   expectedVersion: z.number().optional(),
+});
+
+const cancelOrderSchema = z.object({
+  reason: z.enum([
+    'Changed my mind',
+    'Ordered by mistake',
+    'Found a better price',
+    'Need to change size',
+    'Need to change address',
+    'Delivery will take too long',
+    'Payment issue',
+    'Duplicate order',
+    'Product no longer needed',
+    'Other reason',
+  ]),
 });
 
 function parseAddressSnapshot(value: string) {
@@ -69,6 +90,18 @@ router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   }
 
   return successResponse(res, { order: mapOrderForClient(order) });
+}));
+
+// POST /api/orders/:id/cancel-request
+router.post('/:id/cancel-request', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const data = cancelOrderSchema.parse(req.body);
+  const order = await requestOrderCancellation(req.params.id, user.id, data.reason);
+
+  return successResponse(res, {
+    order: order ? mapOrderForClient(order) : null,
+    message: 'Cancellation request submitted',
+  });
 }));
 
 // POST /api/orders

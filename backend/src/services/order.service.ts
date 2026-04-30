@@ -71,6 +71,8 @@ type EnqueueResult = {
   reason?: string;
 };
 
+const CUSTOMER_CANCELLATION_ELIGIBLE_STATUSES = ['PENDING', 'CONFIRMED'] as const;
+
 let orderPersistenceReady: Promise<void> | null = null;
 
 export async function ensureOrderPersistenceCompatibility() {
@@ -638,4 +640,36 @@ export async function getOrderById(id: string, userId: string) {
     where: and(eq(orders.id, id), eq(orders.userId, userId)),
     with: { items: true }
   });
+}
+
+export async function requestOrderCancellation(orderId: string, userId: string, reason: string) {
+  await ensureOrderPersistenceCompatibility();
+
+  const order = await db.query.orders.findFirst({
+    where: and(eq(orders.id, orderId), eq(orders.userId, userId)),
+    columns: {
+      id: true,
+      status: true,
+    },
+  });
+
+  if (!order) {
+    throw new NotFoundError('Order');
+  }
+
+  if (!CUSTOMER_CANCELLATION_ELIGIBLE_STATUSES.includes(order.status as any)) {
+    throw new ValidationError('Cancellation request is available only before the order is shipped.');
+  }
+
+  await db
+    .update(orders)
+    .set({
+      status: 'CANCELLED',
+      updatedAt: new Date().toISOString(),
+    })
+    .where(and(eq(orders.id, orderId), eq(orders.userId, userId)));
+
+  logger.info({ orderId, userId, reason }, 'Customer cancellation requested');
+
+  return getOrderById(orderId, userId);
 }

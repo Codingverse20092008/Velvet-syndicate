@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { CalendarDays, IndianRupee, Package, Star, Truck } from 'lucide-react'
+import { CalendarDays, IndianRupee, Package, Star } from 'lucide-react'
 import { format } from 'date-fns'
 import { formatPrice } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
@@ -91,20 +91,10 @@ export function UserStats() {
           animate={{ opacity: 1, y: 0 }}
           className="bg-indigo-500/10 border border-indigo-400/30 rounded-xl p-4"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-widest text-indigo-200 mb-1">Active Order</div>
-              <div className="text-sm text-white flex items-center gap-2">
-                <Truck size={14} className="text-indigo-300" />
-                #{stats.activeOrder.id.slice(0, 8).toUpperCase()} • {stats.activeOrder.status}
-              </div>
-              <div className="text-xs text-indigo-100/80 mt-1">
-                Your order is on the way.
-              </div>
-            </div>
+          <div className="flex justify-end">
             <Link
               href="/orders"
-              className="text-[10px] uppercase tracking-widest px-3 py-2 rounded-lg border border-indigo-300/40 text-indigo-100 hover:bg-indigo-400/10"
+              className="text-[10px] uppercase tracking-widest px-4 py-3 rounded-lg border border-indigo-300/40 text-indigo-100 hover:bg-indigo-400/10"
             >
               Order History
             </Link>

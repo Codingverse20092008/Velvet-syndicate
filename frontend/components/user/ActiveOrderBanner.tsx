@@ -19,6 +19,16 @@ export function ActiveOrderBanner() {
   const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(null)
   const [isVisible, setIsVisible] = useState(false)
 
+  function shouldShowOrder(orderId: string) {
+    if (typeof window === 'undefined') return false
+    return sessionStorage.getItem(`velvet_active_order_banner:${orderId}`) !== 'shown'
+  }
+
+  function markOrderShown(orderId: string) {
+    if (typeof window === 'undefined') return
+    sessionStorage.setItem(`velvet_active_order_banner:${orderId}`, 'shown')
+  }
+
   useEffect(() => {
     if (!isAuthenticated) {
       setActiveOrder(null)
@@ -35,7 +45,10 @@ export function ActiveOrderBanner() {
         if (data?.success) {
           const order = data.data?.activeOrder ?? null
           setActiveOrder(order)
-          if (order) setIsVisible(true)
+          if (order && shouldShowOrder(order.id)) {
+            setIsVisible(true)
+            markOrderShown(order.id)
+          }
         }
       } catch {
         if (mounted) setActiveOrder(null)
@@ -58,7 +71,7 @@ export function ActiveOrderBanner() {
 
     const timeoutId = window.setTimeout(() => {
       setIsVisible(false)
-    }, 6000)
+    }, 10000)
 
     return () => window.clearTimeout(timeoutId)
   }, [activeOrder?.id])
