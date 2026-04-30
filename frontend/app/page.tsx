@@ -37,10 +37,28 @@ export default function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await apiFetch('/products?limit=4')
+        const res = await apiFetch('/products?featured=true&limit=4')
         const data = await res.json()
         if (data.success) {
-          setProducts(data.data.products)
+          const featured = data.data?.products ?? []
+
+          // Fallback: if featured inventory is low, backfill with regular products.
+          if (featured.length < 4) {
+            const fallbackRes = await apiFetch('/products?limit=4')
+            const fallbackData = await fallbackRes.json()
+            if (fallbackData.success) {
+              const regular = fallbackData.data?.products ?? []
+              const merged = [...featured]
+              for (const p of regular) {
+                if (!merged.find((x) => x.id === p.id)) merged.push(p)
+                if (merged.length >= 4) break
+              }
+              setProducts(merged.slice(0, 4))
+              return
+            }
+          }
+
+          setProducts(featured.slice(0, 4))
         }
       } catch (error) {
         console.error('Failed to fetch products:', error)

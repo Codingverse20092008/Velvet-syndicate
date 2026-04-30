@@ -1,9 +1,9 @@
 // API configuration for separate backend
 // MUST be set in .env.local: NEXT_PUBLIC_API_URL=https://velvet-syndicate.onrender.com
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://velvet-syndicate.onrender.com'
 
-if (!API_URL) {
-  console.error('NEXT_PUBLIC_API_URL is not set. API calls will fail.')
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  console.warn('NEXT_PUBLIC_API_URL is not set. Falling back to default backend URL.')
 }
 
 const TOKEN_KEY = 'velvet_access_token'
