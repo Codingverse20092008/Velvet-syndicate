@@ -26,7 +26,7 @@ export async function runReconciliation() {
     
     const orphanedIntents = await db.query.orderIntents.findMany({
       where: and(
-        inArray(orderIntents.status, ['READY_FOR_QUEUE', 'QUEUED', 'FAILED_RETRYABLE', 'FAILED']),
+        inArray(orderIntents.status, ['READY_FOR_QUEUE', 'PROCESSING_STALE', 'QUEUED', 'FAILED_RETRYABLE', 'FAILED']),
         lt(orderIntents.createdAt, fiveMinutesAgo)
       ),
       limit: 50 // Process in batches

@@ -1,5 +1,5 @@
 import { eq, and, desc, inArray, sql, lt } from 'drizzle-orm';
-import { db } from '../lib/db';
+import { db, dbClient } from '../lib/db';
 import { orders, orderItems, cart, cartItems, productSizes, addresses, orderIntents } from '../lib/schema';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { invalidateCartCache } from '../lib/cache';
@@ -70,6 +70,39 @@ type EnqueueResult = {
   enqueued: boolean;
   reason?: string;
 };
+
+let orderPersistenceReady: Promise<void> | null = null;
+
+export async function ensureOrderPersistenceCompatibility() {
+  if (orderPersistenceReady) return orderPersistenceReady;
+
+  orderPersistenceReady = (async () => {
+    await dbClient.execute(`
+      CREATE TABLE IF NOT EXISTS order_intents (
+        id TEXT PRIMARY KEY NOT NULL,
+        user_id TEXT NOT NULL,
+        data TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'READY_FOR_QUEUE',
+        error TEXT,
+        created_at TEXT DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+        updated_at TEXT DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE no action ON DELETE no action
+      )
+    `);
+    await dbClient.execute('CREATE INDEX IF NOT EXISTS order_intents_user_id_idx ON order_intents(user_id)');
+    await dbClient.execute('CREATE INDEX IF NOT EXISTS order_intents_status_idx ON order_intents(status)');
+    await dbClient.execute(`
+      CREATE UNIQUE INDEX IF NOT EXISTS orders_idempotency_key_idx
+      ON orders(idempotency_key)
+      WHERE idempotency_key IS NOT NULL AND idempotency_key <> ''
+    `);
+  })().catch((err) => {
+    orderPersistenceReady = null;
+    throw err;
+  });
+
+  return orderPersistenceReady;
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -241,6 +274,8 @@ export async function createOrder(
   idempotencyKey?: string,
   expectedVersion?: number
 ) {
+  await ensureOrderPersistenceCompatibility();
+
   if (!idempotencyKey) {
     throw new ValidationError('Idempotency key is required');
   }
@@ -343,6 +378,8 @@ export async function createOrder(
  * Uses only immutable payload from WAL for deterministic processing.
  */
 export async function processOrderIntent(intentId: string, jobId?: string, requestId?: string) {
+  await ensureOrderPersistenceCompatibility();
+
   const intent = await db.query.orderIntents.findFirst({
     where: eq(orderIntents.id, intentId),
   });
@@ -517,6 +554,8 @@ export async function processOrderIntent(intentId: string, jobId?: string, reque
 }
 
 export async function getOrderIntentStatus(intentId: string, userId: string) {
+  await ensureOrderPersistenceCompatibility();
+
   const intent = await db.query.orderIntents.findFirst({
     where: and(eq(orderIntents.id, intentId), eq(orderIntents.userId, userId)),
   });
@@ -559,6 +598,8 @@ export async function getOrderIntentStatus(intentId: string, userId: string) {
 }
 
 export async function resetStaleProcessingIntents(staleMs = 2 * 60 * 1000) {
+  await ensureOrderPersistenceCompatibility();
+
   const staleIso = new Date(Date.now() - staleMs).toISOString();
   const staleIntents = await db.query.orderIntents.findMany({
     where: and(eq(orderIntents.status, 'PROCESSING'), lt(orderIntents.updatedAt, staleIso)),
@@ -581,6 +622,8 @@ export async function resetStaleProcessingIntents(staleMs = 2 * 60 * 1000) {
 }
 
 export async function getOrdersByUserId(userId: string) {
+  await ensureOrderPersistenceCompatibility();
+
   return db.query.orders.findMany({
     where: eq(orders.userId, userId),
     orderBy: [desc(orders.createdAt)],
@@ -589,6 +632,8 @@ export async function getOrdersByUserId(userId: string) {
 }
 
 export async function getOrderById(id: string, userId: string) {
+  await ensureOrderPersistenceCompatibility();
+
   return db.query.orders.findFirst({
     where: and(eq(orders.id, id), eq(orders.userId, userId)),
     with: { items: true }

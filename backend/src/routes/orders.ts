@@ -47,6 +47,18 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
   return successResponse(res, { orders: orders.map(mapOrderForClient) });
 }));
 
+// GET /api/orders/status/:jobId
+// 🔍 JOB TRACKING: Allows clients to poll for completion of async checkout
+router.get('/status/:jobId', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const { jobId } = req.params;
+  const status = await getOrderIntentStatus(jobId, user.id);
+  return successResponse(res, {
+    ...status,
+    order: status.order ? mapOrderForClient(status.order) : null,
+  });
+}));
+
 // GET /api/orders/:id
 router.get('/:id', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
@@ -66,7 +78,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
   if (!allowed) throw new RateLimitError('Too many orders from this account. Please try again later.');
 
   const data = createOrderSchema.parse(req.body);
-  
+
   const order = await createOrder(
     user.id,
     data.addressId,
@@ -77,18 +89,6 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 
   const statusCode = ('alreadyExists' in order && order.alreadyExists) ? 200 : 201;
   return successResponse(res, { order, message: 'Order is being processed' }, statusCode);
-}));
-
-// GET /api/orders/status/:jobId
-// 🔍 JOB TRACKING: Allows clients to poll for completion of async checkout
-router.get('/status/:jobId', asyncHandler(async (req: Request, res: Response) => {
-  const user = await getUserFromRequest(req);
-  const { jobId } = req.params;
-  const status = await getOrderIntentStatus(jobId, user.id);
-  return successResponse(res, {
-    ...status,
-    order: status.order ? mapOrderForClient(status.order) : null,
-  });
 }));
 
 export default router;
