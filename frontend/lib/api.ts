@@ -130,25 +130,39 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
   // Build URL - ALWAYS use absolute URL in production
   const url = path.startsWith('http') ? path : `${API_URL}/api${path}`
 
+  // Get stored access token
+  const accessToken = getStoredAccessToken()
+
+  // Build headers with Authorization if token exists
+  // Don't set Content-Type for FormData - browser sets it with boundary
+  const isFormData = restOptions.body instanceof FormData
+  const authHeaders: Record<string, string> = {
+    ...headers as Record<string, string>,
+  }
+
+  if (!isFormData) {
+    authHeaders['Content-Type'] = 'application/json'
+  }
+
+  if (accessToken && !skipAuth) {
+    authHeaders['Authorization'] = `Bearer ${accessToken}`
+  }
+
+  // Helper to execute request with given token
   const executeRequest = async (token: string | null) => {
-    const authHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...headers as Record<string, string>,
-    }
-
+    const headers = { ...authHeaders }
     if (token && !skipAuth) {
-      authHeaders['Authorization'] = `Bearer ${token}`
+      headers['Authorization'] = `Bearer ${token}`
     }
-
-    return fetchWithTimeout(url, {
+    return await fetchWithTimeout(url, {
       ...restOptions,
-      headers: authHeaders,
+      headers,
       credentials: 'include',
     })
   }
 
   // First attempt
-  let res = await executeRequest(getStoredAccessToken())
+  let res = await executeRequest(accessToken)
 
   // Handle 401 - Token expired, try to refresh and retry
   if (res.status === 401 && !skipRetry && !path.includes('/auth/login') && !path.includes('/auth/signup')) {

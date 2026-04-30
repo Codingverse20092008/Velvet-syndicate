@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Award, Gift, Users, TrendingUp, Search, Plus, Minus, History } from 'lucide-react'
-import { useAdminStore } from '@/store/adminStore'
 import { formatPrice } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
 
@@ -30,10 +29,10 @@ interface PointsTransaction {
 }
 
 export default function LoyaltyPage() {
-  const { fetchUsers } = useAdminStore()
   const [users, setUsers] = useState<LoyaltyUser[]>([])
   const [transactions, setTransactions] = useState<PointsTransaction[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedUser, setSelectedUser] = useState<LoyaltyUser | null>(null)
   const [adjustPoints, setAdjustPoints] = useState('')
@@ -54,6 +53,7 @@ export default function LoyaltyPage() {
 
   const fetchLoyaltyData = async () => {
     setIsLoading(true)
+    setError(null)
     try {
       const [usersRes, transRes] = await Promise.all([
         apiFetch('/admin/loyalty/users'),
@@ -65,8 +65,13 @@ export default function LoyaltyPage() {
       
       if (usersData.success) setUsers(usersData.users)
       if (transData.success) setTransactions(transData.transactions)
+      
+      if (!usersData.success || !transData.success) {
+        setError(usersData.error || transData.error || 'Failed to load loyalty data')
+      }
     } catch (err) {
       console.error('Failed to load loyalty data:', err)
+      setError('Failed to load loyalty data. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -120,6 +125,8 @@ export default function LoyaltyPage() {
           <p className="text-velvet-muted text-sm mt-2">Manage customer points and rewards.</p>
         </div>
       </div>
+
+      {error && <div className="p-4 border border-red-400/20 bg-red-500/10 rounded-xl text-red-300 text-sm">{error}</div>}
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-white/10">

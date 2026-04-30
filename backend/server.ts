@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
+import path from 'path';
 import { globalLimiter, authLimiter, checkoutLimiter } from './src/middleware/rate-limiter';
 import './src/workers/orderWorker'; // Start the background worker
 
@@ -249,6 +250,9 @@ app.get('/metrics', (req: Request, res: Response) => {
 
 // Import error handler
 import { errorHandler } from './src/lib/api-handler-express';
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // API Routes - Apply stricter rate limiting to auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);

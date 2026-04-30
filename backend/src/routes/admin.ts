@@ -21,6 +21,7 @@ import {
 import analyticsRoutes from './admin/analytics';
 import loyaltyRoutes from './admin/loyalty';
 import dashboardMetricsRoutes from './admin/metrics';
+import uploadRoutes from './admin/upload';
 
 const router = Router();
 
@@ -28,6 +29,7 @@ const router = Router();
 router.use('/analytics', analyticsRoutes);
 router.use('/loyalty', loyaltyRoutes);
 router.use('/metrics', dashboardMetricsRoutes);
+router.use('/upload', uploadRoutes);
 
 const orderStatusSchema = z.object({
   status: z.enum(['CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PENDING', 'FAILED']),
@@ -36,7 +38,7 @@ const orderStatusSchema = z.object({
 const productCreateSchema = z.object({
   name: z.string().min(2).max(120),
   price: z.number().positive(),
-  image: z.string().url(),
+  image: z.string().min(1),
   description: z.string().min(10).max(4000),
   stock: z.number().int().min(0),
   brand: z.string().min(2).max(120),
@@ -45,7 +47,7 @@ const productCreateSchema = z.object({
 const productUpdateSchema = z.object({
   name: z.string().min(2).max(120).optional(),
   price: z.number().positive().optional(),
-  image: z.string().url().optional(),
+  image: z.string().min(1).optional(),
   description: z.string().min(10).max(4000).optional(),
   stock: z.number().int().min(0).optional(),
   brand: z.string().min(2).max(120).optional(),

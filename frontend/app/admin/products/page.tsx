@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAdminStore, AdminProduct } from '@/store/adminStore'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
+import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { apiFetch } from '@/lib/api'
 
 type ProductForm = {
   name: string
@@ -36,12 +38,54 @@ export default function AdminProductsPage() {
   } = useAdminStore()
   const [form, setForm] = useState<ProductForm>(emptyForm)
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProducts()
   }, [fetchProducts])
 
   const title = useMemo(() => (editingProduct ? 'Edit Product' : 'Add Product'), [editingProduct])
+
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('image', file)
+      
+      const res = await apiFetch('/admin/upload', {
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type header - let browser set it with boundary
+      })
+      
+      const data = await res.json()
+      if (data.success) {
+        const fullImageUrl = `${process.env.NEXT_PUBLIC_API_URL}${data.imageUrl}`
+        setForm((prev) => ({ ...prev, image: fullImageUrl }))
+        setImagePreview(fullImageUrl)
+      } else {
+        throw new Error(data.error || 'Upload failed')
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err)
+      alert('Failed to upload image. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      handleImageUpload(file)
+    }
+  }
+
+  const clearImage = () => {
+    setForm((prev) => ({ ...prev, image: '' }))
+    setImagePreview(null)
+  }
 
   const submit = async () => {
     const payload = {
@@ -60,6 +104,7 @@ export default function AdminProductsPage() {
       await createProduct(payload)
     }
     setForm(emptyForm)
+    setImagePreview(null)
   }
 
   const startEdit = (product: AdminProduct) => {
@@ -72,6 +117,7 @@ export default function AdminProductsPage() {
       stock: String(product.stock),
       brand: product.brand,
     })
+    setImagePreview(product.image)
   }
 
   const handleDeactivate = async (product: AdminProduct) => {
@@ -98,13 +144,32 @@ export default function AdminProductsPage() {
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Brand" value={form.brand} onChange={(e) => setForm((prev) => ({ ...prev, brand: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Price" type="number" min="0" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Stock" type="number" min="0" value={form.stock} onChange={(e) => setForm((prev) => ({ ...prev, stock: e.target.value }))} />
-          <input className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Image URL" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} />
+          <input className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Image URL (optional - use upload instead)" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} />
+          <div className="md:col-span-2">
+            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+              <Upload size={16} className="text-velvet-accent" />
+              <span className="text-sm text-velvet-white">Upload Image</span>
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" disabled={uploadingImage} />
+              {uploadingImage && <span className="text-xs text-velvet-muted ml-auto">Uploading...</span>}
+            </label>
+            {imagePreview && (
+              <div className="mt-3 relative">
+                <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg" />
+                <button
+                  onClick={clearImage}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+          </div>
           <textarea className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white min-h-[110px]" placeholder="Description" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} />
         </div>
         <div className="flex gap-3 mt-4">
           <Button onClick={submit} isLoading={isLoading}>{editingProduct ? 'Update Product' : 'Create Product'}</Button>
           {editingProduct && (
-            <Button variant="secondary" onClick={() => { setEditingProduct(null); setForm(emptyForm) }}>
+            <Button variant="secondary" onClick={() => { setEditingProduct(null); setForm(emptyForm); setImagePreview(null) }}>
               Cancel Edit
             </Button>
           )}
