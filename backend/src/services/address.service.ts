@@ -3,6 +3,7 @@ import { db } from '../lib/db';
 import { addresses } from '../lib/schema';
 import { NotFoundError, UnauthorizedError } from '../lib/errors';
 import { logger } from '../lib/logger';
+import crypto from 'node:crypto';
 
 export interface CreateAddressData {
   userId: string;

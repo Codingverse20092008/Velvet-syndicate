@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../lib/db';
 import { cart, cartItems, products, productSizes, productVariants } from '../lib/schema';
 import { NotFoundError, ValidationError, AppError } from '../lib/errors';
+import crypto from 'node:crypto';
 import { invalidateCartCache } from '../lib/cache';
 import { logger } from '../lib/logger';
 

@@ -1,6 +1,7 @@
 import { db } from '../lib/db';
 import { feedback } from '../lib/schema';
 import { logger } from '../lib/logger';
+import crypto from 'node:crypto';
 
 export async function submitFeedback(data: {
   userId?: string;

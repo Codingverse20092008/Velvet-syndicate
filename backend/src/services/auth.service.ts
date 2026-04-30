@@ -1,5 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '../lib/db';
+import { env } from '../lib/env';
+import crypto from 'node:crypto';
 import { users, type User, type NewUser } from '../lib/schema';
 import { ConflictError, NotFoundError, UnauthorizedError, ValidationError } from '../lib/errors';
 import { hashPassword, verifyPassword, createSession, revokeSession, TokenPair } from '../lib/auth';

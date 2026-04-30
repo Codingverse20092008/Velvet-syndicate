@@ -6,6 +6,7 @@ import { invalidateCartCache } from '../lib/cache';
 import { logger } from '../lib/logger';
 import { orderQueue } from '../lib/queue';
 import { getRequestId } from '../lib/context';
+import crypto from 'node:crypto';
 
 /**
  * 📥 PRODUCER: createOrder

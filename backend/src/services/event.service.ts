@@ -1,6 +1,7 @@
 import { db } from '../lib/db';
 import { events } from '../lib/schema';
 import { logger } from '../lib/logger';
+import crypto from 'node:crypto';
 import { sql } from 'drizzle-orm';
 
 const VALID_EVENT_TYPES = [

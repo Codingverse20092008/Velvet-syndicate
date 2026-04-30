@@ -11,6 +11,7 @@ import {
 } from '../lib/schema';
 import { NotFoundError, ValidationError } from '../lib/errors';
 import { logger } from '../lib/logger';
+import crypto from 'node:crypto';
 import { invalidateProductsCache } from '../lib/cache';
 
 type AdminOrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELLED' | 'FAILED';

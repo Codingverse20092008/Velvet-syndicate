@@ -5,6 +5,7 @@ import { env } from './env';
 import { db } from './db';
 import { sessions, users } from './schema';
 import { eq, and, gt } from 'drizzle-orm';
+import crypto from 'node:crypto';
 import { logger } from './logger';
 import { UnauthorizedError } from './errors';
 import { redis } from './redis';
