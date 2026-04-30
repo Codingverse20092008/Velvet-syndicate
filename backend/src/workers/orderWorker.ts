@@ -2,7 +2,7 @@ import { Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
 import { env } from '../lib/env';
 import { logger } from '../lib/logger';
-import { createOrderInDB } from '../services/order.service';
+import { processOrderIntent } from '../services/order.service';
 
 const useRedis = env.REDIS_URL && (env.REDIS_URL.startsWith('redis://') || env.REDIS_URL.startsWith('rediss://'));
 
@@ -17,14 +17,13 @@ const connection = useRedis
 export const orderWorker = (useRedis && connection) ? new Worker(
   'order-processing',
   async (job: Job) => {
-    // ... same logic ...
-    const { userId, addressId, paymentMethod, idempotencyKey, expectedVersion, requestId } = job.data;
-    const log = logger.child({ jobId: job.id, requestId: requestId || 'async-worker', userId, idempotencyKey });
+    const { intentId, requestId } = job.data as { intentId: string; requestId?: string };
+    const log = logger.child({ jobId: job.id, intentId, requestId: requestId || 'async-worker' });
     log.info('📦 Order processing started');
     const startTime = Date.now();
     
     try {
-      const result = await createOrderInDB(userId, addressId, paymentMethod, idempotencyKey, expectedVersion, job.id, requestId);
+      const result = await processOrderIntent(intentId, String(job.id), requestId);
       log.info({ durationMs: Date.now() - startTime, orderId: result.id }, '✅ Order processing successful');
       return result;
     } catch (err: any) {

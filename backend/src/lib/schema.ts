@@ -153,7 +153,9 @@ export const orderIntents = sqliteTable('order_intents', {
   id: text('id').primaryKey(), // Usually same as idempotencyKey
   userId: text('user_id').notNull().references(() => users.id),
   data: text('data').notNull(), // JSON blob of order details
-  status: text('status', { enum: ['QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED'] }).notNull().default('QUEUED'),
+  status: text('status', {
+    enum: ['RECEIVED', 'READY_FOR_QUEUE', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED_RETRYABLE', 'FAILED_FINAL', 'QUEUED', 'FAILED'],
+  }).notNull().default('READY_FOR_QUEUE'),
   error: text('error'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),

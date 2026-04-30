@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, inArray, sql, lt } from 'drizzle-orm';
 import { db } from '../lib/db';
 import { orders, orderItems, cart, cartItems, productSizes, addresses, orderIntents } from '../lib/schema';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
@@ -8,10 +8,230 @@ import { orderQueue } from '../lib/queue';
 import { getRequestId } from '../lib/context';
 import crypto from 'node:crypto';
 
+type OrderIntentStatus =
+  | 'RECEIVED'
+  | 'READY_FOR_QUEUE'
+  | 'ENQUEUED'
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED_RETRYABLE'
+  | 'FAILED_FINAL'
+  | 'QUEUED'
+  | 'FAILED';
+
+type SnapshotOrderLine = {
+  cartItemId: string;
+  productId: string;
+  variantId: string;
+  size: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  productName: string;
+  imageUrl: string | null;
+};
+
+type SnapshotAddress = {
+  id: string;
+  name: string;
+  phone: string;
+  street: string;
+  city: string;
+  state: string;
+  pincode: string;
+};
+
+type OrderPayload = {
+  schemaVersion: 1;
+  intentId: string;
+  idempotencyKey: string;
+  requestId: string;
+  userId: string;
+  paymentMethod: string;
+  createdAt: string;
+  cartId: string;
+  cartVersion: number;
+  addressSnapshot: SnapshotAddress;
+  totals: {
+    subtotal: number;
+    shipping: number;
+    tax: number;
+    discount: number;
+    grandTotal: number;
+  };
+  lines: SnapshotOrderLine[];
+  metadata: {
+    expectedVersion?: number;
+  };
+};
+
+type EnqueueResult = {
+  enqueued: boolean;
+  reason?: string;
+};
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function normalizeIntentStatus(status: string): OrderIntentStatus {
+  if (status === 'QUEUED') return 'READY_FOR_QUEUE';
+  if (status === 'FAILED') return 'FAILED_RETRYABLE';
+  return status as OrderIntentStatus;
+}
+
+function shouldAllowClaim(status: OrderIntentStatus) {
+  return ['ENQUEUED', 'READY_FOR_QUEUE', 'RECEIVED', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'].includes(status);
+}
+
+function classifyFailure(error: unknown): 'FAILED_FINAL' | 'FAILED_RETRYABLE' {
+  if (error instanceof ValidationError || error instanceof ConflictError) {
+    return 'FAILED_FINAL';
+  }
+  return 'FAILED_RETRYABLE';
+}
+
+function parsePayload(raw: string): OrderPayload {
+  try {
+    const parsed = JSON.parse(raw) as OrderPayload;
+    if (!parsed?.intentId || !parsed?.idempotencyKey || !Array.isArray(parsed?.lines)) {
+      throw new Error('invalid payload');
+    }
+    return parsed;
+  } catch {
+    throw new ValidationError('Invalid order intent payload');
+  }
+}
+
+async function buildOrderSnapshot(
+  userId: string,
+  addressId: string,
+  paymentMethod: string,
+  intentId: string,
+  idempotencyKey: string,
+  requestId: string,
+  expectedVersion?: number
+): Promise<OrderPayload> {
+  const [userCart, address] = await Promise.all([
+    db.query.cart.findFirst({
+      where: eq(cart.userId, userId),
+      with: { items: { with: { product: true } } },
+    }),
+    db.query.addresses.findFirst({
+      where: and(eq(addresses.id, addressId), eq(addresses.userId, userId)),
+    }),
+  ]);
+
+  if (!userCart || userCart.items.length === 0) {
+    throw new ValidationError('Cart is empty');
+  }
+  if (!address) {
+    throw new ValidationError('Invalid shipping address');
+  }
+
+  const lines: SnapshotOrderLine[] = userCart.items.map((item) => {
+    const lineTotal = item.product.price * item.quantity;
+    return {
+      cartItemId: item.id,
+      productId: item.productId,
+      variantId: item.variantId,
+      size: item.size,
+      quantity: item.quantity,
+      unitPrice: item.product.price,
+      lineTotal,
+      productName: item.product.name,
+      imageUrl: item.product.imageUrl ?? null,
+    };
+  });
+
+  const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
+
+  return {
+    schemaVersion: 1,
+    intentId,
+    idempotencyKey,
+    requestId,
+    userId,
+    paymentMethod,
+    createdAt: nowIso(),
+    cartId: userCart.id,
+    cartVersion: userCart.version,
+    addressSnapshot: {
+      id: address.id,
+      name: address.name,
+      phone: address.phone,
+      street: address.street,
+      city: address.city,
+      state: address.state,
+      pincode: address.pincode,
+    },
+    totals: {
+      subtotal,
+      shipping: 0,
+      tax: 0,
+      discount: 0,
+      grandTotal: subtotal,
+    },
+    lines,
+    metadata: {
+      expectedVersion,
+    },
+  };
+}
+
+async function enqueueIntent(intentId: string, requestId: string): Promise<EnqueueResult> {
+  if (!orderQueue) {
+    return { enqueued: false, reason: 'QUEUE_UNAVAILABLE' };
+  }
+
+  try {
+    await orderQueue.add(
+      'process-order',
+      { intentId, requestId },
+      {
+        jobId: intentId,
+        attempts: 1,
+        removeOnComplete: false,
+        removeOnFail: false,
+      }
+    );
+
+    await db
+      .update(orderIntents)
+      .set({ status: 'ENQUEUED', updatedAt: nowIso() })
+      .where(
+        and(
+          eq(orderIntents.id, intentId),
+          inArray(orderIntents.status, ['RECEIVED', 'READY_FOR_QUEUE', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'])
+        )
+      );
+
+    return { enqueued: true };
+  } catch (err: any) {
+    const msg = String(err?.message || '');
+    if (msg.includes('Job is already waiting') || msg.includes('Job is already active') || msg.includes('exists')) {
+      await db
+        .update(orderIntents)
+        .set({ status: 'ENQUEUED', updatedAt: nowIso() })
+        .where(eq(orderIntents.id, intentId));
+      return { enqueued: true };
+    }
+
+    logger.error({ intentId, requestId, err: msg }, 'Failed to enqueue order intent');
+    return { enqueued: false, reason: 'ENQUEUE_ERROR' };
+  }
+}
+
+async function getOrderByIdempotencyKey(idempotencyKey: string) {
+  return db.query.orders.findFirst({
+    where: eq(orders.idempotencyKey, idempotencyKey),
+    with: { items: true },
+  });
+}
+
 /**
  * 📥 PRODUCER: createOrder
- * Validates basic state and pushes the order to a distributed queue.
- * Handles backpressure and distributed idempotency locking.
+ * Captures an immutable snapshot and persists it to WAL before queueing.
  */
 export async function createOrder(
   userId: string,
@@ -24,235 +244,341 @@ export async function createOrder(
     throw new ValidationError('Idempotency key is required');
   }
 
-  const requestId = getRequestId() || 'system';
+  const requestId = getRequestId() || crypto.randomUUID();
 
-  // 1. QUICK IDEMPOTENCY CHECK (Pre-queue)
-  const existingOrder = await db.query.orders.findFirst({
-    where: eq(orders.idempotencyKey, idempotencyKey)
-  });
-
+  const existingOrder = await getOrderByIdempotencyKey(idempotencyKey);
   if (existingOrder) {
-    return {
-      id: existingOrder.id,
-      status: existingOrder.status,
-      alreadyExists: true,
-      fromQueue: false
-    };
-  }
-
-  // 🛡️ DUAL PERSISTENCE: Record Intent in DB BEFORE Enqueueing
-  // This ensures that even if Redis fails/evicts, the order request is NOT lost.
-  await db.insert(orderIntents).values({
-    id: idempotencyKey,
-    userId,
-    status: 'QUEUED',
-    data: JSON.stringify({ addressId, paymentMethod, expectedVersion, requestId }),
-  }).onConflictDoNothing();
-
-  // 3. PUSH TO DISTRIBUTED QUEUE WITH PRIORITY (Fallback to sync if Queue disabled)
-  if (!orderQueue) {
-    logger.info({ userId }, '🔄 Falling back to synchronous order processing (Redis Queue disabled)');
-    const result = await createOrderInDB(
-      userId,
-      addressId,
-      paymentMethod,
-      idempotencyKey,
-      expectedVersion,
-      'sync-processed',
-      requestId
-    );
-    return {
-      id: result.id,
-      status: 'CONFIRMED',
-      message: 'Order processed synchronously',
-      alreadyExists: result.alreadyExists || false,
-      fromQueue: false
-    };
-  }
-
-  // 2. BACKPRESSURE GUARD: Check queue size to prevent system overload
-  const jobCounts = await orderQueue.getJobCounts('waiting', 'active');
-  const totalBacklog = jobCounts.waiting + jobCounts.active;
-  
-  if (totalBacklog > 1000) {
-    logger.warn({ totalBacklog }, '💥 SYSTEM BUSY: Order queue threshold exceeded');
-    throw new Error('System is currently busy. Please try again in a moment.');
-  }
-
-  // 3. PUSH TO DISTRIBUTED QUEUE
-  const job = await orderQueue.add(`order-${idempotencyKey}`, {
-    userId,
-    addressId,
-    paymentMethod,
-    idempotencyKey,
-    expectedVersion,
-    requestId
-  }, {
-    jobId: idempotencyKey,
-    priority: 10,
-  });
-
-  logger.info({ jobId: job.id, userId, totalBacklog }, '📥 Order queued for processing');
-
-  return {
-    jobId: job.id,
-    status: 'PENDING',
-    message: 'Order is being processed',
-    alreadyExists: false,
-    fromQueue: true
-  };
-}
-
-/**
- * 🛠️ CONSUMER: createOrderInDB
- * Atomic transaction handling, stock deduction with optimistic locking,
- * and final order commitment.
- */
-export async function createOrderInDB(
-  userId: string,
-  addressId: string,
-  paymentMethod: string = 'COD',
-  idempotencyKey?: string,
-  expectedVersion?: number,
-  jobId?: string,
-  requestId?: string
-) {
-  if (!idempotencyKey) {
-    throw new ValidationError('Idempotency key is required');
-  }
-
-  // 🛡️ WORKER IDEMPOTENCY CHECK (Final Line of Defense)
-  const existingOrder = await db.query.orders.findFirst({
-    where: eq(orders.idempotencyKey, idempotencyKey),
-    with: { items: true }
-  });
-
-  if (existingOrder) {
-    // Sync Intent status
-    await db.update(orderIntents)
-      .set({ status: 'COMPLETED' })
-      .where(eq(orderIntents.id, idempotencyKey));
-
     return {
       id: existingOrder.id,
       status: existingOrder.status,
       totalAmount: existingOrder.totalAmount,
-      alreadyExists: true
+      alreadyExists: true,
+      fromQueue: false,
+      requestId,
     };
   }
 
-  // Update Intent to PROCESSING
-  await db.update(orderIntents)
-    .set({ status: 'PROCESSING', updatedAt: new Date().toISOString() })
-    .where(eq(orderIntents.id, idempotencyKey));
+  let intent = await db.query.orderIntents.findFirst({
+    where: eq(orderIntents.id, idempotencyKey),
+  });
+
+  if (!intent) {
+    const snapshot = await buildOrderSnapshot(
+      userId,
+      addressId,
+      paymentMethod,
+      idempotencyKey,
+      idempotencyKey,
+      requestId,
+      expectedVersion
+    );
+
+    await db
+      .insert(orderIntents)
+      .values({
+        id: idempotencyKey,
+        userId,
+        status: 'READY_FOR_QUEUE',
+        data: JSON.stringify(snapshot),
+      })
+      .onConflictDoNothing();
+
+    intent = await db.query.orderIntents.findFirst({
+      where: eq(orderIntents.id, idempotencyKey),
+    });
+  }
+
+  if (!intent) {
+    throw new Error('Failed to persist order intent');
+  }
+
+  const status = normalizeIntentStatus(intent.status);
+  if (status === 'FAILED_FINAL') {
+    throw new ValidationError(intent.error || 'Order request cannot be processed');
+  }
+  if (status === 'COMPLETED') {
+    const completed = await getOrderByIdempotencyKey(idempotencyKey);
+    if (completed) {
+      return {
+        id: completed.id,
+        status: completed.status,
+        totalAmount: completed.totalAmount,
+        alreadyExists: true,
+        fromQueue: false,
+        requestId,
+      };
+    }
+  }
+
+  const enqueueResult = await enqueueIntent(idempotencyKey, requestId);
+  if (!enqueueResult.enqueued && !orderQueue) {
+    const syncResult = await processOrderIntent(idempotencyKey, 'sync-no-queue', requestId);
+    if (syncResult?.id) {
+      const alreadyExists = 'alreadyExists' in syncResult ? Boolean(syncResult.alreadyExists) : false;
+      return {
+        id: syncResult.id,
+        status: syncResult.status,
+        totalAmount: syncResult.totalAmount,
+        alreadyExists,
+        fromQueue: false,
+        requestId,
+      };
+    }
+  }
+
+  return {
+    intentId: idempotencyKey,
+    jobId: idempotencyKey,
+    status: 'PENDING',
+    message: 'Order accepted for processing',
+    alreadyExists: false,
+    fromQueue: enqueueResult.enqueued,
+    requestId,
+  };
+}
+
+/**
+ * 🛠️ CONSUMER: processOrderIntent
+ * Uses only immutable payload from WAL for deterministic processing.
+ */
+export async function processOrderIntent(intentId: string, jobId?: string, requestId?: string) {
+  const intent = await db.query.orderIntents.findFirst({
+    where: eq(orderIntents.id, intentId),
+  });
+
+  if (!intent) {
+    throw new NotFoundError('Order intent');
+  }
+
+  const payload = parsePayload(intent.data);
+
+  const preExistingOrder = await getOrderByIdempotencyKey(payload.idempotencyKey);
+  if (preExistingOrder) {
+    await db
+      .update(orderIntents)
+      .set({ status: 'COMPLETED', updatedAt: nowIso(), error: null })
+      .where(eq(orderIntents.id, intentId));
+    return {
+      id: preExistingOrder.id,
+      status: preExistingOrder.status,
+      totalAmount: preExistingOrder.totalAmount,
+      alreadyExists: true,
+    };
+  }
+
+  const normalized = normalizeIntentStatus(intent.status);
+  if (!shouldAllowClaim(normalized)) {
+    if (normalized === 'COMPLETED') {
+      const completed = await getOrderByIdempotencyKey(payload.idempotencyKey);
+      if (!completed) throw new Error('Intent marked completed but order missing');
+      return {
+        id: completed.id,
+        status: completed.status,
+        totalAmount: completed.totalAmount,
+        alreadyExists: true,
+      };
+    }
+    if (normalized === 'PROCESSING') {
+      return {
+        id: intentId,
+        status: 'PROCESSING',
+        alreadyProcessing: true,
+      };
+    }
+    if (normalized === 'FAILED_FINAL') {
+      throw new ValidationError(intent.error || 'Order intent is in final failed state');
+    }
+  }
+
+  const claim = await db
+    .update(orderIntents)
+    .set({ status: 'PROCESSING', updatedAt: nowIso(), error: null })
+    .where(
+      and(
+        eq(orderIntents.id, intentId),
+        inArray(orderIntents.status, ['ENQUEUED', 'READY_FOR_QUEUE', 'RECEIVED', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'])
+      )
+    );
+
+  if (claim.rowsAffected === 0) {
+    const latestIntent = await db.query.orderIntents.findFirst({
+      where: eq(orderIntents.id, intentId),
+    });
+    const latestStatus = normalizeIntentStatus(latestIntent?.status || 'PROCESSING');
+    if (latestStatus === 'COMPLETED') {
+      const completed = await getOrderByIdempotencyKey(payload.idempotencyKey);
+      if (!completed) throw new Error('Intent marked completed but order missing');
+      return {
+        id: completed.id,
+        status: completed.status,
+        totalAmount: completed.totalAmount,
+        alreadyExists: true,
+      };
+    }
+    return {
+      id: intentId,
+      status: 'PROCESSING',
+      alreadyProcessing: true,
+    };
+  }
 
   try {
-    return await db.transaction(async (tx) => {
-      // 1. FETCH CART
-      const userCart = await tx.query.cart.findFirst({
-        where: eq(cart.userId, userId),
-        with: { items: { with: { product: true } } },
+    const result = await db.transaction(async (tx) => {
+      const lines = [...payload.lines].sort((a, b) => {
+        const keyA = `${a.variantId}:${a.size}`;
+        const keyB = `${b.variantId}:${b.size}`;
+        return keyA.localeCompare(keyB);
       });
 
-      if (!userCart || userCart.items.length === 0) {
-        const lastOrder = await tx.query.orders.findFirst({
-          where: eq(orders.userId, userId),
-          orderBy: desc(orders.createdAt),
-        });
-
-        if (lastOrder && (Date.now() - new Date(lastOrder.createdAt).getTime() < 300000)) {
-          return { id: lastOrder.id, alreadyExists: true };
-        }
-        throw new ValidationError('Cart is empty');
-      }
-
-      // 2. ATOMIC VERSION CHECK (Prevention of race conditions)
-      if (expectedVersion !== undefined && userCart.version !== expectedVersion) {
-        throw new ConflictError('Cart has been modified. Please refresh and try again.');
-      }
-
-      // 3. ATOMIC STOCK LOCKING
-      for (const item of userCart.items) {
-        const result = await tx
+      for (const line of lines) {
+        const stockUpdate = await tx
           .update(productSizes)
-          .set({ stock: sql`${productSizes.stock} - ${item.quantity}` })
-          .where(and(
-            eq(productSizes.variantId, item.variantId),
-            eq(productSizes.size, item.size),
-            sql`${productSizes.stock} >= ${item.quantity}`
-          ));
+          .set({ stock: sql`${productSizes.stock} - ${line.quantity}` })
+          .where(
+            and(
+              eq(productSizes.variantId, line.variantId),
+              eq(productSizes.size, line.size),
+              sql`${productSizes.stock} >= ${line.quantity}`
+            )
+          );
 
-        if (result.rowsAffected === 0) {
-          throw new ValidationError(`Insufficient stock for ${item.product.name}`);
+        if (stockUpdate.rowsAffected === 0) {
+          throw new ValidationError(`Insufficient stock for ${line.productName}`);
         }
       }
 
-      // 4. SNAPSHOT ADDRESS
-      const address = await tx.query.addresses.findFirst({
-        where: and(eq(addresses.id, addressId), eq(addresses.userId, userId)),
-      });
-      if (!address) throw new ValidationError('Invalid shipping address');
-
-      const addressSnapshot = JSON.stringify({
-        name: address.name,
-        phone: address.phone,
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        pincode: address.pincode
-      });
-
-      // 5. CREATE ORDER (With Tracing IDs)
       const orderId = crypto.randomUUID();
-      const totalAmount = userCart.items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
       await tx.insert(orders).values({
         id: orderId,
-        userId,
-        totalAmount,
+        userId: payload.userId,
+        totalAmount: payload.totals.grandTotal,
         status: 'CONFIRMED',
         paymentStatus: 'PENDING',
-        paymentMethod,
-        shippingAddress: addressSnapshot,
-        idempotencyKey,
-        jobId,
-        requestId,
+        paymentMethod: payload.paymentMethod,
+        shippingAddress: JSON.stringify(payload.addressSnapshot),
+        idempotencyKey: payload.idempotencyKey,
+        jobId: jobId || intentId,
+        requestId: requestId || payload.requestId,
       });
 
-      // 6. CREATE ORDER ITEMS
-      for (const item of userCart.items) {
+      for (const line of lines) {
         await tx.insert(orderItems).values({
           id: crypto.randomUUID(),
           orderId,
-          productId: item.productId,
-          productName: item.product.name,
-          productPrice: item.product.price,
-          quantity: item.quantity,
-          size: item.size,
-          variantId: item.variantId,
-          imageUrl: item.product.imageUrl,
+          productId: line.productId,
+          productName: line.productName,
+          productPrice: line.unitPrice,
+          quantity: line.quantity,
+          size: line.size,
+          variantId: line.variantId,
+          imageUrl: line.imageUrl,
         });
       }
 
-      // 7. CLEAR CART
-      await tx.delete(cartItems).where(eq(cartItems.cartId, userCart.id));
-      await tx.update(cart).set({ version: userCart.version + 1 }).where(eq(cart.id, userCart.id));
+      for (const line of lines) {
+        await tx
+          .delete(cartItems)
+          .where(
+            and(
+              eq(cartItems.id, line.cartItemId),
+              eq(cartItems.variantId, line.variantId),
+              eq(cartItems.size, line.size),
+              eq(cartItems.quantity, line.quantity)
+            )
+          );
+      }
 
-      // 8. UPDATE INTENT STATUS
-      await tx.update(orderIntents)
-        .set({ status: 'COMPLETED', updatedAt: new Date().toISOString() })
-        .where(eq(orderIntents.id, idempotencyKey));
+      await tx
+        .update(orderIntents)
+        .set({ status: 'COMPLETED', updatedAt: nowIso(), error: null })
+        .where(eq(orderIntents.id, intentId));
 
-      invalidateCartCache(userId).catch(() => {});
-
-      return { id: orderId, status: 'CONFIRMED', totalAmount };
+      return {
+        id: orderId,
+        status: 'CONFIRMED',
+        totalAmount: payload.totals.grandTotal,
+      };
     });
+
+    invalidateCartCache(payload.userId).catch(() => {});
+    return result;
   } catch (err) {
-    await db.update(orderIntents)
-      .set({ status: 'FAILED', error: (err as any).message, updatedAt: new Date().toISOString() })
-      .where(eq(orderIntents.id, idempotencyKey));
+    const failureStatus = classifyFailure(err);
+    await db
+      .update(orderIntents)
+      .set({
+        status: failureStatus,
+        error: (err as Error).message,
+        updatedAt: nowIso(),
+      })
+      .where(eq(orderIntents.id, intentId));
     throw err;
   }
+}
+
+export async function getOrderIntentStatus(intentId: string, userId: string) {
+  const intent = await db.query.orderIntents.findFirst({
+    where: and(eq(orderIntents.id, intentId), eq(orderIntents.userId, userId)),
+  });
+
+  if (!intent) {
+    throw new NotFoundError('Order intent');
+  }
+
+  const parsed = parsePayload(intent.data);
+  const order = await db.query.orders.findFirst({
+    where: eq(orders.idempotencyKey, parsed.idempotencyKey),
+    with: { items: true },
+  });
+
+  if (order) {
+    return {
+      status: 'completed',
+      order,
+      intentStatus: normalizeIntentStatus(intent.status),
+      error: null,
+    };
+  }
+
+  const normalized = normalizeIntentStatus(intent.status);
+  if (normalized === 'FAILED_FINAL' || normalized === 'FAILED_RETRYABLE') {
+    return {
+      status: 'failed',
+      order: null,
+      intentStatus: normalized,
+      error: intent.error || 'Order processing failed',
+    };
+  }
+
+  return {
+    status: normalized.toLowerCase(),
+    order: null,
+    intentStatus: normalized,
+    error: null,
+  };
+}
+
+export async function resetStaleProcessingIntents(staleMs = 2 * 60 * 1000) {
+  const staleIso = new Date(Date.now() - staleMs).toISOString();
+  const staleIntents = await db.query.orderIntents.findMany({
+    where: and(eq(orderIntents.status, 'PROCESSING'), lt(orderIntents.updatedAt, staleIso)),
+    limit: 100,
+  });
+
+  if (staleIntents.length === 0) return [];
+
+  const ids = staleIntents.map((intent) => intent.id);
+  await db
+    .update(orderIntents)
+    .set({
+      status: 'READY_FOR_QUEUE',
+      error: 'Recovered from stale processing state',
+      updatedAt: nowIso(),
+    })
+    .where(inArray(orderIntents.id, ids));
+
+  return ids;
 }
 
 export async function getOrdersByUserId(userId: string) {

@@ -20,9 +20,8 @@ export const orderQueue = useRedis && connection
   ? new Queue('order-processing', {
       connection,
       defaultJobOptions: {
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 5000 },
-        removeOnComplete: true,
+        attempts: 1,
+        removeOnComplete: false,
         removeOnFail: false,
       },
     })

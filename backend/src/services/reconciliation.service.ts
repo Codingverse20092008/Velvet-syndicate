@@ -1,9 +1,10 @@
 import { db } from '../lib/db';
 import { orderIntents } from '../lib/schema';
 import { orderQueue } from '../lib/queue';
-import { eq, and, lt, sql } from 'drizzle-orm';
+import { eq, and, lt, inArray } from 'drizzle-orm';
 import { logger } from '../lib/logger';
 import { sendAlert } from '../lib/alerts';
+import { resetStaleProcessingIntents } from './order.service';
 
 /**
  * 🩹 WAL RECONCILIATION SERVICE
@@ -14,12 +15,18 @@ export async function runReconciliation() {
   const log = logger.child({ service: 'reconciliation' });
   
   try {
-    // 1. Find intents stuck in QUEUED for more than 5 minutes
+    // 1) Recover stale PROCESSING intents (worker crash / stalled job)
+    const recoveredIds = await resetStaleProcessingIntents(2 * 60 * 1000);
+    if (recoveredIds.length > 0) {
+      log.warn({ recoveredCount: recoveredIds.length }, 'Recovered stale processing intents');
+    }
+
+    // 2) Find intents that should be queued but are still waiting
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     
     const orphanedIntents = await db.query.orderIntents.findMany({
       where: and(
-        eq(orderIntents.status, 'QUEUED'),
+        inArray(orderIntents.status, ['READY_FOR_QUEUE', 'QUEUED', 'FAILED_RETRYABLE', 'FAILED']),
         lt(orderIntents.createdAt, fiveMinutesAgo)
       ),
       limit: 50 // Process in batches
@@ -30,22 +37,26 @@ export async function runReconciliation() {
     log.info({ count: orphanedIntents.length }, 'Found orphaned order intents, starting replay');
 
     for (const intent of orphanedIntents) {
-      const data = JSON.parse(intent.data);
-      
       try {
         if (!orderQueue) {
           log.warn({ intentId: intent.id }, 'Cannot re-queue: Order Queue is disabled');
           continue;
         }
-        // Re-enqueue using the original idempotencyKey as jobId
-        await orderQueue.add(`replayed-order-${intent.id}`, {
-          ...data,
-          idempotencyKey: intent.id,
-          isReplayed: true
+
+        await orderQueue.add('process-order', {
+          intentId: intent.id,
+          requestId: 'reconciler',
         }, {
           jobId: intent.id,
-          priority: 5 // Replayed orders get higher priority (bumped from 10)
+          attempts: 1,
+          removeOnComplete: false,
+          removeOnFail: false,
+          priority: 5
         });
+
+        await db.update(orderIntents)
+          .set({ status: 'ENQUEUED', updatedAt: new Date().toISOString() })
+          .where(eq(orderIntents.id, intent.id));
 
         log.info({ intentId: intent.id }, 'Successfully re-queued orphaned intent');
       } catch (err) {

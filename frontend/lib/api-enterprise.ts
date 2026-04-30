@@ -86,7 +86,8 @@ export async function enterpriseFetch(
 }
 
 /**
- * Enterprise order creation with built-in retry and idempotency
+ * Order creation is intentionally non-retriable.
+ * Safe replay must happen only via the same idempotency key.
  */
 export async function createOrderWithRetry(
   addressId: string,
@@ -104,13 +105,9 @@ export async function createOrderWithRetry(
     }),
     credentials: 'include', // 🛡️ ALWAYS include credentials
     retry: {
-      maxRetries: 3,
-      retryDelay: 1000,
-      retryCondition: (error) => {
-        // Retry on server errors and network issues
-        // Don't retry on validation errors (400) or auth errors (401)
-        return error.status >= 500 || error.status === 0
-      }
+      maxRetries: 0,
+      retryDelay: 0,
+      retryCondition: () => false
     }
   })
 }

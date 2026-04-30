@@ -95,6 +95,41 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         throw new Error('Idempotency key is required for order creation')
       }
 
+      const waitForOrderCompletion = async (trackingId: string) => {
+        const maxAttempts = 45
+        const delayMs = 1000
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          const statusRes = await apiFetch(`/orders/status/${encodeURIComponent(trackingId)}`)
+          const statusData = await statusRes.json()
+          const statusPayload = statusData?.data ?? statusData
+
+          if (!statusData.success) {
+            if (statusRes.status === 404) {
+              await new Promise((resolve) => setTimeout(resolve, delayMs))
+              continue
+            }
+            const err: any = new Error(statusData.error || 'Failed to fetch order status')
+            err.status = statusRes.status
+            throw err
+          }
+
+          if (statusPayload.status === 'completed' && statusPayload.order?.id) {
+            return statusPayload.order
+          }
+
+          if (statusPayload.status === 'failed') {
+            const err: any = new Error(statusPayload.error || 'Order processing failed')
+            err.status = 400
+            throw err
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, delayMs))
+        }
+
+        throw new Error('Order is taking longer than expected. Please check your orders page.')
+      }
+
       const response = await createOrderWithRetry(addressId, paymentMethod, {
         idempotencyKey: options.idempotencyKey,
         expectedVersion: options.expectedVersion,
@@ -104,11 +139,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const payload = data?.data ?? data
       
       if (data.success) {
-        set({ isLoading: false })
-        const order = payload.order
+        let order = payload.order
+        const trackingId = order?.jobId || order?.intentId || order?.id || payload.jobId || payload.intentId
+
         if (!order?.id) {
-          throw new Error('Order created but response is invalid')
+          if (!trackingId) {
+            throw new Error('Order accepted but tracking id is missing')
+          }
+          order = await waitForOrderCompletion(trackingId)
         }
+
+        set({ isLoading: false })
         
         console.log('✅ ENTERPRISE ORDER CREATED', {
           orderId: order.id,
