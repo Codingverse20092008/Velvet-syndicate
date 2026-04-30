@@ -136,9 +136,6 @@ export const orders = sqliteTable('orders', {
   paymentMethod: text('payment_method').notNull().default('COD'),
   shippingAddress: text('shipping_address').notNull(),
   idempotencyKey: text('idempotency_key').notNull(),
-  // 🔍 DISTRIBUTED TRACING
-  jobId: text('job_id'),
-  requestId: text('request_id'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
@@ -154,7 +151,7 @@ export const orderIntents = sqliteTable('order_intents', {
   userId: text('user_id').notNull().references(() => users.id),
   data: text('data').notNull(), // JSON blob of order details
   status: text('status', {
-    enum: ['RECEIVED', 'READY_FOR_QUEUE', 'ENQUEUED', 'PROCESSING', 'COMPLETED', 'FAILED_RETRYABLE', 'FAILED_FINAL', 'QUEUED', 'FAILED'],
+    enum: ['RECEIVED', 'READY_FOR_QUEUE', 'ENQUEUED', 'PROCESSING', 'PROCESSING_STALE', 'COMPLETED', 'FAILED_RETRYABLE', 'FAILED_FINAL', 'QUEUED', 'FAILED'],
   }).notNull().default('READY_FOR_QUEUE'),
   error: text('error'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
