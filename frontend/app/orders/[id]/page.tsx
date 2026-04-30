@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, use } from 'react'
+import { useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { 
@@ -17,7 +17,7 @@ import { OrderTimeline } from '@/components/orders/OrderTimeline'
 import { StatusMessage } from '@/components/orders/StatusMessage'
 
 interface OrderDetailsPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 function safeParseAddress(raw?: string) {
@@ -30,7 +30,7 @@ function safeParseAddress(raw?: string) {
 }
 
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
-  const { id } = use(params)
+  const { id } = params
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
   const { currentOrder, fetchOrderById, isLoading: orderLoading, error } = useOrderStore()
   const router = useRouter()
