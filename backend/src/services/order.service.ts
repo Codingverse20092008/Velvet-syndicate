@@ -1,7 +1,7 @@
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../lib/db';
 import { orders, orderItems, cart, cartItems, productSizes, addresses, orderIntents } from '../lib/schema';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { invalidateCartCache } from '../lib/cache';
 import { logger } from '../lib/logger';
 import { orderQueue } from '../lib/queue';
@@ -166,9 +166,9 @@ export async function createOrderInDB(
         throw new ValidationError('Cart is empty');
       }
 
-      // 2. ATOMIC VERSION CHECK
+      // 2. ATOMIC VERSION CHECK (Prevention of race conditions)
       if (expectedVersion !== undefined && userCart.version !== expectedVersion) {
-        throw new ValidationError('Cart has been modified. Please refresh.');
+        throw new ConflictError('Cart has been modified. Please refresh and try again.');
       }
 
       // 3. ATOMIC STOCK LOCKING

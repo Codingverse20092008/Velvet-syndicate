@@ -149,7 +149,11 @@ function CheckoutPage() {
       
       // 10. DETAILED ERROR HANDLING
       let msg = 'Failed to place order. Please try again.'
-      if (error.status === 400) {
+      if (error.status === 409) {
+        msg = 'Your cart was modified in another tab or session. Please refresh and try again.'
+        // Auto-trigger fetch to sync with reality
+        setTimeout(() => cartStore.fetchCart(), 500)
+      } else if (error.status === 400) {
         if (error.message?.includes('version') || error.message?.includes('modified')) {
           msg = 'Your cart was modified elsewhere. Please refresh and try again.'
           // Auto-trigger fetch to sync with reality
