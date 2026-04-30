@@ -101,7 +101,7 @@ export default function LoyaltyPage() {
     }
   }
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = (users || []).filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.phone?.includes(searchQuery)
@@ -296,7 +296,7 @@ export default function LoyaltyPage() {
             <div className="text-[10px] uppercase tracking-widest text-velvet-muted">Recent Transactions</div>
           </div>
           <div className="divide-y divide-white/5">
-            {transactions.map((tx) => (
+            {(transactions || []).map((tx) => (
               <div key={tx.id} className="px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
@@ -326,7 +326,7 @@ export default function LoyaltyPage() {
                 </div>
               </div>
             ))}
-            {transactions.length === 0 && (
+            {(transactions || []).length === 0 && (
               <div className="px-6 py-8 text-center text-sm text-velvet-muted">No transactions yet.</div>
             )}
           </div>
