@@ -63,18 +63,34 @@ export default function HomePage() {
     fetchProducts()
   }, [])
 
+  // Helper to get full image URL
+  const getFullImageUrl = (url: string): string => {
+    if (!url) return '/images/placeholder-product.png'
+    // If URL is already absolute, return it
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    // If URL starts with /uploads, prepend the API URL
+    if (url.startsWith('/uploads')) {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
+      return `${baseUrl}${url}`
+    }
+    return url
+  }
+
   // Get product image - prioritize variants.images, then imageUrl, then fallback
   const getProductImage = (product: Product): string => {
     // First try variant images
     if (product.variants && product.variants.length > 0) {
       const firstVariant = product.variants[0]
       if (firstVariant.images && firstVariant.images.length > 0) {
-        return firstVariant.images[0]
+        return getFullImageUrl(firstVariant.images[0])
       }
     }
     // Then try imageUrl
     if (product.imageUrl) {
-      return product.imageUrl
+      return getFullImageUrl(product.imageUrl)
     }
     // Fallback to placeholder
     return '/images/placeholder-product.png'

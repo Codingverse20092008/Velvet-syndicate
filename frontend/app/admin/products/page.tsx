@@ -59,6 +59,21 @@ export default function AdminProductsPage() {
 
   const title = useMemo(() => (editingProduct ? 'Edit Product' : 'Add Product'), [editingProduct])
 
+  const getFullImageUrl = (url: string): string => {
+    // If URL is already absolute, return it
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url
+    }
+    // If URL starts with /uploads, prepend the API URL
+    if (url.startsWith('/uploads')) {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+      // Remove trailing slash from API URL if present
+      const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
+      return `${baseUrl}${url}`
+    }
+    return url
+  }
+
   const handleImageUpload = async (file: File) => {
     setUploadingImage(true)
     try {
@@ -72,7 +87,7 @@ export default function AdminProductsPage() {
       
       const data = await res.json()
       if (data.success) {
-        const fullImageUrl = `${process.env.NEXT_PUBLIC_API_URL}${data.imageUrl}`
+        const fullImageUrl = getFullImageUrl(data.imageUrl)
         setForm((prev) => ({ ...prev, image: fullImageUrl }))
         setImagePreview(fullImageUrl)
       } else {
@@ -104,7 +119,7 @@ export default function AdminProductsPage() {
       
       const data = await res.json()
       if (data.success) {
-        const fullImageUrls = data.imageUrls.map((url: string) => `${process.env.NEXT_PUBLIC_API_URL}${url}`)
+        const fullImageUrls = data.imageUrls.map((url: string) => getFullImageUrl(url))
         setForm((prev) => ({ ...prev, images: [...prev.images, ...fullImageUrls] }))
         setImagePreviews(prev => [...prev, ...fullImageUrls])
       } else {
