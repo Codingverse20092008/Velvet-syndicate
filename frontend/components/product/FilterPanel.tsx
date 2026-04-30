@@ -65,7 +65,7 @@ export function FilterPanel({
                 </h2>
                 <button
                   onClick={onClose}
-                  className="text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive p-2"
+                  className="text-velvet-muted hover:text-velvet-white transition-colors interactive p-2"
                 >
                   <X size={20} strokeWidth={1} />
                 </button>
@@ -81,7 +81,7 @@ export function FilterPanel({
                     <button
                       key={gender}
                       onClick={() => onGenderChange(selectedGender === gender ? null : gender)}
-                      className={`text-left px-6 py-4 text-[10px] tracking-[0.2em] uppercase transition-all duration-500 cursor-none interactive ${
+                      className={`text-left px-6 py-4 text-[10px] tracking-[0.2em] uppercase transition-all duration-500 interactive ${
                         selectedGender === gender
                           ? 'bg-white text-black'
                           : 'bg-neutral-900 text-velvet-muted hover:text-velvet-white'
@@ -103,7 +103,7 @@ export function FilterPanel({
                     <button
                       key={subcategory}
                       onClick={() => onSubcategoryChange(selectedSubcategory === subcategory ? null : subcategory)}
-                      className={`text-left px-6 py-4 text-[10px] tracking-[0.2em] uppercase transition-all duration-500 cursor-none interactive ${
+                      className={`text-left px-6 py-4 text-[10px] tracking-[0.2em] uppercase transition-all duration-500 interactive ${
                         selectedSubcategory === subcategory
                           ? 'bg-white text-black'
                           : 'bg-neutral-900 text-velvet-muted hover:text-velvet-white'
@@ -125,7 +125,7 @@ export function FilterPanel({
                     <button
                       key={size}
                       onClick={() => onSizeChange(selectedSize === size ? null : size)}
-                      className={`h-16 flex items-center justify-center text-[10px] tracking-[0.1em] transition-all duration-500 cursor-none interactive ${
+                      className={`h-16 flex items-center justify-center text-[10px] tracking-[0.1em] transition-all duration-500 interactive ${
                         selectedSize === size
                           ? 'bg-white text-black'
                           : 'bg-neutral-900 text-velvet-muted hover:text-velvet-white'
@@ -154,7 +154,7 @@ export function FilterPanel({
                     step="50"
                     value={priceRange[1]}
                     onChange={(e) => onPriceRangeChange([990, Number(e.target.value)])}
-                    className="w-full h-px bg-neutral-800 appearance-none cursor-none interactive accent-velvet-white"
+                    className="w-full h-px bg-neutral-800 appearance-none interactive accent-velvet-white"
                   />
                 </div>
               </div>
@@ -166,7 +166,7 @@ export function FilterPanel({
                   onSubcategoryChange(null)
                   onPriceRangeChange([990, 5000])
                 }}
-                className="w-full py-6 text-[10px] tracking-[0.4em] uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive border border-white/5 hover:border-white/10"
+                className="w-full py-6 text-[10px] tracking-[0.4em] uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive border border-white/5 hover:border-white/10"
               >
                 Reset Archive
               </button>

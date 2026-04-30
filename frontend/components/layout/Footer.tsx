@@ -32,12 +32,12 @@ export function Footer() {
             </h4>
             <ul className="space-y-3">
               <li>
-                <Link href="/collection" className="text-sm text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive">
+                <Link href="/collection" className="text-sm text-velvet-muted hover:text-velvet-white transition-colors interactive">
                   Collection
                 </Link>
               </li>
               <li>
-                <Link href="/about" className="text-sm text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive">
+                <Link href="/about" className="text-sm text-velvet-muted hover:text-velvet-white transition-colors interactive">
                   About
                 </Link>
               </li>

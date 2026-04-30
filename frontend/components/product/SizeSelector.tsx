@@ -21,7 +21,7 @@ export function SizeSelector({
         <span className="text-xs tracking-widest uppercase text-velvet-muted">
           Select Size
         </span>
-        <button className="text-xs text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive underline">
+        <button className="text-xs text-velvet-muted hover:text-velvet-white transition-colors interactive underline">
           Size Guide
         </button>
       </div>
@@ -35,7 +35,7 @@ export function SizeSelector({
               key={size}
               onClick={() => !isOutOfStock && onSelectSize(size)}
               disabled={isOutOfStock}
-              className={`w-14 h-14 flex items-center justify-center text-sm transition-all cursor-none interactive ${
+              className={`w-14 h-14 flex items-center justify-center text-sm transition-all interactive ${
                 isSelected
                   ? 'bg-velvet-white text-velvet-black'
                   : isOutOfStock

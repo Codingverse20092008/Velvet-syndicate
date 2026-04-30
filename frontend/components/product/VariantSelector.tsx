@@ -42,7 +42,7 @@ export function VariantSelector({
             <button
               key={variant.id}
               onClick={() => onSelectVariant(variant.id)}
-              className="group relative flex items-center justify-center p-1 cursor-none interactive"
+              className="group relative flex items-center justify-center p-1 interactive"
               title={variant.name}
             >
               {/* Active Ring */}

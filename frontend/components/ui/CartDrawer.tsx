@@ -45,7 +45,7 @@ export function CartDrawer() {
                 </h2>
                 <button
                   onClick={closeCart}
-                  className="p-2 text-velvet-muted hover:text-velvet-white transition-colors cursor-none"
+                  className="p-2 text-velvet-muted hover:text-velvet-white transition-colors"
                 >
                   <X size={20} />
                 </button>
@@ -87,20 +87,20 @@ export function CartDrawer() {
                           <div className="flex items-center gap-3 mt-3">
                             <button
                               onClick={() => updateQuantity(item.id, item.variantId, item.size, item.quantity - 1)}
-                              className="w-8 h-8 border border-white/20 flex items-center justify-center text-velvet-muted hover:text-velvet-white hover:border-velvet-white transition-colors cursor-none"
+                              className="w-8 h-8 border border-white/20 flex items-center justify-center text-velvet-muted hover:text-velvet-white hover:border-velvet-white transition-colors"
                             >
                               -
                             </button>
                             <span className="text-sm w-8 text-center">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(item.id, item.variantId, item.size, item.quantity + 1)}
-                              className="w-8 h-8 border border-white/20 flex items-center justify-center text-velvet-muted hover:text-velvet-white hover:border-velvet-white transition-colors cursor-none"
+                              className="w-8 h-8 border border-white/20 flex items-center justify-center text-velvet-muted hover:text-velvet-white hover:border-velvet-white transition-colors"
                             >
                               +
                             </button>
                             <button
                               onClick={() => removeItem(item.id, item.variantId, item.size)}
-                              className="ml-auto text-xs text-velvet-muted hover:text-velvet-white transition-colors cursor-none"
+                              className="ml-auto text-xs text-velvet-muted hover:text-velvet-white transition-colors"
                             >
                               Remove
                             </button>

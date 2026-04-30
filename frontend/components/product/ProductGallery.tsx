@@ -26,7 +26,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
     <div className="relative group">
       {/* Main Image */}
       <motion.div
-        className="aspect-[4/5] bg-velvet-dark overflow-hidden cursor-none relative"
+        className="aspect-[4/5] bg-velvet-dark overflow-hidden relative"
         onClick={() => setIsZoomed(true)}
         whileHover={{ scale: 1.01 }}
         transition={{ duration: 0.8, ease: [0.215, 0.61, 0.355, 1] }}

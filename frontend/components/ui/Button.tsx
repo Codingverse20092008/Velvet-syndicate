@@ -23,7 +23,7 @@ export function Button({
   // Base: consistent tracking, letter-spacing, transition timing
   const baseStyles = cn(
     'inline-flex items-center justify-center font-normal tracking-[0.32em] uppercase',
-    'transition-all duration-[420ms] cursor-none select-none',
+    'transition-all duration-[420ms] select-none',
     'focus:outline-none focus-visible:ring-1 focus-visible:ring-white/30',
     'disabled:opacity-40 disabled:pointer-events-none'
   )

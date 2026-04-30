@@ -55,13 +55,13 @@ export function Navigation() {
           <div className={`items-center gap-6 md:gap-10 flex-shrink-0 ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
             <Link
               href="/collection"
-              className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors duration-300 cursor-none interactive hidden md:block"
+              className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors duration-300 interactive hidden md:block"
             >
               Collection
             </Link>
             <Link
               href="/about"
-              className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors duration-300 cursor-none interactive hidden xs:block"
+              className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors duration-300 interactive hidden xs:block"
             >
               About
             </Link>
@@ -102,7 +102,7 @@ export function Navigation() {
             {/* Mobile Search Toggle */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className={`md:hidden text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive ${isSearchOpen ? 'hidden' : 'block'}`}
+              className={`md:hidden text-velvet-muted hover:text-velvet-white transition-colors interactive ${isSearchOpen ? 'hidden' : 'block'}`}
             >
               <Search size={17} />
             </button>
@@ -114,20 +114,20 @@ export function Navigation() {
                   {user?.role === 'admin' && (
                     <Link
                       href="/admin"
-                      className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive hidden md:block"
+                      className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive hidden md:block"
                     >
                       Admin
                     </Link>
                   )}
                   <Link
                     href="/account"
-                    className="text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive"
+                    className="text-velvet-muted hover:text-velvet-white transition-colors interactive"
                   >
                     <User size={17} />
                   </Link>
                   <button
                     onClick={() => useAuthStore.getState().logout()}
-                    className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive hidden md:block"
+                    className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive hidden md:block"
                   >
                     Logout
                   </button>
@@ -135,7 +135,7 @@ export function Navigation() {
               ) : (
                 <Link
                   href="/login"
-                  className="text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive"
+                  className="text-velvet-muted hover:text-velvet-white transition-colors interactive"
                 >
                   <User size={17} />
                 </Link>
@@ -146,7 +146,7 @@ export function Navigation() {
             <div className={`${isSearchOpen ? 'hidden md:block' : 'block'}`}>
               <button
                 onClick={toggleCart}
-                className="relative text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive"
+                className="relative text-velvet-muted hover:text-velvet-white transition-colors interactive"
               >
                 <ShoppingBag size={17} />
                 {totalItems > 0 && (
