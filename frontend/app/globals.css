@@ -27,7 +27,6 @@ body {
   color: #EAEAEA;
   font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 300;
-  cursor: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Belt-and-suspenders overflow guard */
@@ -38,55 +37,7 @@ body {
   font-family: 'Cormorant Garamond', serif;
 }
 
-
-/* Custom Cursor */
-.cursor {
-  position: fixed;
-  width: var(--cursor-size);
-  height: var(--cursor-size);
-  background: #EAEAEA;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9999;
-  transform: translate(-50%, -50%);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.cursor-follower {
-  position: fixed;
-  width: var(--follower-size);
-  height: var(--follower-size);
-  border: 1px solid rgba(74, 125, 156, 0.6);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 9998;
-  transform: translate(-50%, -50%);
-  transition: all 0.15s cubic-bezier(0.215, 0.61, 0.355, 1);
-  opacity: 0.5;
-}
-
-.cursor.hover {
-  transform: translate(-50%, -50%) scale(1.5);
-  background: #4A7D9C;
-}
-
-.cursor-follower.hover {
-  transform: translate(-50%, -50%) scale(1.8);
-  border-color: #EAEAEA;
-  opacity: 0.3;
-}
-
-/* Hide cursor on touch devices */
-@media (hover: none) {
-  .cursor,
-  .cursor-follower {
-    display: none;
-  }
-
-  body {
-    cursor: auto;
-  }
-}
+/* Removed custom cursor CSS */
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
@@ -115,7 +66,7 @@ body {
   .btn-luxury {
     @apply inline-flex items-center justify-center px-10 py-[14px] text-[10px] font-normal
            tracking-[0.32em] uppercase border border-white/20 text-velvet-white
-           transition-all duration-[420ms] cursor-none select-none;
+           transition-all duration-[420ms] select-none;
   }
 
   .btn-luxury:hover {
@@ -133,7 +84,7 @@ body {
   }
 
   .card-luxury {
-    @apply bg-velvet-card transition-all duration-[600ms] cursor-none;
+    @apply bg-velvet-card transition-all duration-[600ms];
   }
 
   .card-luxury:hover {

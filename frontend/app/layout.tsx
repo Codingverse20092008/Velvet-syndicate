@@ -40,7 +40,6 @@ export default function RootLayout({
       </head>
       <body>
         <AuthProvider>
-          <Cursor />
           <Navigation />
           <ActiveOrderBanner />
           <ReturnVisitTracker />
