@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { apiFetch } from '@/lib/api'
 
 interface Product {
   id: string
@@ -28,7 +29,7 @@ export default function CollectionPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/products')
+        const response = await apiFetch('/products')
         const data = await response.json()
         
         if (data.success) {
