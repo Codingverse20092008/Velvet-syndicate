@@ -40,28 +40,21 @@ export default function HomePage() {
         const res = await apiFetch('/products?featured=true&limit=4')
         const data = await res.json()
         if (data.success) {
-          const featured = data.data?.products ?? []
-
-          // Fallback: if featured inventory is low, backfill with regular products.
-          if (featured.length < 4) {
-            const fallbackRes = await apiFetch('/products?limit=4')
-            const fallbackData = await fallbackRes.json()
-            if (fallbackData.success) {
-              const regular = fallbackData.data?.products ?? []
-              const merged = [...featured]
-              for (const p of regular) {
-                if (!merged.find((x) => x.id === p.id)) merged.push(p)
-                if (merged.length >= 4) break
-              }
-              setProducts(merged.slice(0, 4))
-              return
-            }
-          }
-
-          setProducts(featured.slice(0, 4))
+          const products = data.data?.products ?? []
+          setProducts(products.slice(0, 4))
         }
       } catch (error) {
         console.error('Failed to fetch products:', error)
+        // Fallback: try regular products if featured fails
+        try {
+          const fallbackRes = await apiFetch('/products?limit=4')
+          const fallbackData = await fallbackRes.json()
+          if (fallbackData.success) {
+            setProducts(fallbackData.data?.products?.slice(0, 4) ?? [])
+          }
+        } catch (fallbackError) {
+          console.error('Fallback fetch also failed:', fallbackError)
+        }
       } finally {
         setIsLoading(false)
       }

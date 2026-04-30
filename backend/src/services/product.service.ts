@@ -86,12 +86,16 @@ export async function getProducts(filters: ProductFilters = {}): Promise<Paginat
 }
 
 export async function getFeaturedProducts(): Promise<any[]> {
-  const cacheKey = CACHE_KEYS.PRODUCTS_FEATURED;
-  const cached = await getCachedProducts<any[]>(cacheKey);
-  if (cached) return cached;
-
+  // Always query DB for featured products to ensure reliability
+  // Cache can cause stale data or failures, so we skip it for featured products
   const products = await productRepository.findFeatured();
-  await setCachedProducts(cacheKey, products, CACHE_TTL.FEATURED);
+  
+  // Fallback: if no featured products, return recent visible products
+  if (!products || products.length === 0) {
+    const fallback = await productRepository.findMany({ limit: 4, sort: 'createdAt' });
+    return fallback.items;
+  }
+  
   return products;
 }
 
