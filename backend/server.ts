@@ -86,7 +86,9 @@ app.use((req, res, next) => {
 app.use(globalLimiter);
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 // 🛡️ BULLETPROOF CORS FOR CROSS-DOMAIN AUTH (Vercel → Render)
 app.use(cors({
