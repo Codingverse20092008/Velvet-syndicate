@@ -103,10 +103,10 @@ export function UserStats() {
               </div>
             </div>
             <Link
-              href={`/orders/${stats.activeOrder.id}`}
+              href="/orders"
               className="text-[10px] uppercase tracking-widest px-3 py-2 rounded-lg border border-indigo-300/40 text-indigo-100 hover:bg-indigo-400/10"
             >
-              Quick Track
+              Order History
             </Link>
           </div>
         </motion.div>
