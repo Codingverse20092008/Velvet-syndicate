@@ -71,15 +71,42 @@ export interface AdminStats {
   recentOrders: AdminOrderItem[]
 }
 
+export interface DashboardMetrics {
+  totalUsers: number
+  newUsersToday: number
+  totalProfit: number
+  profitToday: number
+  profitMargin: number
+  avgOrderValue: number
+  conversionRate: number
+  salesGrowth: number
+  totalLoyaltyPoints: number
+  pointsRedeemed: number
+  topProducts: Array<{
+    id: string
+    name: string
+    totalSold: number
+    revenue: number
+  }>
+  salesByDay: Array<{
+    date: string
+    sales: number
+    orders: number
+  }>
+  ordersByStatus: Record<AdminOrderStatus, number>
+}
+
 interface AdminState {
   orders: AdminOrderItem[]
   currentOrder: AdminOrderDetail | null
   products: AdminProduct[]
   users: AdminUser[]
   stats: AdminStats | null
+  dashboardMetrics: DashboardMetrics | null
   isLoading: boolean
   error: string | null
   fetchOverview: () => Promise<void>
+  fetchDashboardMetrics: () => Promise<void>
   fetchOrders: () => Promise<void>
   fetchOrderById: (orderId: string) => Promise<void>
   updateOrderStatus: (orderId: string, status: AdminOrderStatus) => Promise<void>
@@ -101,6 +128,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   products: [],
   users: [],
   stats: null,
+  dashboardMetrics: null,
   isLoading: false,
   error: null,
 
@@ -112,6 +140,19 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       if (!data.success) throw new Error(data.error || 'Failed to load dashboard')
       const payload = getPayload(data)
       set({ stats: payload.overview, isLoading: false })
+    } catch (err) {
+      set({ error: (err as Error).message, isLoading: false })
+    }
+  },
+
+  fetchDashboardMetrics: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const res = await apiFetch('/admin/metrics')
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to load metrics')
+      const payload = getPayload(data)
+      set({ dashboardMetrics: payload.metrics, isLoading: false })
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false })
     }

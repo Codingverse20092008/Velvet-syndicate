@@ -17,7 +17,17 @@ import {
   updateAdminProduct,
 } from '../services/admin.service';
 
+// Import sub-routes
+import analyticsRoutes from './admin/analytics';
+import loyaltyRoutes from './admin/loyalty';
+import dashboardMetricsRoutes from './admin/metrics';
+
 const router = Router();
+
+// Mount sub-routes
+router.use('/analytics', analyticsRoutes);
+router.use('/loyalty', loyaltyRoutes);
+router.use('/metrics', dashboardMetricsRoutes);
 
 const orderStatusSchema = z.object({
   status: z.enum(['CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PENDING', 'FAILED']),
