@@ -251,8 +251,13 @@ app.get('/metrics', (req: Request, res: Response) => {
 // Import error handler
 import { errorHandler } from './src/lib/api-handler-express';
 
-// Serve uploaded files statically
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Serve uploaded files statically with CORS headers
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+}, express.static(path.join(process.cwd(), 'uploads')));
 
 // API Routes - Apply stricter rate limiting to auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
