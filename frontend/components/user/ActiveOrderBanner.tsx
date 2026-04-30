@@ -21,12 +21,12 @@ export function ActiveOrderBanner() {
 
   function shouldShowOrder(orderId: string) {
     if (typeof window === 'undefined') return false
-    return sessionStorage.getItem(`velvet_active_order_banner:${orderId}`) !== 'shown'
+    return localStorage.getItem(`velvet_active_order_banner:${orderId}`) !== 'shown'
   }
 
   function markOrderShown(orderId: string) {
     if (typeof window === 'undefined') return
-    sessionStorage.setItem(`velvet_active_order_banner:${orderId}`, 'shown')
+    localStorage.setItem(`velvet_active_order_banner:${orderId}`, 'shown')
   }
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export function ActiveOrderBanner() {
 
     const timeoutId = window.setTimeout(() => {
       setIsVisible(false)
-    }, 10000)
+    }, 5000)
 
     return () => window.clearTimeout(timeoutId)
   }, [activeOrder?.id])
