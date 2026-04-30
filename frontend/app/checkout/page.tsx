@@ -16,6 +16,7 @@ import { getVariant, trackABConversion } from '@/lib/ab-testing'
 import { MapPin, Plus, Check, Loader2, AlertCircle } from 'lucide-react'
 import { AddressModal } from '@/components/address/AddressModal'
 import { checkoutLock } from '@/lib/checkout-lock'
+import { OrderConfirmationAnimation } from '@/components/orders/OrderConfirmationAnimation'
 
 function CheckoutPage() {
   const router = useRouter()
@@ -353,6 +354,33 @@ function CheckoutPage() {
         isOpen={isAddressModalOpen} 
         onClose={() => setIsAddressModalOpen(false)} 
       />
+
+      <AnimatePresence>
+        {(isLocked || isSubmitting) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-6 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 18, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              className="w-full max-w-md border border-white/10 bg-velvet-card px-6 py-10 text-center shadow-2xl"
+            >
+              <OrderConfirmationAnimation state="processing" />
+              <h2 className="mt-8 font-heading text-2xl uppercase tracking-widest text-velvet-white">
+                Confirming Your Order
+              </h2>
+              <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-velvet-muted">
+                Please keep this page open while we reserve your items and confirm Cash on Delivery.
+              </p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

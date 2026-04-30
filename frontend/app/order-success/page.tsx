@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { ProductCard } from '@/components/product/ProductCard'
 import { apiFetch } from '@/lib/api'
 import { useState } from 'react'
+import { OrderConfirmationAnimation } from '@/components/orders/OrderConfirmationAnimation'
 
 interface SuggestionProduct {
   id: string
@@ -86,9 +87,17 @@ function OrderSuccessPage() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-velvet-card border border-white/10 rounded-2xl p-10"
       >
-        <div className="flex items-center gap-3 mb-6">
-          <PackageCheck className="text-emerald-400" size={28} />
-          <h1 className="font-heading text-3xl tracking-widest uppercase text-velvet-white">Order Confirmed</h1>
+        <div className="mb-8 grid grid-cols-1 items-center gap-8 md:grid-cols-[220px_1fr]">
+          <OrderConfirmationAnimation state="confirmed" />
+          <div>
+            <div className="flex items-center gap-3">
+              <PackageCheck className="text-emerald-400" size={28} />
+              <h1 className="font-heading text-3xl tracking-widest uppercase text-velvet-white">Order Confirmed</h1>
+            </div>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-velvet-muted">
+              Your order is locked in. We will call you shortly to confirm delivery details for Cash on Delivery.
+            </p>
+          </div>
         </div>
 
         <div className="space-y-4 text-sm">
