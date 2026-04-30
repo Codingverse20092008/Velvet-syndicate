@@ -2,7 +2,9 @@ import express, { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
+import pinoHttp from 'pino-http';
+import { globalLimiter, authLimiter, checkoutLimiter } from './src/middleware/rate-limiter';
+import './src/workers/orderWorker'; // Start the background worker
 
 // Import env early to validate
 import { env } from './src/lib/env';
@@ -61,28 +63,18 @@ app.use((req: any, res, next) => {
   requestContext.run({ requestId }, () => next());
 });
 
-// Rate limiting - Global protection
-const globalLimiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW * 1000, // Convert to milliseconds
-  max: env.RATE_LIMIT_MAX,
-  message: {
-    success: false,
-    error: 'Too many requests from this IP, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// 🚀 PERFORMANCE: Request Logging
+app.use(pinoHttp({
+  logger,
+  customLogLevel: (res, err) => ((res.statusCode || 500) >= 500 || err ? 'error' : 'info'),
+}));
 
-// Rate limiting - Auth endpoints (stricter)
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
-  message: {
-    success: false,
-    error: 'Too many authentication attempts, please try again later.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
+// 🚀 PERFORMANCE: Cache-Control for GET requests
+app.use((req, res, next) => {
+  if (req.method === 'GET' && req.path.startsWith('/api/products')) {
+    res.setHeader('Cache-Control', 'public, max-age=60'); // 1 minute browser cache
+  }
+  next();
 });
 
 // Apply global rate limiting
@@ -90,7 +82,24 @@ app.use(globalLimiter);
 
 // Security middleware
 app.use(helmet());
+
+// 🛡️ BULLETPROOF CORS FOR CROSS-DOMAIN AUTH (Vercel → Render)
 app.use(cors({
+  origin: [
+    'https://velvet-syndicate.vercel.app',
+    'https://velvet-syndicate-frontend.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    env.FRONTEND_URL,
+  ].filter(Boolean),
+  credentials: true, // 🔴 CRITICAL: Allow cookies cross-domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['X-Request-Id', 'Set-Cookie'] // 🔴 EXPOSE Set-Cookie so browser accepts it
+}));
+
+// 🛡️ PRE-FLIGHT HANDLING FOR CORS
+app.options('*', cors({
   origin: [
     'https://velvet-syndicate.vercel.app',
     'https://velvet-syndicate-frontend.vercel.app',
@@ -99,8 +108,8 @@ app.use(cors({
   ].filter(Boolean),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['X-Request-Id']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['X-Request-Id', 'Set-Cookie']
 }));
 
 // Body parsing with size limit (prevents payload abuse)
@@ -237,39 +246,71 @@ app.get('/metrics', (req: Request, res: Response) => {
 // Import error handler
 import { errorHandler } from './src/lib/api-handler-express';
 
+import metricsRoutes from './src/routes/metrics';
+
 // API Routes - Apply stricter rate limiting to auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/orders', ordersRoutes);
+app.use('/api/orders', checkoutLimiter, ordersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/user/addresses', addressRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/metrics', metricsRoutes);
 
 // Error handling
 app.use(errorHandler);
 
-if (require.main === module) {
-  const server = app.listen(PORT, () => {
-    console.log(`🚀 Backend server running on http://localhost:${PORT}`);
-    console.log(`📦 API endpoints available at http://localhost:${PORT}/api/*`);
-  });
+// ─── START SERVER ──────────────────────────────────────────────────────────────
+const server = app.listen(PORT, () => {
+  logger.info({ port: PORT, env: env.NODE_ENV }, `🚀 Velvet Syndicate API listening on port ${PORT}`);
+});
 
-  // Graceful shutdown
+// ─── BACKGROUND SERVICES + GRACEFUL SHUTDOWN (main process only) ───────────────
+if (require.main === module) {
+  // Use async IIFE — top-level await is illegal in CJS modules
+  (async () => {
+    try {
+      // Note: import paths without .ts extension (runtime uses compiled JS)
+      const { runReconciliation } = await import('./src/services/reconciliation.service');
+      const { sendAlert } = await import('./src/lib/alerts');
+
+      // 1. Reconciliation Loop (Every 2 minutes)
+      setInterval(async () => {
+        try { await runReconciliation(); } catch (err) {
+          logger.error({ err }, 'Reconciliation failed');
+        }
+      }, 120000);
+
+      // 2. Queue Health Monitor (Every 1 minute)
+      setInterval(async () => {
+        try {
+          const { orderQueue } = await import('./src/lib/queue');
+          const counts = await orderQueue.getJobCounts('failed');
+          if (counts.failed > 50) {
+            await sendAlert('CRITICAL: High order failure rate detected!', { failedCount: counts.failed });
+          }
+        } catch (err) { /* Redis/queue optional — non-fatal */ }
+      }, 60000);
+
+      logger.info('Background monitoring services started');
+    } catch (err) {
+      // Non-fatal — reconciliation is optional
+      logger.error({ err }, 'Failed to initialize background services (non-fatal)');
+    }
+  })();
+
+  // ─── Graceful Shutdown ────────────────────────────────────────────────────────
   const shutdown = async (signal: string) => {
     logger.info({ signal }, 'Shutting down gracefully...');
     server.close(async () => {
       logger.info('HTTP server closed');
       try {
-        // Close DB connection
         dbClient.close();
         logger.info('Database connection closed');
-        
-        // Close Redis if applicable
-        // Note: @upstash/redis is HTTP based and stateless, no close() needed
-        
+        // @upstash/redis is HTTP-based and stateless — no explicit close needed
         process.exit(0);
       } catch (err) {
         logger.error({ err }, 'Error during shutdown');
@@ -277,9 +318,9 @@ if (require.main === module) {
       }
     });
 
-    // Force shutdown after 10s
+    // Force shutdown after 10s if graceful close hangs
     setTimeout(() => {
-      logger.error('Could not close connections in time, forceful shutdown');
+      logger.error('Could not close connections in time — forceful shutdown');
       process.exit(1);
     }, 10000);
   };

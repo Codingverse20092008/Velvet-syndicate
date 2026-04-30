@@ -44,12 +44,22 @@ export function clearStoredTokens(): void {
 }
 
 // Refresh token from backend
+// Strategy: cookie (primary) + body fallback (cross-domain safety)
 async function refreshAuthToken(): Promise<string | null> {
   try {
+    // Always attempt to read from storage — browsers in strict/incognito mode
+    // may silently drop SameSite=None cookies across domains (Vercel → Render).
+    // The backend /api/auth/refresh already reads req.body?.refreshToken as fallback.
+    const storedRefreshToken = getStoredRefreshToken()
+
     const res = await fetch(`${API_URL}/api/auth/refresh`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include', // Send refresh token cookie
+      credentials: 'include', // Primary: send refresh_token cookie
+      // Fallback: also send token in body so cross-domain requests succeed
+      body: storedRefreshToken
+        ? JSON.stringify({ refreshToken: storedRefreshToken })
+        : undefined,
     })
 
     if (!res.ok) {
@@ -102,70 +112,83 @@ interface ApiFetchOptions extends RequestInit {
   skipRetry?: boolean // Skip retry on 401
 }
 
+let isRefreshing = false
+let refreshSubscribers: ((token: string) => void)[] = []
+
+function subscribeTokenRefresh(cb: (token: string) => void) {
+  refreshSubscribers.push(cb)
+}
+
+function onTokenRefreshed(token: string) {
+  refreshSubscribers.map((cb) => cb(token))
+  refreshSubscribers = []
+}
+
 export async function apiFetch(path: string, options: ApiFetchOptions = {}): Promise<Response> {
   const { skipAuth, skipRetry, headers, ...restOptions } = options
 
   // Build URL - ALWAYS use absolute URL in production
   const url = path.startsWith('http') ? path : `${API_URL}/api${path}`
 
-  // Get stored access token
-  const accessToken = getStoredAccessToken()
+  const executeRequest = async (token: string | null) => {
+    const authHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...headers as Record<string, string>,
+    }
 
-  // Build headers with Authorization if token exists
-  const authHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...headers as Record<string, string>,
-  }
+    if (token && !skipAuth) {
+      authHeaders['Authorization'] = `Bearer ${token}`
+    }
 
-  if (accessToken && !skipAuth) {
-    authHeaders['Authorization'] = `Bearer ${accessToken}`
+    return fetchWithTimeout(url, {
+      ...restOptions,
+      headers: authHeaders,
+      credentials: 'include',
+    })
   }
 
   // First attempt
-  let res = await fetchWithTimeout(url, {
-    ...restOptions,
-    headers: authHeaders,
-    credentials: 'include', // Send refresh token cookie
-  })
+  let res = await executeRequest(getStoredAccessToken())
 
   // Handle 401 - Token expired, try to refresh and retry
   if (res.status === 401 && !skipRetry && !path.includes('/auth/login') && !path.includes('/auth/signup')) {
+    if (isRefreshing) {
+      // 🛡️ QUEUE REQUEST: If already refreshing, wait for the new token
+      return new Promise((resolve) => {
+        subscribeTokenRefresh(async (token: string) => {
+          resolve(await executeRequest(token))
+        })
+      })
+    }
+
+    isRefreshing = true
     console.warn('Received 401, attempting token refresh...')
 
-    // Try to refresh the token
-    const newAccessToken = await refreshAuthToken()
+    try {
+      const newAccessToken = await refreshAuthToken()
 
-    if (newAccessToken) {
-      console.log('Token refreshed successfully, retrying original request...')
-
-      // Retry original request with new token
-      res = await fetchWithTimeout(url, {
-        ...restOptions,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-          'Authorization': `Bearer ${newAccessToken}`,
-        },
-        credentials: 'include',
-      })
-
-      // If retry also fails with 401, clear tokens
-      if (res.status === 401) {
-        console.warn('Retry also failed with 401, clearing tokens...')
-        clearStoredTokens()
-        if (typeof window !== 'undefined') {
-          const { useAuthStore } = await import('@/store/authStore')
-          useAuthStore.getState().clearUser()
-        }
+      if (newAccessToken) {
+        console.log('Token refreshed successfully, retrying original request...')
+        isRefreshing = false
+        onTokenRefreshed(newAccessToken)
+        
+        // Retry original request
+        return await executeRequest(newAccessToken)
+      } else {
+        throw new Error('Token refresh failed')
       }
-    } else {
-      // Refresh failed, clear tokens
+    } catch (err) {
+      isRefreshing = false
+      // 🛡️ CRITICAL: Notify all subscribers that refresh failed so they don't hang
+      onTokenRefreshed('') // Send empty string to signify failure
+      
       console.warn('Token refresh failed, clearing tokens...')
       clearStoredTokens()
       if (typeof window !== 'undefined') {
         const { useAuthStore } = await import('@/store/authStore')
         useAuthStore.getState().clearUser()
       }
+      return res // Return the original 401
     }
   }
 

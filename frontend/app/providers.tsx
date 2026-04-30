@@ -20,10 +20,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init()
   }, [checkAuth])
 
-  // Multi-tab sync
+  // Multi-tab sync: react to token changes (login/logout in other tabs)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'velvet-auth-state' || !e.key) {
+      // Listen for the actual keys used in api.ts (TOKEN_KEY / REFRESH_TOKEN_KEY)
+      if (e.key === 'velvet_access_token' || e.key === 'velvet_refresh_token' || !e.key) {
         checkAuth()
       }
     }
