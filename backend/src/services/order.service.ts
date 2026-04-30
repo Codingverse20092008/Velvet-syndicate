@@ -1,5 +1,5 @@
 import { eq, and, desc, inArray, sql, lt } from 'drizzle-orm';
-import { db } from '../lib/db';
+import { db, dbClient } from '../lib/db';
 import { orders, orderItems, cart, cartItems, productSizes, addresses, orderIntents } from '../lib/schema';
 import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { invalidateCartCache } from '../lib/cache';
@@ -13,6 +13,7 @@ type OrderIntentStatus =
   | 'READY_FOR_QUEUE'
   | 'ENQUEUED'
   | 'PROCESSING'
+  | 'PROCESSING_STALE'
   | 'COMPLETED'
   | 'FAILED_RETRYABLE'
   | 'FAILED_FINAL'
@@ -70,6 +71,42 @@ type EnqueueResult = {
   reason?: string;
 };
 
+let orderSchemaCompatibilityPromise: Promise<void> | null = null;
+
+async function ensureOrderSchemaCompatibility() {
+  if (orderSchemaCompatibilityPromise) {
+    return orderSchemaCompatibilityPromise;
+  }
+
+  orderSchemaCompatibilityPromise = (async () => {
+    const tableInfo = await dbClient.execute('PRAGMA table_info(orders)');
+    const rows = (tableInfo.rows as Record<string, unknown>[]) ?? [];
+    const columns = new Set(
+      rows
+        .map((row) => String(row.name ?? row['name'] ?? '').toLowerCase())
+        .filter(Boolean)
+    );
+
+    const alterStatements: string[] = [];
+    if (!columns.has('job_id')) {
+      alterStatements.push('ALTER TABLE orders ADD COLUMN job_id TEXT');
+    }
+    if (!columns.has('request_id')) {
+      alterStatements.push('ALTER TABLE orders ADD COLUMN request_id TEXT');
+    }
+
+    for (const statement of alterStatements) {
+      await dbClient.execute(statement);
+    }
+  })().catch((err) => {
+    // Allow retry on next request if first boot-time compatibility check fails.
+    orderSchemaCompatibilityPromise = null;
+    throw err;
+  });
+
+  return orderSchemaCompatibilityPromise;
+}
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -81,7 +118,7 @@ function normalizeIntentStatus(status: string): OrderIntentStatus {
 }
 
 function shouldAllowClaim(status: OrderIntentStatus) {
-  return ['ENQUEUED', 'READY_FOR_QUEUE', 'RECEIVED', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'].includes(status);
+  return ['ENQUEUED', 'READY_FOR_QUEUE', 'RECEIVED', 'PROCESSING_STALE', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'].includes(status);
 }
 
 function classifyFailure(error: unknown): 'FAILED_FINAL' | 'FAILED_RETRYABLE' {
@@ -202,7 +239,7 @@ async function enqueueIntent(intentId: string, requestId: string): Promise<Enque
       .where(
         and(
           eq(orderIntents.id, intentId),
-          inArray(orderIntents.status, ['RECEIVED', 'READY_FOR_QUEUE', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'])
+          inArray(orderIntents.status, ['RECEIVED', 'READY_FOR_QUEUE', 'PROCESSING_STALE', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'])
         )
       );
 
@@ -240,6 +277,8 @@ export async function createOrder(
   idempotencyKey?: string,
   expectedVersion?: number
 ) {
+  await ensureOrderSchemaCompatibility();
+
   if (!idempotencyKey) {
     throw new ValidationError('Idempotency key is required');
   }
@@ -342,6 +381,8 @@ export async function createOrder(
  * Uses only immutable payload from WAL for deterministic processing.
  */
 export async function processOrderIntent(intentId: string, jobId?: string, requestId?: string) {
+  await ensureOrderSchemaCompatibility();
+
   const intent = await db.query.orderIntents.findFirst({
     where: eq(orderIntents.id, intentId),
   });
@@ -396,7 +437,7 @@ export async function processOrderIntent(intentId: string, jobId?: string, reque
     .where(
       and(
         eq(orderIntents.id, intentId),
-        inArray(orderIntents.status, ['ENQUEUED', 'READY_FOR_QUEUE', 'RECEIVED', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'])
+        inArray(orderIntents.status, ['ENQUEUED', 'READY_FOR_QUEUE', 'RECEIVED', 'PROCESSING_STALE', 'FAILED_RETRYABLE', 'QUEUED', 'FAILED'])
       )
     );
 
@@ -518,6 +559,8 @@ export async function processOrderIntent(intentId: string, jobId?: string, reque
 }
 
 export async function getOrderIntentStatus(intentId: string, userId: string) {
+  await ensureOrderSchemaCompatibility();
+
   const intent = await db.query.orderIntents.findFirst({
     where: and(eq(orderIntents.id, intentId), eq(orderIntents.userId, userId)),
   });
@@ -572,7 +615,7 @@ export async function resetStaleProcessingIntents(staleMs = 2 * 60 * 1000) {
   await db
     .update(orderIntents)
     .set({
-      status: 'READY_FOR_QUEUE',
+      status: 'PROCESSING_STALE',
       error: 'Recovered from stale processing state',
       updatedAt: nowIso(),
     })
@@ -582,6 +625,8 @@ export async function resetStaleProcessingIntents(staleMs = 2 * 60 * 1000) {
 }
 
 export async function getOrdersByUserId(userId: string) {
+  await ensureOrderSchemaCompatibility();
+
   return db.query.orders.findMany({
     where: eq(orders.userId, userId),
     orderBy: [desc(orders.createdAt)],
@@ -590,6 +635,8 @@ export async function getOrdersByUserId(userId: string) {
 }
 
 export async function getOrderById(id: string, userId: string) {
+  await ensureOrderSchemaCompatibility();
+
   return db.query.orders.findFirst({
     where: and(eq(orders.id, id), eq(orders.userId, userId)),
     with: { items: true }
