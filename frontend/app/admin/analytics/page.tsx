@@ -118,7 +118,13 @@ export default function AdminAnalyticsPage() {
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error || 'Failed to load analytics'}</p>
-          <p className="text-velvet-muted text-sm">Make sure you have admin access.</p>
+          <p className="text-velvet-muted text-sm mb-6">Make sure you have admin access.</p>
+          <button 
+            onClick={() => window.location.href = '/login?redirect=/admin/analytics'}
+            className="px-6 py-3 bg-velvet-accent text-black rounded-xl text-sm font-medium hover:bg-velvet-accent/90"
+          >
+            Login Again
+          </button>
         </div>
       </div>
     )
