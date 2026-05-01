@@ -59,6 +59,11 @@ router.get('/stats', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
   const stats = await getUserStats(user.id);
 
+  // Hide loyalty points from admin users
+  if (user.role === 'admin') {
+    stats.loyaltyPoints = 0;
+  }
+
   return successResponse(res, { stats });
 }));
 

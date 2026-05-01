@@ -254,6 +254,10 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
         p.brand,
         p.is_visible as isVisible,
         p.created_at as createdAt,
+        p.gender,
+        p.product_type as subcategory,
+        COALESCE(GROUP_CONCAT(DISTINCT pv.color), '') as color,
+        COALESCE(GROUP_CONCAT(DISTINCT ps.size), '') as sizes,
         COALESCE(SUM(ps.stock), 0) as stock
       FROM products p
       LEFT JOIN product_variants pv ON pv.product_id = p.id
@@ -275,6 +279,10 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
     stock: Number(row.stock ?? 0),
     isVisible: Boolean(row.isVisible),
     createdAt: row.createdAt,
+    color: row.color || null,
+    sizes: row.sizes || null,
+    gender: row.gender || null,
+    subcategory: row.subcategory || null,
   }));
 }
 
