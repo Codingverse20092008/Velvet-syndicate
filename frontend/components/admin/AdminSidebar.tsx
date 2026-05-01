@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Award, TrendingUp, Settings, Menu, X, Layers } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { LayoutDashboard, Package, ShoppingBag, Users, Award, Settings, Menu, X, Layers } from 'lucide-react'
 
 const mainLinks = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
