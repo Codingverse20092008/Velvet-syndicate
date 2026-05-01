@@ -9,8 +9,6 @@ import { SizeSelector } from '@/components/product/SizeSelector'
 import { Button } from '@/components/ui/Button'
 import { useCartStore } from '@/store/cartStore'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { VariantSelector } from '@/components/product/VariantSelector'
-import { AnimatePresence } from 'framer-motion'
 import { formatPrice } from '@/lib/utils'
 import { events } from '@/lib/analytics'
 
@@ -170,7 +168,7 @@ export default function ProductPage() {
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, ease: [0.215, 0.61, 0.355, 1] }}
-            key={selectedVariantId} // Reset animation on variant change
+            key={product.id} // Reset animation on product change
           >
             <ProductGallery 
               images={selectedVariant?.images || []} 
@@ -201,23 +199,6 @@ export default function ProductPage() {
               <p className="text-velvet-muted font-light leading-relaxed">
                 {product.description}
               </p>
-            </motion.div>
-
-            {/* Variant Selector */}
-            <motion.div
-              className="mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-            >
-              <VariantSelector
-                variants={product.variants}
-                selectedVariantId={selectedVariantId || ''}
-                onSelectVariant={(id) => {
-                  setSelectedVariantId(id)
-                  setSelectedSize(null) // Reset size on variant change
-                }}
-              />
             </motion.div>
 
             {/* Size Selector */}
