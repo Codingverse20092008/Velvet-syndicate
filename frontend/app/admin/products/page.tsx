@@ -90,7 +90,6 @@ export default function AdminProductsPage() {
       })
       
       const data = await res.json()
-      console.log('Upload response:', data)
       // Backend wraps response in data.data property
       const responseData = data.data || data
       if (data.success && responseData.imageUrl) {
@@ -126,7 +125,6 @@ export default function AdminProductsPage() {
       })
       
       const data = await res.json()
-      console.log('Multiple upload response:', data)
       // Backend wraps response in data.data property
       const responseData = data.data || data
       if (data.success && responseData.imageUrls && Array.isArray(responseData.imageUrls)) {

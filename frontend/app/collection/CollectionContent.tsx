@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { apiFetch } from '@/lib/api'
 import Link from 'next/link'
+import { formatPrice } from '@/lib/utils'
 
 interface Product {
   id: string
@@ -32,8 +33,6 @@ export function CollectionContent() {
       try {
         const response = await apiFetch('/products')
         const data = await response.json()
-        
-        console.log('Collection API Response:', data)
         
         if (data.success) {
           setProducts(data.data.products || [])
@@ -101,7 +100,7 @@ export function CollectionContent() {
               <div key={product.id} className="bg-velvet-dark border border-white/10 p-6">
                 <h3 className="text-xl font-heading mb-2">{product.name}</h3>
                 <p className="text-velvet-muted mb-2">{product.category}</p>
-                <p className="text-velvet-white mb-4">${product.price}</p>
+                <p className="text-velvet-white mb-4">{formatPrice(product.price)}</p>
                 <Link
                   href={`/product/${product.slug}`}
                   className="inline-block px-4 py-2 border border-white/20 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors"

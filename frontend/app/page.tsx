@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { apiFetch } from '@/lib/api'
+import { formatPrice } from '@/lib/utils'
 
 // Hero3D with 3D rotating shoes
 const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => ({ default: mod.Hero3D })), {
@@ -96,6 +97,11 @@ export default function HomePage() {
     return '/images/placeholder-product.png'
   }
 
+  // Check if image URL is external
+  const isExternalImage = (url: string): boolean => {
+    return url.startsWith('http://') || url.startsWith('https://')
+  }
+
   return (
     <div className="relative">
       {/* Hero Section with 3D Rotating Shoes */}
@@ -134,24 +140,37 @@ export default function HomePage() {
                   <div key={product.id} className="bg-velvet-dark border border-white/10 overflow-hidden group">
                     {/* Product Image */}
                     <div className="relative aspect-square bg-velvet-black overflow-hidden">
-                      <Image
-                        src={productImage}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = '/images/placeholder-product.png'
-                        }}
-                      />
+                      {isExternalImage(productImage) ? (
+                        <img
+                          src={productImage}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = '/images/placeholder-product.png'
+                          }}
+                        />
+                      ) : (
+                        <Image
+                          src={productImage}
+                          alt={product.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          unoptimized={isExternalImage(productImage)}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement
+                            target.src = '/images/placeholder-product.png'
+                          }}
+                        />
+                      )}
                     </div>
                     
                     {/* Product Info */}
                     <div className="p-6">
                       <h3 className="text-xl font-heading mb-2">{product.name}</h3>
                       <p className="text-velvet-muted mb-2 text-sm">{product.category}</p>
-                      <p className="text-velvet-white mb-4 font-medium">${product.price}</p>
+                      <p className="text-velvet-white mb-4 font-medium">{formatPrice(product.price)}</p>
                       <Link
                         href={`/product/${product.slug}`}
                         className="inline-block px-4 py-2 border border-white/20 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors"
