@@ -72,9 +72,13 @@ export function CartDrawer() {
                       >
                         <div className="w-24 h-24 bg-velvet-card overflow-hidden">
                           <img 
-                            src={item.image} 
+                            src={item.image || '/images/placeholder-product.png'} 
                             alt={item.name} 
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = '/images/placeholder-product.png'
+                            }}
                           />
                         </div>
                         <div className="flex-1">

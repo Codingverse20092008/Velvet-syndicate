@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Award, TrendingUp, Settings } from 'lucide-react'
+import { useState } from 'react'
+import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Award, TrendingUp, Settings, Menu, X } from 'lucide-react'
 
 const mainLinks = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const systemLinks = [
 
 export function AdminSidebar() {
   const pathname = usePathname()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const isActive = (href: string) => {
     if (href === '/admin') return pathname === '/admin'
@@ -26,7 +28,24 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="w-full lg:w-64 bg-[#0A0A0A] border-r border-white/10 lg:min-h-[calc(100vh-7rem)] rounded-2xl lg:rounded-none flex flex-col">
+    <>
+      {/* Mobile Header with Hamburger */}
+      <div className="lg:hidden bg-[#0A0A0A] border border-white/10 rounded-2xl p-4 mb-4 flex items-center justify-between">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.35em] text-velvet-muted">Velvet Ops</div>
+          <h2 className="font-heading text-lg text-velvet-white tracking-wide">Admin Console</h2>
+        </div>
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 text-velvet-white hover:bg-white/10 rounded-lg transition-colors"
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
+      {/* Sidebar - Hidden on mobile unless menu open */}
+      <aside className={`${isMobileMenuOpen ? 'block' : 'hidden'} lg:block w-full lg:w-64 bg-[#0A0A0A] border border-white/10 lg:border-r lg:border-white/10 rounded-2xl lg:rounded-none lg:min-h-[calc(100vh-7rem)] flex flex-col`}>
       <div className="p-6 border-b border-white/5">
         <div className="text-[11px] uppercase tracking-[0.35em] text-velvet-muted">Velvet Ops</div>
         <h2 className="font-heading text-xl text-velvet-white mt-2 tracking-wide">Admin Console</h2>
@@ -80,5 +99,6 @@ export function AdminSidebar() {
         </div>
       </div>
     </aside>
+    </>
   )
 }

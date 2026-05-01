@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { apiFetch } from '@/lib/api'
+import { formatPrice } from '@/lib/utils'
 
 interface Product {
   id: string
@@ -135,7 +136,7 @@ export default function CollectionPage() {
                   <div className="p-6">
                     <h3 className="text-xl font-heading mb-2 text-white">{product.name}</h3>
                     <p className="text-velvet-muted mb-2 text-sm">{product.category}</p>
-                    <p className="text-white mb-4 font-medium">${product.price}</p>
+                    <p className="text-white mb-4 font-medium">{formatPrice(product.price)}</p>
                     <Link
                       href={`/product/${product.slug}`}
                       className="inline-block px-4 py-2 border border-white/20 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors text-white"

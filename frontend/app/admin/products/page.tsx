@@ -303,7 +303,8 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
-      <div className="bg-velvet-card border border-white/10 rounded-2xl overflow-hidden">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-velvet-card border border-white/10 rounded-2xl overflow-hidden">
         <div className="grid grid-cols-12 px-5 py-4 text-[10px] uppercase tracking-widest text-velvet-muted border-b border-white/5">
           <div className="col-span-4">Product</div>
           <div className="col-span-1">Stock</div>
@@ -342,6 +343,43 @@ export default function AdminProductsPage() {
             <div className="px-6 py-10 text-center text-velvet-muted">No products found.</div>
           )}
         </div>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {products.map((product) => (
+          <div key={product.id} className="bg-velvet-card border border-white/10 rounded-2xl p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1 min-w-0">
+                <div className="text-velvet-white font-medium truncate">{product.name}</div>
+                <div className="text-xs text-velvet-muted mt-1">{product.brand}</div>
+              </div>
+              <div className="text-velvet-white font-heading ml-4">{formatPrice(product.price)}</div>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-velvet-muted mb-3">
+              <span>Stock: {product.stock}</span>
+              <span className={product.isVisible ? 'text-emerald-400' : 'text-amber-400'}>
+                {product.isVisible ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-velvet-white hover:bg-white/10" onClick={() => startEdit(product)}>Edit</button>
+              <button className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-amber-300 hover:bg-amber-400/10" onClick={() => toggleStock(product.id, !product.isVisible)}>
+                {product.isVisible ? 'Hide' : 'Show'}
+              </button>
+              <button
+                className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-red-400/20 rounded-lg text-red-300 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                onClick={() => handleDeactivate(product)}
+                disabled={!product.isVisible}
+              >
+                {product.isVisible ? 'Deactivate' : 'Inactive'}
+              </button>
+            </div>
+          </div>
+        ))}
+        {!isLoading && products.length === 0 && (
+          <div className="px-6 py-10 text-center text-velvet-muted bg-velvet-card border border-white/10 rounded-2xl">No products found.</div>
+        )}
       </div>
     </div>
   )

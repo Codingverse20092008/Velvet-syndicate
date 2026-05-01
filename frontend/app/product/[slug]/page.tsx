@@ -11,6 +11,7 @@ import { useCartStore } from '@/store/cartStore'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { events } from '@/lib/analytics'
+import { apiFetch } from '@/lib/api'
 
 interface Variant {
   id: string
@@ -54,7 +55,7 @@ export default function ProductPage() {
 
   const fetchProduct = async (slug: string) => {
     try {
-      const res = await fetch(`/api/products/${slug}`)
+      const res = await apiFetch(`/products/${slug}`)
       const data = await res.json()
       if (data.success) {
         const p = data.data.product
