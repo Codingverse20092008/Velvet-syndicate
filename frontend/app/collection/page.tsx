@@ -79,6 +79,11 @@ export default function CollectionPage() {
     return '/images/placeholder-product.png'
   }
 
+  // Check if image URL is external (needs unoptimized loading)
+  const isExternalImage = (url: string): boolean => {
+    return url.startsWith('http://') || url.startsWith('https://')
+  }
+
   return (
     <div className="min-h-screen bg-velvet-black px-6 py-20">
       <div className="max-w-7xl mx-auto">
@@ -118,18 +123,32 @@ export default function CollectionPage() {
                 <div key={product.id} className="bg-velvet-dark border border-white/10 overflow-hidden group">
                   {/* Product Image */}
                   <div className="relative aspect-square bg-velvet-black overflow-hidden">
-                    <Image
-                      src={productImage}
-                      alt={product.name}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      onError={(e) => {
-                        // Fallback if image fails to load
-                        const target = e.target as HTMLImageElement
-                        target.src = '/images/placeholder-product.png'
-                      }}
-                    />
+                    {isExternalImage(productImage) ? (
+                      // External images - use regular img with unoptimized loading
+                      <img
+                        src={productImage}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/images/placeholder-product.png'
+                        }}
+                      />
+                    ) : (
+                      // Local images - use Next.js Image optimization
+                      <Image
+                        src={productImage}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        unoptimized={isExternalImage(productImage)}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/images/placeholder-product.png'
+                        }}
+                      />
+                    )}
                   </div>
                   
                   {/* Product Info */}

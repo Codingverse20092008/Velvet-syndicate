@@ -10,9 +10,26 @@ interface ProductGalleryProps {
   productName: string
 }
 
+// Helper to check if URL is external
+const isExternalUrl = (url: string): boolean => {
+  return url.startsWith('http://') || url.startsWith('https://')
+}
+
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
+  const [failedImages, setFailedImages] = useState<Set<number>>(new Set())
+
+  const handleImageError = (index: number) => {
+    setFailedImages(prev => new Set(prev).add(index))
+  }
+
+  const getImageSrc = (index: number): string => {
+    if (failedImages.has(index)) {
+      return '/images/placeholder-product.png'
+    }
+    return images[index] || '/images/placeholder-product.png'
+  }
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length)
@@ -40,14 +57,27 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Image
-              src={images[currentIndex] || '/placeholder.jpg'}
-              alt={`${productName} - ${currentIndex + 1}`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              priority={currentIndex === 0}
-            />
+            {isExternalUrl(getImageSrc(currentIndex)) ? (
+              // External images - use unoptimized img tag
+              <img
+                src={getImageSrc(currentIndex)}
+                alt={`${productName} - ${currentIndex + 1}`}
+                className="w-full h-full object-cover"
+                onError={() => handleImageError(currentIndex)}
+              />
+            ) : (
+              // Local images - use Next.js Image optimization
+              <Image
+                src={getImageSrc(currentIndex)}
+                alt={`${productName} - ${currentIndex + 1}`}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                priority={currentIndex === 0}
+                unoptimized={isExternalUrl(getImageSrc(currentIndex))}
+                onError={() => handleImageError(currentIndex)}
+              />
+            )}
           </motion.div>
         </AnimatePresence>
 
@@ -92,9 +122,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               }`}
             >
               <img
-                src={img}
+                src={failedImages.has(index) ? '/images/placeholder-product.png' : (img || '/images/placeholder-product.png')}
                 alt={`${productName} thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
+                onError={() => handleImageError(index)}
               />
             </button>
           ))}
@@ -128,9 +159,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               
               <div className="relative w-full h-full flex items-center justify-center">
                 <img
-                  src={images[currentIndex]}
+                  src={getImageSrc(currentIndex)}
                   alt={productName}
                   className="max-w-full max-h-full object-contain shadow-[0_0_100px_rgba(74,125,156,0.15)]"
+                  onError={() => handleImageError(currentIndex)}
                 />
               </div>
             </motion.div>
