@@ -7,7 +7,6 @@ import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Award, Trendin
 
 const mainLinks = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/analytics', label: 'Sales & Profit', icon: BarChart3 },
   { href: '/admin/orders', label: 'Order Control', icon: ShoppingBag },
   { href: '/admin/users', label: 'User Management', icon: Users },
   { href: '/admin/products', label: 'Inventory', icon: Package },

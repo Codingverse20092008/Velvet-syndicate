@@ -111,40 +111,54 @@ export default function AdminOrdersPage() {
           {rows.map((order) => {
             const options = transitionOptions[order.status]
             return (
-              <div key={order.id} className="flex flex-col lg:grid lg:grid-cols-12 px-5 py-4 gap-3 lg:gap-0 lg:items-center text-sm">
-                <div className="col-span-2">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Order</div>
+              <div key={order.id} className="flex flex-col lg:grid lg:grid-cols-12 px-5 py-4 gap-4 lg:gap-0 lg:items-center text-sm">
+                {/* Mobile Header: Order ID & Status */}
+                <div className="flex justify-between items-center lg:hidden">
+                  <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors font-heading text-base">
+                    #{order.id.slice(0, 8).toUpperCase()}
+                  </Link>
+                  <StatusBadge status={order.status} />
+                </div>
+
+                {/* Desktop: Order ID */}
+                <div className="hidden lg:block col-span-2">
                   <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors font-medium">
                     #{order.id.slice(0, 8).toUpperCase()}
                   </Link>
                 </div>
-                <div className="col-span-2">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Customer</div>
-                  <div className="text-velvet-white">{order.customerName}</div>
-                </div>
-                <div className="col-span-2">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Phone</div>
-                  <div className="text-velvet-muted">{order.phone || '-'}</div>
-                </div>
-                <div className="col-span-2">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Address</div>
-                  <div className="text-velvet-muted lg:truncate">
-                    {order.addressSnapshot.street}, {order.addressSnapshot.city}
+
+                {/* Customer & Phone grouped on mobile */}
+                <div className="flex flex-col gap-1 lg:col-span-4 lg:grid lg:grid-cols-2 lg:gap-0">
+                  <div className="lg:col-span-1">
+                    <div className="text-velvet-white font-medium lg:font-normal">{order.customerName}</div>
+                  </div>
+                  <div className="lg:col-span-1">
+                    <div className="text-velvet-muted text-xs lg:text-sm">{order.phone || '-'}</div>
                   </div>
                 </div>
-                <div className="col-span-1">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Total</div>
-                  <div className="text-velvet-white font-medium">{formatPrice(order.total)}</div>
+
+                {/* Address */}
+                <div className="col-span-2 text-velvet-muted lg:truncate text-xs lg:text-sm">
+                  {order.addressSnapshot.street}, {order.addressSnapshot.city}
                 </div>
-                <div className="col-span-1">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Payment</div>
-                  <div className="text-velvet-muted text-xs uppercase">{order.paymentMethod}</div>
+
+                {/* Total & Payment grouped on mobile */}
+                <div className="flex justify-between items-center lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-0">
+                  <div className="lg:col-span-1 text-velvet-white font-heading tracking-wide">
+                    {formatPrice(order.total)}
+                  </div>
+                  <div className="lg:col-span-1 text-velvet-muted text-[10px] uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded w-fit">
+                    {order.paymentMethod}
+                  </div>
                 </div>
-                <div className="col-span-1">
-                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Status</div>
+
+                {/* Desktop: Status */}
+                <div className="hidden lg:block col-span-1">
                   <StatusBadge status={order.status} />
                 </div>
-                <div className="col-span-1 flex lg:justify-end border-t border-white/5 lg:border-0 pt-3 lg:pt-0">
+
+                {/* Action Dropdown */}
+                <div className="col-span-1 flex lg:justify-end border-t border-white/5 lg:border-0 pt-3 lg:pt-0 mt-1 lg:mt-0">
                   {options.length > 0 ? (
                     <select
                       value=""
@@ -154,7 +168,7 @@ export default function AdminOrdersPage() {
                           handleStatusUpdate(order.id, e.target.value as AdminOrderStatus)
                         }
                       }}
-                      className="w-full lg:w-auto bg-black border border-white/15 text-velvet-white text-[11px] px-2 py-1.5 rounded-lg"
+                      className="w-full lg:w-auto bg-black border border-white/15 text-velvet-white text-[11px] px-3 py-2 lg:px-2 lg:py-1.5 rounded-lg"
                     >
                       <option value="">Update Status</option>
                       {options.map((status) => (
