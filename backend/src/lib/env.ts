@@ -23,7 +23,7 @@ const envSchema = z.object({
   ALERT_WEBHOOK_URL: z.string().url().optional(),
   // Resend (email)
   RESEND_API_KEY: z.string().min(1),
-  RESEND_FROM_EMAIL: z.string().email().default('noreply@velvetsyndicate.in'),
+  RESEND_FROM_EMAIL: z.string().email().default('onboarding@resend.dev'),
 });
 
 export const env = envSchema.parse(process.env);

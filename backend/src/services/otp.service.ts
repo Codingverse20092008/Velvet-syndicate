@@ -28,6 +28,10 @@ const OTP_MAX_ATTEMPTS = 5;
 
 // ─── Resend client ────────────────────────────────────────────────────────────
 
+if (!env.RESEND_API_KEY) {
+  logger.error('RESEND_API_KEY is missing from environment variables');
+}
+
 const resend = new Resend(env.RESEND_API_KEY);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -88,22 +92,35 @@ export async function sendOtp(email: string): Promise<void> {
   });
 
   // 5. Send via Resend
-  const { error } = await resend.emails.send({
-    from: env.RESEND_FROM_EMAIL,
-    to: normalised,
-    subject: 'Your Velvet Syndicate verification code',
-    html: buildEmailHtml(otp),
-    text: `Your OTP is ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes. Do not share this code.`,
-  });
+  const fromEmail = env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  
+  logger.info({ email: normalised, from: fromEmail }, 'Attempting to send OTP email');
 
-  if (error) {
-    // Clean up the DB record so the user can retry cleanly
+  try {
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: normalised,
+      subject: 'Your Velvet Syndicate verification code',
+      html: buildEmailHtml(otp),
+      text: `Your OTP is ${otp}. Valid for ${OTP_EXPIRY_MINUTES} minutes. Do not share this code.`,
+    });
+
+    if (error) {
+      // Clean up the DB record so the user can retry cleanly
+      await db.delete(otpVerifications).where(eq(otpVerifications.email, normalised));
+      logger.error({ error, email: normalised }, 'Resend API returned an error');
+      throw new ValidationError(`Failed to send OTP email: ${error.message}`);
+    }
+
+    logger.info({ email: normalised, resendId: data?.id }, 'OTP delivered successfully via Resend');
+  } catch (err) {
+    // Catch network errors or unexpected exceptions
     await db.delete(otpVerifications).where(eq(otpVerifications.email, normalised));
-    logger.error({ error, email: normalised }, 'Resend failed to deliver OTP');
-    throw new Error('Failed to send OTP email. Please try again.');
+    logger.error({ err, email: normalised }, 'Unexpected error while sending email via Resend');
+    
+    if (err instanceof ValidationError) throw err;
+    throw new Error('Failed to send OTP email due to an internal error. Please try again later.');
   }
-
-  logger.info({ email: normalised }, 'OTP sent');
 }
 
 /**
