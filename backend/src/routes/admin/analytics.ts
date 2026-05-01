@@ -12,11 +12,13 @@ const requireAdmin = async (req: Request, res: Response): Promise<boolean> => {
   try {
     const user = await getUserFromRequest(req);
     if (!user || (user as any).role !== 'admin') {
+      console.log('Analytics middleware: Not admin', user?.role);
       res.status(403).json({ success: false, error: 'Admin access required' });
       return false;
     }
     return true;
-  } catch {
+  } catch (err) {
+    console.error('Analytics middleware auth failed:', err);
     res.status(401).json({ success: false, error: 'Authentication required' });
     return false;
   }

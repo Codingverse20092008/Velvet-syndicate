@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Award, TrendingUp, Settings, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Users, BarChart3, Award, TrendingUp, Settings, Menu, X, Layers } from 'lucide-react'
 
 const mainLinks = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const mainLinks = [
   { href: '/admin/orders', label: 'Order Control', icon: ShoppingBag },
   { href: '/admin/users', label: 'User Management', icon: Users },
   { href: '/admin/products', label: 'Inventory', icon: Package },
+  { href: '/admin/collections', label: 'Collections', icon: Layers },
   { href: '/admin/loyalty', label: 'Loyalty Points', icon: Award },
 ]
 

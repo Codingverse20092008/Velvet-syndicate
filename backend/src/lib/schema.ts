@@ -274,3 +274,33 @@ export const feedback = sqliteTable('feedback', {
 }));
 
 export type Feedback = typeof feedback.$inferSelect;
+ 
+// 📂 Collections Table
+export const collections = sqliteTable('collections', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  imageUrl: text('image_url'),
+  isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  slugIdx: uniqueIndex('collections_slug_idx').on(table.slug),
+}));
+
+// 🔗 Collection-Product Mapping
+export const collectionProducts = sqliteTable('collection_products', {
+  id: text('id').primaryKey(),
+  collectionId: text('collection_id').notNull().references(() => collections.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  order: integer('order').notNull().default(0),
+}, (table) => ({
+  collectionIdIdx: index('collection_products_collection_id_idx').on(table.collectionId),
+  productIdIdx: index('collection_products_product_id_idx').on(table.productId),
+  uniqueItemIdx: uniqueIndex('collection_products_unique_idx').on(table.collectionId, table.productId),
+}));
+
+export type Collection = typeof collections.$inferSelect;
+export type NewCollection = typeof collections.$inferInsert;
+export type CollectionProduct = typeof collectionProducts.$inferSelect;

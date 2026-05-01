@@ -122,7 +122,8 @@ router.get('/', asyncHandler(async (req: Request, res: Response) => {
     }
 
     allOrders.forEach(order => {
-      const date = order.createdAt.split('T')[0];
+      // Handle both SQLite CURRENT_TIMESTAMP (YYYY-MM-DD HH:MM:SS) and ISO (YYYY-MM-DDTHH:MM:SS)
+      const date = order.createdAt.includes('T') ? order.createdAt.split('T')[0] : order.createdAt.split(' ')[0];
       if (salesByDay[date]) {
         salesByDay[date].sales += order.totalAmount;
         salesByDay[date].orders++;

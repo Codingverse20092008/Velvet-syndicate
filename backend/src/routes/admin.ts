@@ -22,6 +22,8 @@ import analyticsRoutes from './admin/analytics';
 import loyaltyRoutes from './admin/loyalty';
 import dashboardMetricsRoutes from './admin/metrics';
 import uploadRoutes from './admin/upload';
+import settingsRoutes from './admin/settings';
+import collectionsRoutes from './admin/collections';
 
 const router = Router();
 
@@ -30,6 +32,8 @@ router.use('/analytics', analyticsRoutes);
 router.use('/loyalty', loyaltyRoutes);
 router.use('/metrics', dashboardMetricsRoutes);
 router.use('/upload', uploadRoutes);
+router.use('/settings', settingsRoutes);
+router.use('/collections', collectionsRoutes);
 
 const orderStatusSchema = z.object({
   status: z.enum(['CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PENDING', 'FAILED']),

@@ -23,7 +23,7 @@ import metricsRoutes from './src/routes/metrics';
 import { runReconciliation } from './src/services/reconciliation.service';
 import { sendAlert } from './src/lib/alerts';
 import { orderQueue } from './src/lib/queue';
-import adminRoutes from './src/routes/admin';
+import adminRoutes from './src/routes/admin.ts';
 import { dbClient } from './src/lib/db';
 import { redis } from './src/lib/redis';
 import { logger } from './src/lib/logger';
