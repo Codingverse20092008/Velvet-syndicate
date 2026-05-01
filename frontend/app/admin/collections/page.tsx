@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
-import { Upload, X, Layers, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Upload, X, Layers, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 interface Collection {
@@ -248,7 +248,7 @@ export default function AdminCollectionsPage() {
       )}
 
       <div className="bg-velvet-card border border-white/10 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-12 px-5 py-4 text-[10px] uppercase tracking-widest text-velvet-muted border-b border-white/5">
+        <div className="hidden sm:grid grid-cols-12 px-5 py-4 text-[10px] uppercase tracking-widest text-velvet-muted border-b border-white/5">
           <div className="col-span-5">Collection</div>
           <div className="col-span-2">Products</div>
           <div className="col-span-2">Created</div>
@@ -256,23 +256,34 @@ export default function AdminCollectionsPage() {
         </div>
         <div className="divide-y divide-white/5">
           {isLoading ? (
-            <div className="px-6 py-12 text-center text-velvet-muted">Loading collections...</div>
+            <div className="px-6 py-12 text-center text-velvet-muted">
+              <Loader2 size={24} className="animate-spin mx-auto mb-2 text-velvet-accent" />
+              Loading collections...
+            </div>
           ) : collections.length === 0 ? (
             <div className="px-6 py-12 text-center text-velvet-muted">No collections found.</div>
           ) : collections.map(c => (
-            <div key={c.id} className="grid grid-cols-12 px-5 py-4 items-center">
-              <div className="col-span-5">
+            <div key={c.id} className="flex flex-col sm:grid sm:grid-cols-12 px-5 py-4 items-start sm:items-center gap-4 sm:gap-0">
+              <div className="col-span-5 w-full">
                 <div className="text-velvet-white font-medium">{c.name}</div>
-                <div className="text-[10px] text-velvet-muted mt-1 uppercase">/{c.slug}</div>
+                <div className="text-[10px] text-velvet-muted mt-1 uppercase tracking-tight">/{c.slug}</div>
               </div>
-              <div className="col-span-2 text-velvet-white">{c.productCount}</div>
-              <div className="col-span-2 text-velvet-muted text-[10px]">{new Date(c.createdAt).toLocaleDateString()}</div>
-              <div className="col-span-3 flex justify-end gap-2">
-                <button onClick={() => startEdit(c)} className="p-2 text-velvet-muted hover:text-velvet-white transition-colors">
-                  <Pencil size={16} />
+              <div className="col-span-2 flex items-center gap-2 sm:block">
+                <span className="sm:hidden text-[10px] uppercase text-velvet-muted">Products:</span>
+                <span className="text-velvet-white text-sm sm:text-base">{c.productCount}</span>
+              </div>
+              <div className="col-span-2 flex items-center gap-2 sm:block">
+                <span className="sm:hidden text-[10px] uppercase text-velvet-muted">Created:</span>
+                <span className="text-velvet-muted text-[10px]">{new Date(c.createdAt).toLocaleDateString()}</span>
+              </div>
+              <div className="col-span-3 w-full flex justify-start sm:justify-end gap-2 border-t border-white/5 sm:border-0 pt-3 sm:pt-0">
+                <button onClick={() => startEdit(c)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 text-velvet-muted hover:text-velvet-white transition-colors text-xs">
+                  <Pencil size={14} />
+                  <span>Edit</span>
                 </button>
-                <button onClick={() => handleDelete(c.id)} className="p-2 text-red-400/60 hover:text-red-400 transition-colors">
-                  <Trash2 size={16} />
+                <button onClick={() => handleDelete(c.id)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400/60 hover:text-red-400 transition-colors text-xs">
+                  <Trash2 size={14} />
+                  <span>Delete</span>
                 </button>
               </div>
             </div>

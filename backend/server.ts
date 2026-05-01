@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { randomUUID } from 'crypto';
+import crypto from 'node:crypto';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
@@ -23,7 +23,7 @@ import metricsRoutes from './src/routes/metrics';
 import { runReconciliation } from './src/services/reconciliation.service';
 import { sendAlert } from './src/lib/alerts';
 import { orderQueue } from './src/lib/queue';
-import adminRoutes from './src/routes/admin.ts';
+import adminRoutes from './src/routes/admin';
 import { dbClient } from './src/lib/db';
 import { redis } from './src/lib/redis';
 import { logger } from './src/lib/logger';
@@ -38,7 +38,7 @@ import { requestContext } from './src/lib/context';
 
 // Request ID Tracking + Logging (Elite level traceability)
 app.use((req: any, res, next) => {
-  const requestId = randomUUID();
+  const requestId = crypto.randomUUID();
   req.id = requestId;
   res.setHeader('X-Request-Id', requestId);
 

@@ -96,7 +96,7 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className="bg-velvet-card border border-white/10 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-12 px-5 py-4 text-[10px] uppercase tracking-widest text-velvet-muted border-b border-white/5">
+        <div className="hidden lg:grid grid-cols-12 px-5 py-4 text-[10px] uppercase tracking-widest text-velvet-muted border-b border-white/5">
           <div className="col-span-2">Order</div>
           <div className="col-span-2">Customer</div>
           <div className="col-span-2">Phone</div>
@@ -111,21 +111,40 @@ export default function AdminOrdersPage() {
           {rows.map((order) => {
             const options = transitionOptions[order.status]
             return (
-              <div key={order.id} className="grid grid-cols-12 px-5 py-4 items-center text-sm">
+              <div key={order.id} className="flex flex-col lg:grid lg:grid-cols-12 px-5 py-4 gap-3 lg:gap-0 lg:items-center text-sm">
                 <div className="col-span-2">
-                  <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Order</div>
+                  <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors font-medium">
                     #{order.id.slice(0, 8).toUpperCase()}
                   </Link>
                 </div>
-                <div className="col-span-2 text-velvet-white">{order.customerName}</div>
-                <div className="col-span-2 text-velvet-muted">{order.phone || '-'}</div>
-                <div className="col-span-2 text-velvet-muted truncate">
-                  {order.addressSnapshot.street}, {order.addressSnapshot.city}
+                <div className="col-span-2">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Customer</div>
+                  <div className="text-velvet-white">{order.customerName}</div>
                 </div>
-                <div className="col-span-1 text-velvet-white">{formatPrice(order.total)}</div>
-                <div className="col-span-1 text-velvet-muted text-xs uppercase">{order.paymentMethod}</div>
-                <div className="col-span-1"><StatusBadge status={order.status} /></div>
-                <div className="col-span-1 flex justify-end">
+                <div className="col-span-2">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Phone</div>
+                  <div className="text-velvet-muted">{order.phone || '-'}</div>
+                </div>
+                <div className="col-span-2">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Address</div>
+                  <div className="text-velvet-muted lg:truncate">
+                    {order.addressSnapshot.street}, {order.addressSnapshot.city}
+                  </div>
+                </div>
+                <div className="col-span-1">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Total</div>
+                  <div className="text-velvet-white font-medium">{formatPrice(order.total)}</div>
+                </div>
+                <div className="col-span-1">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Payment</div>
+                  <div className="text-velvet-muted text-xs uppercase">{order.paymentMethod}</div>
+                </div>
+                <div className="col-span-1">
+                  <div className="lg:hidden text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Status</div>
+                  <StatusBadge status={order.status} />
+                </div>
+                <div className="col-span-1 flex lg:justify-end border-t border-white/5 lg:border-0 pt-3 lg:pt-0">
                   {options.length > 0 ? (
                     <select
                       value=""
@@ -135,9 +154,9 @@ export default function AdminOrdersPage() {
                           handleStatusUpdate(order.id, e.target.value as AdminOrderStatus)
                         }
                       }}
-                      className="bg-black border border-white/15 text-velvet-white text-[11px] px-2 py-1 rounded-lg"
+                      className="w-full lg:w-auto bg-black border border-white/15 text-velvet-white text-[11px] px-2 py-1.5 rounded-lg"
                     >
-                      <option value="">Update</option>
+                      <option value="">Update Status</option>
                       {options.map((status) => (
                         <option key={status} value={status}>{status}</option>
                       ))}
