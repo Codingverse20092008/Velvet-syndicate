@@ -25,6 +25,7 @@ export interface AdminOrderItem {
   paymentStatus: string
   status: AdminOrderStatus
   createdAt: string
+  itemsSummary?: string
 }
 
 export interface AdminOrderDetail extends AdminOrderItem {

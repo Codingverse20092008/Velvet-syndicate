@@ -45,6 +45,7 @@ export interface AdminOrderListItem {
   paymentStatus: string;
   status: AdminOrderStatus;
   createdAt: string;
+  itemsSummary?: string;
 }
 
 export interface AdminOrderDetail extends AdminOrderListItem {
@@ -113,6 +114,7 @@ function mapOrderRecord(record: any): AdminOrderListItem {
     paymentStatus: record.paymentStatus,
     status: record.status,
     createdAt: record.createdAt,
+    itemsSummary: record.items?.map((i: any) => i.productName).join(', ') || '',
   };
 }
 
@@ -189,7 +191,7 @@ export async function getAdminOverview(): Promise<AdminOverview> {
 export async function getAdminOrders(): Promise<AdminOrderListItem[]> {
   const rows = await db.query.orders.findMany({
     orderBy: desc(orders.createdAt),
-    with: { user: true },
+    with: { user: true, items: true },
   });
 
   return rows.map(mapOrderRecord);

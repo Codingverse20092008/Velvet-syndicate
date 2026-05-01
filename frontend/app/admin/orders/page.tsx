@@ -112,19 +112,31 @@ export default function AdminOrdersPage() {
             const options = transitionOptions[order.status]
             return (
               <div key={order.id} className="flex flex-col lg:grid lg:grid-cols-12 px-5 py-4 gap-4 lg:gap-0 lg:items-center text-sm">
-                {/* Mobile Header: Order ID & Status */}
-                <div className="flex justify-between items-center lg:hidden">
-                  <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors font-heading text-base">
-                    #{order.id.slice(0, 8).toUpperCase()}
-                  </Link>
-                  <StatusBadge status={order.status} />
+                {/* Mobile Header: Order ID & Status & Product */}
+                <div className="flex flex-col lg:hidden gap-2">
+                  <div className="flex justify-between items-center">
+                    <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors font-heading text-base">
+                      #{order.id.slice(0, 8).toUpperCase()}
+                    </Link>
+                    <StatusBadge status={order.status} />
+                  </div>
+                  {order.itemsSummary && (
+                    <div className="text-xs text-velvet-muted line-clamp-2 italic">
+                      {order.itemsSummary}
+                    </div>
+                  )}
                 </div>
 
-                {/* Desktop: Order ID */}
+                {/* Desktop: Order ID & Product */}
                 <div className="hidden lg:block col-span-2">
                   <Link href={`/admin/orders/${order.id}`} className="text-velvet-white hover:text-velvet-accent transition-colors font-medium">
                     #{order.id.slice(0, 8).toUpperCase()}
                   </Link>
+                  {order.itemsSummary && (
+                    <div className="text-xs text-velvet-muted mt-1 line-clamp-2 italic pr-2">
+                      {order.itemsSummary}
+                    </div>
+                  )}
                 </div>
 
                 {/* Customer & Phone grouped on mobile */}
@@ -138,8 +150,8 @@ export default function AdminOrdersPage() {
                 </div>
 
                 {/* Address */}
-                <div className="col-span-2 text-velvet-muted lg:truncate text-xs lg:text-sm">
-                  {order.addressSnapshot.street}, {order.addressSnapshot.city}
+                <div className="col-span-2 text-velvet-muted text-xs lg:text-sm break-words pr-2">
+                  {order.addressSnapshot.street}, {order.addressSnapshot.city}{order.addressSnapshot.state ? `, ${order.addressSnapshot.state}` : ''}{order.addressSnapshot.pincode ? ` - ${order.addressSnapshot.pincode}` : ''}
                 </div>
 
                 {/* Total & Payment grouped on mobile */}
