@@ -51,6 +51,10 @@ export interface AdminProduct {
   stock: number
   isVisible: boolean
   createdAt: string
+  color?: string
+  sizes?: string
+  gender?: string
+  subcategory?: string
 }
 
 export interface AdminUser {

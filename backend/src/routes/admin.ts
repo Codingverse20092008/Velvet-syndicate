@@ -44,6 +44,7 @@ const productCreateSchema = z.object({
   stock: z.number().int().min(0),
   brand: z.string().min(2).max(120),
   color: z.string().default('Default'),
+  sizes: z.string().default('7,8,9,10,11,12'),
   gender: z.enum(['men', 'women', 'unisex']).default('unisex'),
   subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).default('sneakers'),
 });
@@ -57,6 +58,7 @@ const productUpdateSchema = z.object({
   stock: z.number().int().min(0).optional(),
   brand: z.string().min(2).max(120).optional(),
   color: z.string().optional(),
+  sizes: z.string().optional(),
   gender: z.enum(['men', 'women', 'unisex']).optional(),
   subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
   isVisible: z.boolean().optional(),

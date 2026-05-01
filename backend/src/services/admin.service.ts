@@ -287,13 +287,22 @@ export async function createAdminProduct(data: {
   stock: number;
   brand: string;
   color: string;
+  sizes: string;
   gender: string;
   subcategory: string;
 }): Promise<AdminProductItem> {
   const productId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
-  const sizeId = crypto.randomUUID();
   const slug = await generateUniqueSlug(data.name);
+
+  // Parse sizes (comma-separated like "7,8,9,10,11,12")
+  const sizeList = data.sizes
+    ? data.sizes.split(',').map(s => s.trim()).filter(s => s)
+    : ['7', '8', '9', '10', '11', '12'];
+
+  // Calculate stock per size (divide total stock evenly)
+  const stockPerSize = Math.floor(data.stock / sizeList.length) || 0;
+  const remainderStock = data.stock - (stockPerSize * sizeList.length);
 
   await db.transaction(async (tx) => {
     await tx.insert(products).values({
@@ -335,11 +344,15 @@ export async function createAdminProduct(data: {
       });
     }
 
-    await tx.insert(productSizes).values({
-      id: sizeId,
-      variantId,
-      size: '8',
-      stock: data.stock,
+    // Insert sizes with distributed stock
+    sizeList.forEach((size, index) => {
+      const sizeStock = stockPerSize + (index < remainderStock ? 1 : 0);
+      tx.insert(productSizes).values({
+        id: crypto.randomUUID(),
+        variantId,
+        size: size,
+        stock: sizeStock,
+      });
     });
   });
 
@@ -364,6 +377,7 @@ export async function updateAdminProduct(
     stock: number;
     brand: string;
     color: string;
+    sizes: string;
     gender: string;
     subcategory: string;
     isVisible: boolean;
@@ -440,7 +454,8 @@ export async function updateAdminProduct(
       await tx.update(productVariants).set({ color: data.color }).where(eq(productVariants.id, variants[0].id));
     }
 
-    if (data.stock !== undefined) {
+    // Handle sizes and stock update
+    if (data.stock !== undefined || data.sizes !== undefined) {
       let variantIds = variants.map((variant) => variant.id);
       if (variantIds.length === 0) {
         const variantId = crypto.randomUUID();
@@ -454,22 +469,40 @@ export async function updateAdminProduct(
         variantIds = [variantId];
       }
 
-      await tx.update(productSizes).set({ stock: 0 }).where(inArray(productSizes.variantId, variantIds));
-
       const firstVariantId = variantIds[0];
-      const firstSize = await tx.query.productSizes.findFirst({
-        where: eq(productSizes.variantId, firstVariantId),
-        columns: { id: true },
-      });
 
-      if (firstSize) {
-        await tx.update(productSizes).set({ stock: data.stock }).where(eq(productSizes.id, firstSize.id));
+      // Parse sizes if provided, otherwise use existing sizes
+      let sizeList: string[];
+      if (data.sizes) {
+        sizeList = data.sizes.split(',').map(s => s.trim()).filter(s => s);
       } else {
+        // Get existing sizes
+        const existingSizes = await tx.query.productSizes.findMany({
+          where: eq(productSizes.variantId, firstVariantId),
+          columns: { size: true },
+        });
+        sizeList = existingSizes.map(s => s.size);
+        if (sizeList.length === 0) {
+          sizeList = ['7', '8', '9', '10', '11', '12'];
+        }
+      }
+
+      // Delete existing sizes for this variant
+      await tx.delete(productSizes).where(eq(productSizes.variantId, firstVariantId));
+
+      // Calculate stock per size
+      const totalStock = data.stock ?? 0;
+      const stockPerSize = Math.floor(totalStock / sizeList.length) || 0;
+      const remainderStock = totalStock - (stockPerSize * sizeList.length);
+
+      // Insert new sizes with distributed stock
+      for (let i = 0; i < sizeList.length; i++) {
+        const sizeStock = stockPerSize + (i < remainderStock ? 1 : 0);
         await tx.insert(productSizes).values({
           id: crypto.randomUUID(),
           variantId: firstVariantId,
-          size: '8',
-          stock: data.stock,
+          size: sizeList[i],
+          stock: sizeStock,
         });
       }
     }

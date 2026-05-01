@@ -16,6 +16,7 @@ type ProductForm = {
   stock: string
   brand: string
   color: string
+  sizes: string
   gender: 'men' | 'women' | ''
   subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | ''
 }
@@ -29,6 +30,7 @@ const emptyForm: ProductForm = {
   stock: '',
   brand: '',
   color: '',
+  sizes: '7,8,9,10,11,12',
   gender: '',
   subcategory: '',
 }
@@ -177,6 +179,7 @@ export default function AdminProductsPage() {
       stock: Number(form.stock),
       brand: form.brand.trim(),
       color: form.color.trim(),
+      sizes: form.sizes.trim(),
       gender: form.gender || 'unisex',
       subcategory: form.subcategory || 'sneakers',
     }
@@ -202,9 +205,10 @@ export default function AdminProductsPage() {
       description: product.description,
       stock: String(product.stock),
       brand: product.brand,
-      color: '',
-      gender: '',
-      subcategory: '',
+      color: product.color || '',
+      sizes: product.sizes || '7,8,9,10,11,12',
+      gender: (product.gender as any) || '',
+      subcategory: (product.subcategory as any) || '',
     })
     setImagePreview(product.image)
     setImagePreviews([])
@@ -234,7 +238,8 @@ export default function AdminProductsPage() {
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Brand" value={form.brand} onChange={(e) => setForm((prev) => ({ ...prev, brand: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Price" type="number" min="0" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Stock" type="number" min="0" value={form.stock} onChange={(e) => setForm((prev) => ({ ...prev, stock: e.target.value }))} />
-          <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Color" value={form.color} onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))} />
+          <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Color (e.g., Red, Blue, Black)" value={form.color} onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))} />
+          <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Sizes (comma-separated: 7,8,9,10,11,12)" value={form.sizes} onChange={(e) => setForm((prev) => ({ ...prev, sizes: e.target.value }))} />
           <select className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" value={form.gender} onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value as any }))}>
             <option value="">Select Gender</option>
             {GENDERS.map(g => <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</option>)}
