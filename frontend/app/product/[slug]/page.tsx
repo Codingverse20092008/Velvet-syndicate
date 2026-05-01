@@ -260,18 +260,6 @@ export default function ProductPage() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              {/* Color Display */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-velvet-muted">Color</span>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-4 h-4 rounded-full border border-white/20"
-                    style={{ backgroundColor: selectedVariant?.color || '#ccc' }}
-                  />
-                  <span className="text-velvet-white">{selectedVariant?.name || 'Standard'}</span>
-                </div>
-              </div>
-              
               {/* Selected Size Display */}
               {selectedSize && (
                 <div className="flex items-center justify-between text-sm">
