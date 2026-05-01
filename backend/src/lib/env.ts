@@ -21,6 +21,9 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW: z.coerce.number().default(60),
   LOG_LEVEL: z.string().default('info'),
   ALERT_WEBHOOK_URL: z.string().url().optional(),
+  // Resend (email)
+  RESEND_API_KEY: z.string().min(1),
+  RESEND_FROM_EMAIL: z.string().email().default('noreply@velvetsyndicate.in'),
 });
 
 export const env = envSchema.parse(process.env);

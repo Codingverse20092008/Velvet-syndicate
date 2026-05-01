@@ -74,8 +74,8 @@ function SignupContent() {
       return
     }
 
-    // On successful signup, redirect to login
-    router.replace('/login?message=Account created successfully')
+    // On successful signup, redirect to OTP verification
+    router.replace(`/verify-otp?email=${encodeURIComponent(formData.email)}`)
   }
 
   return (

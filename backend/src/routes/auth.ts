@@ -1,16 +1,41 @@
 import { Router, Request, Response } from 'express';
 import { registerSchema, loginSchema } from '../lib/schemas';
 import { createUser, authenticateUser as authenticateUserSvc, logout } from '../services/auth.service';
+import { sendOtp, verifyOtp } from '../services/otp.service';
 import { refreshSession, setAuthCookiesExpress, clearAuthCookiesExpress } from '../lib/auth';
 import { getUserFromRequest, getRefreshTokenFromRequest } from '../lib/auth-express';
 import { asyncHandler } from '../lib/api-handler-express';
 import { successResponse } from '../lib/api-response-express';
-import { UnauthorizedError } from '../lib/errors';
+import { UnauthorizedError, ValidationError } from '../lib/errors';
 import { logger } from '../lib/logger';
+import { createLimiter } from '../middleware/rate-limiter';
+import { z } from 'zod';
 
 const router = Router();
 
+// ─── OTP-specific rate limiter: 5 requests per 15 minutes per IP ──────────────
+const otpLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many OTP requests. Please wait 15 minutes before trying again.',
+  keyPrefix: 'otp',
+});
+
+// ─── Input schemas ─────────────────────────────────────────────────────────────
+
+const sendOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+const verifyOtpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  otp: z.string().length(6, 'OTP must be exactly 6 digits').regex(/^\d+$/, 'OTP must be numeric'),
+});
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
 // POST /api/auth/signup
+// Creates user (emailVerified=false) then immediately fires OTP email
 router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
   const body = req.body;
   const parsed = registerSchema.parse(body);
@@ -21,7 +46,13 @@ router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
     password: parsed.password,
   });
 
-  return successResponse(res, { user }, 201);
+  // Auto-send OTP after account creation
+  await sendOtp(user.email);
+
+  return successResponse(res, {
+    user,
+    message: 'Account created. A verification code has been sent to your email.',
+  }, 201);
 }));
 
 // POST /api/auth/login
@@ -98,5 +129,52 @@ router.post('/refresh', asyncHandler(async (req: Request, res: Response) => {
   });
 }));
 
+// ─── OTP Routes ───────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/auth/send-otp
+ * Body: { email: string }
+ *
+ * Generates a fresh 6-digit OTP, stores the hash, emails the user.
+ * Rate-limited to 5 requests/15 min.
+ *
+ * Response 200: { success: true, data: { message: "OTP sent" } }
+ * Response 404: user not found
+ * Response 429: rate limit exceeded
+ */
+router.post('/send-otp', otpLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const { email } = sendOtpSchema.parse(req.body);
+
+  await sendOtp(email);
+
+  logger.info({ email }, 'OTP send requested');
+
+  return successResponse(res, {
+    message: 'A verification code has been sent to your email. Valid for 5 minutes.',
+  });
+}));
+
+/**
+ * POST /api/auth/verify-otp
+ * Body: { email: string, otp: string }
+ *
+ * Validates OTP (hash match, expiry, attempt limit).
+ * On success: marks user.email_verified = true and deletes the OTP record.
+ *
+ * Response 200: { success: true, data: { message: "Email verified" } }
+ * Response 400: invalid / expired OTP, too many attempts
+ * Response 404: user not found
+ */
+router.post('/verify-otp', otpLimiter, asyncHandler(async (req: Request, res: Response) => {
+  const { email, otp } = verifyOtpSchema.parse(req.body);
+
+  await verifyOtp(email, otp);
+
+  logger.info({ email }, 'Email OTP verified successfully');
+
+  return successResponse(res, {
+    message: 'Email verified successfully. You can now log in.',
+  });
+}));
 
 export default router;

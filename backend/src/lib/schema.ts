@@ -7,6 +7,7 @@ export const users = sqliteTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   role: text('role', { enum: ['user', 'admin'] }).notNull().default('user'),
+  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
   phone: text('phone'),
   address: text('address'),
   avatar: text('avatar'),
@@ -15,6 +16,18 @@ export const users = sqliteTable('users', {
 }, (table) => ({
   emailIdx: uniqueIndex('users_email_idx').on(table.email),
   phoneIdx: uniqueIndex('users_phone_idx').on(table.phone),
+}));
+
+// OTP Verifications
+export const otpVerifications = sqliteTable('otp_verifications', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull(),
+  otpHash: text('otp_hash').notNull(),
+  expiresAt: text('expires_at').notNull(),
+  attempts: integer('attempts').notNull().default(0),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  emailIdx: index('otp_verifications_email_idx').on(table.email),
 }));
 
 export const sessions = sqliteTable('sessions', {
@@ -304,3 +317,4 @@ export const collectionProducts = sqliteTable('collection_products', {
 export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;
 export type CollectionProduct = typeof collectionProducts.$inferSelect;
+export type OtpVerification = typeof otpVerifications.$inferSelect;

@@ -112,13 +112,21 @@ function LoginContent() {
           />
 
           {errors.form && (
-            <motion.p
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-sm text-velvet-muted text-center"
+              className="text-sm text-velvet-muted text-center space-y-2"
             >
-              {errors.form}
-            </motion.p>
+              <p>{errors.form}</p>
+              {errors.form.toLowerCase().includes('verify') && (
+                <Link 
+                  href={`/verify-otp?email=${encodeURIComponent(formData.email)}`}
+                  className="block text-velvet-accent hover:text-velvet-white transition-colors uppercase text-[10px] tracking-widest"
+                >
+                  Verify Now
+                </Link>
+              )}
+            </motion.div>
           )}
 
           <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
