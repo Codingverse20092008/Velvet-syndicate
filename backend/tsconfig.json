@@ -10,5 +10,11 @@
     "resolveJsonModule": true
   },
   "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "drizzle.config.ts",
+    "scripts/**/*",
+    "scratch/**/*",
+    "scratch-migrate.ts"
+  ]
 }
