@@ -26,6 +26,10 @@ interface CartState {
   totalPrice: number
   version: number
   checkoutInProgress: boolean // NEW: Prevent mutations during checkout
+  // Loyalty points (10 points = ₹5)
+  redeemedPoints: number
+  discountAmount: number
+  availablePoints: number
   syncCart: () => Promise<void>
   fetchCart: () => Promise<void>
   addItem: (item: Omit<CartItem, 'quantity'>) => Promise<void>
@@ -37,6 +41,10 @@ interface CartState {
   recalculate: () => void
   setHasHydrated: (val: boolean) => void
   setCheckoutInProgress: (inProgress: boolean) => void // NEW: Control checkout state
+  // Loyalty points actions
+  redeemPoints: (points: number) => void
+  clearPointsRedemption: () => void
+  setAvailablePoints: (points: number) => void
 }
 
 export const useCartStore = create<CartState>()(
@@ -51,6 +59,10 @@ export const useCartStore = create<CartState>()(
       totalPrice: 0,
       version: 0,
       checkoutInProgress: false, // NEW: Initialize checkout state
+      // Loyalty points initial state
+      redeemedPoints: 0,
+      discountAmount: 0,
+      availablePoints: 0,
 
       recalculate: () => {
         const items = get().items
@@ -255,22 +267,52 @@ export const useCartStore = create<CartState>()(
           totalItems: 0, 
           totalPrice: 0, 
           checkoutInProgress: false,
-          version: get().version + 1 // Increment version locally to ensure freshness
+          version: get().version + 1,
+          redeemedPoints: 0,
+          discountAmount: 0,
         })
       },
 
-      toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
-      closeCart: () => set({ isOpen: false }),
-      setHasHydrated: (val: boolean) => set({ hasHydrated: val }),
-      
-      // NEW: Control checkout state to prevent mutations
+      toggleCart: () => {
+        set({ isOpen: !get().isOpen })
+      },
+
+      closeCart: () => {
+        set({ isOpen: false })
+      },
+
+      setHasHydrated: (val: boolean) => {
+        set({ hasHydrated: val })
+      },
+
       setCheckoutInProgress: (inProgress: boolean) => {
-        console.log(`🛒 Checkout state: ${inProgress ? 'IN PROGRESS' : 'COMPLETED'}`)
         set({ checkoutInProgress: inProgress })
+      },
+
+      // Loyalty points: 10 points = ₹5 discount
+      redeemPoints: (points: number) => {
+        const { availablePoints, totalPrice } = get()
+        const validPoints = Math.min(points, availablePoints)
+        // 10 points = ₹5, so 1 point = ₹0.5
+        const maxDiscount = totalPrice * 0.5 // Max 50% discount
+        const discount = Math.min((validPoints / 10) * 5, maxDiscount)
+        const actualPoints = Math.ceil((discount / 5) * 10)
+        set({ 
+          redeemedPoints: actualPoints,
+          discountAmount: discount 
+        })
+      },
+
+      clearPointsRedemption: () => {
+        set({ redeemedPoints: 0, discountAmount: 0 })
+      },
+
+      setAvailablePoints: (points: number) => {
+        set({ availablePoints: points })
       },
     }),
     {
-      name: 'velvet-cart',
+      name: 'cart-storage',
       partialize: (state) => ({ items: state.items }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true)

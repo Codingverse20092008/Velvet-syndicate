@@ -331,8 +331,8 @@ export async function createAdminProduct(data: {
     await tx.insert(productVariants).values({
       id: variantId,
       productId,
-      name: 'Standard',
-      color: data.color || 'Default',
+      name: data.color || 'Standard',
+      color: data.color || '#808080',
       slug,
     });
 
@@ -428,8 +428,8 @@ export async function updateAdminProduct(
         await tx.insert(productVariants).values({
           id: variantId,
           productId,
-          name: 'Standard',
-          color: data.color || 'Default',
+          name: data.color || 'Standard',
+          color: data.color || '#808080',
           slug: existing.slug,
         });
         await tx.insert(productVariantImages).values({
@@ -459,7 +459,10 @@ export async function updateAdminProduct(
     }
 
     if (data.color !== undefined && variants.length > 0) {
-      await tx.update(productVariants).set({ color: data.color }).where(eq(productVariants.id, variants[0].id));
+      await tx.update(productVariants).set({ 
+        name: data.color,
+        color: data.color 
+      }).where(eq(productVariants.id, variants[0].id));
     }
 
     // Handle sizes and stock update
@@ -470,8 +473,8 @@ export async function updateAdminProduct(
         await tx.insert(productVariants).values({
           id: variantId,
           productId,
-          name: 'Standard',
-          color: data.color || 'Default',
+          name: data.color || 'Standard',
+          color: data.color || '#808080',
           slug: existing.slug,
         });
         variantIds = [variantId];
