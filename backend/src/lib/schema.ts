@@ -135,7 +135,7 @@ export const orders = sqliteTable('orders', {
   paymentStatus: text('payment_status', { enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'] }).notNull().default('PENDING'),
   paymentMethod: text('payment_method').notNull().default('COD'),
   shippingAddress: text('shipping_address').notNull(),
-  idempotencyKey: text('idempotency_key').notNull(),
+  idempotencyKey: text('idempotency_key'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
