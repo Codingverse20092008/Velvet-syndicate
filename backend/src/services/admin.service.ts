@@ -489,8 +489,12 @@ export async function updateAdminProduct(
 
       // Parse sizes if provided, otherwise use existing sizes
       let sizeList: string[];
-      if (data.sizes) {
-        sizeList = data.sizes.split(',').map(s => s.trim()).filter(s => s);
+      if (data.sizes !== undefined) {
+        if (data.sizes === '') {
+          sizeList = [];
+        } else {
+          sizeList = data.sizes.split(',').map(s => s.trim()).filter(s => s);
+        }
       } else {
         // Get existing sizes
         const existingSizes = await tx.query.productSizes.findMany({

@@ -49,6 +49,7 @@ const productCreateSchema = z.object({
   sizes: z.string().default('7,8,9,10,11,12'),
   gender: z.enum(['men', 'women', 'unisex']).default('unisex'),
   subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).default('sneakers'),
+  featured: z.boolean().default(false),
 });
 
 const productUpdateSchema = z.object({
@@ -64,6 +65,7 @@ const productUpdateSchema = z.object({
   gender: z.enum(['men', 'women', 'unisex']).optional(),
   subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
   isVisible: z.boolean().optional(),
+  featured: z.boolean().optional(),
 });
 
 const productStockToggleSchema = z.object({

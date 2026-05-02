@@ -29,7 +29,12 @@ const mapProduct = (p: any) => ({
     sizes: (v.sizes || []).map((s: any) => ({
       size: s.size,
       stock: Number(s.stock ?? 0)
-    })).sort((a: any, b: any) => parseFloat(a.size) - parseFloat(b.size))
+    })).sort((a: any, b: any) => {
+      const numA = parseFloat(a.size);
+      const numB = parseFloat(b.size);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return String(a.size).localeCompare(String(b.size));
+    })
   }))
 });
 

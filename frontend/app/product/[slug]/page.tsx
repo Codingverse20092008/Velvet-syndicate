@@ -262,7 +262,7 @@ export default function ProductPage() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-velvet-muted">Shipping</span>
-                <span className="text-velvet-white">₹20 (Free above ₹500)</span>
+                <span className="text-velvet-white">Complimentary</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-velvet-muted">Delivery</span>
