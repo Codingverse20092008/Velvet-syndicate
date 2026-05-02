@@ -13,10 +13,11 @@ import { apiFetch } from '@/lib/api'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { events } from '@/lib/analytics'
 import { getVariant, trackABConversion } from '@/lib/ab-testing'
-import { MapPin, Plus, Check, Loader2, AlertCircle } from 'lucide-react'
+import { MapPin, Plus, Check, Loader2, AlertCircle, Trash2 } from 'lucide-react'
 import { AddressModal } from '@/components/address/AddressModal'
 import { checkoutLock } from '@/lib/checkout-lock'
 import { OrderConfirmationAnimation } from '@/components/orders/OrderConfirmationAnimation'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 
 function CheckoutPage() {
   const router = useRouter()
@@ -31,6 +32,8 @@ function CheckoutPage() {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [addressToDelete, setAddressToDelete] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   
   // ENTERPRISE LOCK SYSTEM - Multiple layers of protection
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID())
@@ -190,6 +193,45 @@ function CheckoutPage() {
     ctaVariant
   ])
 
+  const [showProfileSyncModal, setShowProfileSyncModal] = useState(false)
+
+  const handleDeleteAddress = async (syncWithProfile: boolean = false) => {
+    if (!addressToDelete) return
+    setIsDeleting(true)
+    try {
+      // Find the address details before deleting
+      const addr = addresses.find(a => a.id === addressToDelete)
+      
+      await addressStore.deleteAddress(addressToDelete)
+      
+      if (selectedAddressId === addressToDelete) {
+        setSelectedAddressId(null)
+      }
+
+      // If user said yes to sync, or if we want to auto-sync clearing
+      if (syncWithProfile && addr) {
+        // If the deleted address matches current profile phone/address, clear them
+        await apiFetch('/user/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: user?.name, // Required by backend schema
+            phone: null,
+            address: null
+          })
+        })
+        await useAuthStore.getState().refreshProfile()
+      }
+
+    } catch (err) {
+      setErrorMessage('Failed to delete address')
+    } finally {
+      setIsDeleting(false)
+      setAddressToDelete(null)
+      setShowProfileSyncModal(false)
+    }
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -260,11 +302,24 @@ function CheckoutPage() {
                       </p>
                       <p className="text-xs text-velvet-muted pt-1">{address.phone}</p>
                     </div>
-                    {selectedAddressId === address.id && (
-                      <div className="w-6 h-6 rounded-full bg-velvet-accent flex items-center justify-center">
-                        <Check size={14} className="text-white" />
-                      </div>
-                    )}
+                    <div className="flex flex-col items-end gap-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          console.log('🗑️ Delete clicked for address:', address.id)
+                          setAddressToDelete(address.id)
+                        }}
+                        className="p-2 text-velvet-muted hover:text-red-400 transition-colors rounded-full hover:bg-red-500/10 relative z-30 interactive"
+                        title="Delete Address"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                      {selectedAddressId === address.id && (
+                        <div className="w-6 h-6 rounded-full bg-velvet-accent flex items-center justify-center">
+                          <Check size={14} className="text-white" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -381,6 +436,26 @@ function CheckoutPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      <ConfirmModal
+        isOpen={!!addressToDelete && !showProfileSyncModal}
+        onClose={() => setAddressToDelete(null)}
+        onConfirm={() => setShowProfileSyncModal(true)}
+        title="Delete Address?"
+        message="Are you sure you want to remove this address from your shipping list?"
+        confirmText="Delete"
+        variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={showProfileSyncModal}
+        onClose={() => handleDeleteAddress(false)}
+        onConfirm={() => handleDeleteAddress(true)}
+        title="Sync with Profile?"
+        message="Would you also like to remove this phone and address from your main profile information?"
+        confirmText="Yes, Remove Both"
+        cancelText="No, Just Address"
+        variant="danger"
+      />
     </div>
   )
 }

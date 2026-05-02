@@ -177,7 +177,7 @@ function SignupContent() {
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           Already a member?{' '}
-          <Link href={`/login?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors cursor-none interactive">
+          <Link href={`/login?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors interactive">
             Enter Syndicate
           </Link>
         </motion.p>

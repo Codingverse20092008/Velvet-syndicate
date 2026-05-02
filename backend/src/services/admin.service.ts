@@ -308,11 +308,11 @@ export async function createAdminProduct(data: {
   // Parse sizes (comma-separated like "7,8,9,10,11,12")
   const sizeList = data.sizes
     ? data.sizes.split(',').map(s => s.trim()).filter(s => s)
-    : ['7', '8', '9', '10', '11', '12'];
+    : [];
 
   // Calculate stock per size (divide total stock evenly)
-  const stockPerSize = Math.floor(data.stock / sizeList.length) || 0;
-  const remainderStock = data.stock - (stockPerSize * sizeList.length);
+  const stockPerSize = sizeList.length > 0 ? Math.floor(data.stock / sizeList.length) : 0;
+  const remainderStock = sizeList.length > 0 ? data.stock - (stockPerSize * sizeList.length) : 0;
 
   await db.transaction(async (tx) => {
     await tx.insert(products).values({
@@ -496,7 +496,7 @@ export async function updateAdminProduct(
         });
         sizeList = existingSizes.map(s => s.size);
         if (sizeList.length === 0) {
-          sizeList = ['7', '8', '9', '10', '11', '12'];
+          sizeList = [];
         }
       }
 
@@ -505,8 +505,8 @@ export async function updateAdminProduct(
 
       // Calculate stock per size
       const totalStock = data.stock ?? 0;
-      const stockPerSize = Math.floor(totalStock / sizeList.length) || 0;
-      const remainderStock = totalStock - (stockPerSize * sizeList.length);
+      const stockPerSize = sizeList.length > 0 ? Math.floor(totalStock / sizeList.length) : 0;
+      const remainderStock = sizeList.length > 0 ? totalStock - (stockPerSize * sizeList.length) : 0;
 
       // Insert new sizes with distributed stock
       for (let i = 0; i < sizeList.length; i++) {

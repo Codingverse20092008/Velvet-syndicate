@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Loader2, Home, Phone, MapPin, Hash } from 'lucide-react'
 import { useAddressStore, Address } from '@/store/addressStore'
+import { useAuthStore } from '@/store/authStore'
 import { events } from '@/lib/analytics'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
+import { apiFetch } from '@/lib/api'
 
 interface AddressModalProps {
   isOpen: boolean
@@ -17,11 +20,11 @@ export function AddressModal({ isOpen, onClose, address }: AddressModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [pendingData, setPendingData] = useState<any>(null)
+  const [showSyncModal, setShowSyncModal] = useState(false)
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setIsSubmitting(true)
-    setError(null)
-
     const formData = new FormData(e.currentTarget)
     const data = {
       name: formData.get('name') as string,
@@ -33,18 +36,45 @@ export function AddressModal({ isOpen, onClose, address }: AddressModalProps) {
       isDefault: formData.get('isDefault') === 'on',
     }
 
+    setPendingData(data)
+    setShowSyncModal(true)
+  }
+
+  const executeAction = async (syncToProfile: boolean) => {
+    if (!pendingData) return
+    setIsSubmitting(true)
+    setError(null)
+    setShowSyncModal(false)
+
     try {
       if (address) {
-        await updateAddress(address.id, data)
+        await updateAddress(address.id, pendingData)
       } else {
-        await addAddress(data)
+        await addAddress(pendingData)
         events.addressAdded()
       }
+
+      if (syncToProfile) {
+        const fullAddress = `${pendingData.street}, ${pendingData.city}, ${pendingData.state} - ${pendingData.pincode}`
+        const user = useAuthStore.getState().user
+        await apiFetch('/user/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: pendingData.name, // Use the name from the form
+            phone: pendingData.phone,
+            address: fullAddress
+          })
+        })
+        await useAuthStore.getState().refreshProfile()
+      }
+      
       onClose()
     } catch (err) {
       setError((err as Error).message)
     } finally {
       setIsSubmitting(false)
+      setPendingData(null)
     }
   }
 
@@ -184,6 +214,15 @@ export function AddressModal({ isOpen, onClose, address }: AddressModalProps) {
           </motion.div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={showSyncModal}
+        onClose={() => executeAction(false)}
+        onConfirm={() => executeAction(true)}
+        title="Update Profile?"
+        message="Would you like to save this phone and address to your main profile information as well?"
+        confirmText="Yes, Update"
+        cancelText="No, Just for now"
+      />
     </AnimatePresence>
   )
 }

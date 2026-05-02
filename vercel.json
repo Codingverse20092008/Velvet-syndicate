@@ -7,5 +7,15 @@
   "env": {
     "NEXT_PUBLIC_API_URL": "https://velvet-syndicate.onrender.com",
     "NEXT_PUBLIC_APP_URL": "https://velvet-syndicate.vercel.app"
+  },
+  "experimentalServices": {
+    "frontend": {
+      "routePrefix": "/",
+      "framework": "nextjs"
+    },
+    "backend": {
+      "entrypoint": "backend",
+      "routePrefix": "/_/backend"
+    }
   }
 }

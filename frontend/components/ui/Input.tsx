@@ -1,8 +1,9 @@
 'use client'
 
 import { forwardRef, InputHTMLAttributes, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { Eye, EyeOff } from 'lucide-react'
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
@@ -13,6 +14,8 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, type = 'text', className, ...props }, ref) => {
     const [isFocused, setIsFocused] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const isPassword = type === 'password'
 
     return (
       <div className="w-full">
@@ -21,22 +24,51 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {label}
           </label>
         )}
-        <div className="relative">
+        <div className="relative group">
           <input
             ref={ref}
-            type={type}
+            type={isPassword ? (showPassword ? 'text' : 'password') : type}
             className={cn(
               'w-full bg-transparent text-velvet-white placeholder-velvet-muted/50',
               'border-b border-white/20 py-4 px-0',
               'focus:outline-none focus:border-velvet-accent',
               'transition-colors duration-300 luxury-ease',
               'text-base font-light tracking-wide',
+              'autofill:bg-transparent autofill:text-velvet-white',
+              isPassword && 'pr-12',
               className
             )}
+            style={{
+              WebkitBoxShadow: '0 0 0px 1000px transparent inset',
+              WebkitTextFillColor: 'white',
+              transition: 'background-color 5000s ease-in-out 0s',
+            }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             {...props}
           />
+          
+          {isPassword && (
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 text-velvet-muted/80 hover:text-velvet-accent transition-colors p-2 z-10 interactive"
+              tabIndex={-1}
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={showPassword ? 'eye-off' : 'eye'}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {showPassword ? <EyeOff size={20} strokeWidth={1.5} /> : <Eye size={20} strokeWidth={1.5} />}
+                </motion.div>
+              </AnimatePresence>
+            </button>
+          )}
+
           <motion.div
             className="absolute bottom-0 left-0 h-px bg-velvet-accent shadow-[0_-5px_15px_rgba(74,125,156,0.5)]"
             initial={{ width: 0 }}

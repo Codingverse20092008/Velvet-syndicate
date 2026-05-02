@@ -12,16 +12,21 @@ const REFRESH_TOKEN_KEY = 'velvet_refresh_token'
 // Helper to get full image URL (handles relative paths from backend)
 export const getFullImageUrl = (url: string | undefined | null): string => {
   if (!url) return '/images/placeholder-product.png'
-  // If URL is already absolute, return it
+  
+  let finalUrl = url
+  // If URL is already absolute, use it
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
+    finalUrl = url
   }
   // If URL starts with /uploads, prepend the API URL
-  if (url.startsWith('/uploads')) {
+  else if (url.startsWith('/uploads')) {
     const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL
-    return `${baseUrl}${url}`
+    finalUrl = `${baseUrl}${url}`
   }
-  return url
+  
+  // Encode the URL to handle spaces and special characters (like parentheses)
+  // that are common in WhatsApp-saved images
+  return encodeURI(finalUrl)
 }
 
 // Token storage helpers

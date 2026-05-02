@@ -101,15 +101,23 @@ function LoginContent() {
             required
           />
 
-          <Input
-            type="password"
-            label="Password"
-            placeholder="••••••••"
-            value={formData.password}
-            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            error={errors.password}
-            required
-          />
+          <div className="relative">
+            <Input
+              type="password"
+              label="Password"
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              error={errors.password}
+              required
+            />
+            <Link 
+              href="/forgot-password" 
+              className="absolute right-0 -bottom-6 text-[10px] uppercase tracking-widest text-velvet-muted hover:text-velvet-white transition-colors interactive"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
           {errors.form && (
             <motion.div
@@ -142,7 +150,7 @@ function LoginContent() {
           transition={{ duration: 0.6, delay: 0.8 }}
         >
           New to Velvet Syndicate?{' '}
-          <Link href={`/signup?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors cursor-none interactive">
+          <Link href={`/signup?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors interactive">
             Create Account
           </Link>
         </motion.p>

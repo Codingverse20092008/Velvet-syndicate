@@ -23,6 +23,7 @@ interface AuthState {
   logout: () => Promise<void>
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  refreshProfile: () => Promise<void>
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -139,6 +140,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (err) {
       set({ isLoading: false })
       return { success: false, error: (err as Error).message }
+    }
+  },
+  
+  refreshProfile: async () => {
+    try {
+      const res = await api.get('/auth/me')
+      const data = await res.json()
+      if (data.success && data.data.user) {
+        set({ user: data.data.user })
+      }
+    } catch (err) {
+      console.warn('Profile refresh failed:', err)
     }
   },
 }))

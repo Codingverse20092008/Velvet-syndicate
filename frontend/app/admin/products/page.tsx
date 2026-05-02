@@ -30,7 +30,7 @@ const emptyForm: ProductForm = {
   stock: '',
   brand: '',
   color: '',
-  sizes: '7,8,9,10,11,12',
+  sizes: '',
   gender: '',
   subcategory: '',
 }
@@ -204,7 +204,7 @@ export default function AdminProductsPage() {
       stock: String(product.stock),
       brand: product.brand,
       color: product.color || '',
-      sizes: product.sizes || '7,8,9,10,11,12',
+      sizes: product.sizes || '',
       gender: (product.gender as any) || '',
       subcategory: (product.subcategory as any) || '',
     })

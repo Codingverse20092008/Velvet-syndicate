@@ -154,7 +154,7 @@ export default function ProductPage() {
       <div className="max-w-7xl mx-auto px-6 mb-8">
         <Link
           href="/collection"
-          className="inline-flex items-center gap-2 text-sm text-velvet-muted hover:text-velvet-white transition-colors cursor-none interactive"
+          className="inline-flex items-center gap-2 text-sm text-velvet-muted hover:text-velvet-white transition-colors interactive"
         >
           <ArrowLeft size={16} />
           Back to Collection

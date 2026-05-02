@@ -1,0 +1,14 @@
+const { createClient } = require('@libsql/client');
+
+const client = createClient({
+  url: 'libsql://velvet-syndicate-mehefuz-creates-56.aws-ap-northeast-1.turso.io',
+  authToken: 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3NzY5NDI5ODAsImlkIjoiMDE5ZGJhMGQtZmYwMS03ZTY2LTk5ZjctMzgyODIwZTE0MTRjIiwicmlkIjoiZTdhMWM4NjItZmUxZS00NDkxLThhNmYtMWI5MzI0ZjA1MmZhIn0.-EKngRnk_pchevnen4rcMdVsC8LTD_0n3Foe8T7xZ38IXz1iwEmiDqm5nKFxQC1GlmFqq40gYHrRv5u4e4l8Ag',
+});
+
+async function main() {
+  const result = await client.execute("SELECT name, email, role FROM users WHERE role = 'admin'");
+  console.log(JSON.stringify(result.rows, null, 2));
+  process.exit(0);
+}
+
+main().catch(console.error);
