@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { formatPrice } from '@/lib/utils'
+import { getFullImageUrl } from '@/lib/api'
 
 const EASE = [0.22, 1, 0.36, 1]
 
@@ -38,7 +39,7 @@ export function ProductCard({ id, name, slug, price, image, variants, index = 0 
             transition={{ duration: 0.55, ease: EASE }}
           >
             <Image
-              src={image || '/placeholder.jpg'}
+              src={getFullImageUrl(image)}
               alt={name}
               fill
               onLoad={() => setImgLoaded(true)}

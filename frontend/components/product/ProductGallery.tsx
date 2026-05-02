@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { getFullImageUrl } from '@/lib/api'
 
 interface ProductGalleryProps {
   images: string[]
@@ -25,10 +26,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   }
 
   const getImageSrc = (index: number): string => {
-    if (failedImages.has(index)) {
-      return '/images/placeholder-product.png'
-    }
-    return images[index] || '/images/placeholder-product.png'
+    return getFullImageUrl(images[index])
   }
 
   const nextImage = () => {
@@ -122,7 +120,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               }`}
             >
               <img
-                src={failedImages.has(index) ? '/images/placeholder-product.png' : (img || '/images/placeholder-product.png')}
+                src={getFullImageUrl(img)}
                 alt={`${productName} thumbnail ${index + 1}`}
                 className="w-full h-full object-cover"
                 onError={() => handleImageError(index)}

@@ -95,6 +95,8 @@ app.use(cors({
   origin: [
     'https://velvet-syndicate.vercel.app',
     'https://velvet-syndicate-frontend.vercel.app',
+    'https://www.velvetsyndicate.shop',
+    'https://velvetsyndicate.shop',
     'http://localhost:3000',
     'http://localhost:3001',
     env.FRONTEND_URL,
@@ -110,6 +112,8 @@ app.options('*', cors({
   origin: [
     'https://velvet-syndicate.vercel.app',
     'https://velvet-syndicate-frontend.vercel.app',
+    'https://www.velvetsyndicate.shop',
+    'https://velvetsyndicate.shop',
     'http://localhost:3000',
     env.FRONTEND_URL,
   ].filter(Boolean),

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import dynamic from 'next/dynamic'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, getFullImageUrl } from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
 
 // Hero3D with 3D rotating shoes
@@ -63,22 +63,6 @@ export default function HomePage() {
 
     fetchProducts()
   }, [])
-
-  // Helper to get full image URL
-  const getFullImageUrl = (url: string | undefined | null): string => {
-    if (!url) return '/images/placeholder-product.png'
-    // If URL is already absolute, return it
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url
-    }
-    // If URL starts with /uploads, prepend the API URL
-    if (url.startsWith('/uploads')) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
-      const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
-      return `${baseUrl}${url}`
-    }
-    return url
-  }
 
   // Get product image - prioritize variants.images, then imageUrl, then fallback
   const getProductImage = (product: Product): string => {
