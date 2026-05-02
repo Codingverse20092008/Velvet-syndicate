@@ -56,6 +56,7 @@ export interface AdminProduct {
   sizes?: string
   gender?: string
   subcategory?: string
+  featured?: boolean
 }
 
 export interface AdminUser {
@@ -116,7 +117,7 @@ interface AdminState {
   fetchOrderById: (orderId: string) => Promise<void>
   updateOrderStatus: (orderId: string, status: AdminOrderStatus) => Promise<void>
   fetchProducts: () => Promise<void>
-  createProduct: (payload: Omit<AdminProduct, 'id' | 'slug' | 'createdAt' | 'isVisible'>) => Promise<void>
+  createProduct: (payload: Omit<AdminProduct, 'id' | 'slug' | 'createdAt' | 'isVisible'> & { featured?: boolean }) => Promise<void>
   updateProduct: (productId: string, payload: Partial<Omit<AdminProduct, 'id' | 'slug' | 'createdAt'>>) => Promise<void>
   deleteProduct: (productId: string) => Promise<void>
   toggleStock: (productId: string, inStock: boolean) => Promise<void>

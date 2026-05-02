@@ -300,6 +300,7 @@ export async function createAdminProduct(data: {
   sizes: string;
   gender: string;
   subcategory: string;
+  featured: boolean;
 }): Promise<AdminProductItem> {
   const productId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
@@ -326,7 +327,7 @@ export async function createAdminProduct(data: {
       category: 'footwear',
       gender: data.gender || 'unisex',
       productType: data.subcategory || 'sneakers',
-      featured: false,
+      featured: data.featured || false,
       isVisible: true,
     });
 
@@ -391,6 +392,7 @@ export async function updateAdminProduct(
     gender: string;
     subcategory: string;
     isVisible: boolean;
+    featured: boolean;
   }>
 ): Promise<AdminProductItem> {
   const existing = await db.query.products.findFirst({
@@ -412,6 +414,7 @@ export async function updateAdminProduct(
     if (data.gender !== undefined) patch.gender = data.gender;
     if (data.subcategory !== undefined) patch.productType = data.subcategory;
     if (data.isVisible !== undefined) patch.isVisible = data.isVisible;
+    if (data.featured !== undefined) patch.featured = data.featured;
 
     if (data.name) {
       patch.slug = await generateUniqueSlug(data.name);

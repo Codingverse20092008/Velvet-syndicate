@@ -19,6 +19,7 @@ type ProductForm = {
   sizes: string
   gender: 'men' | 'women' | ''
   subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | ''
+  featured: boolean
 }
 
 const emptyForm: ProductForm = {
@@ -33,6 +34,7 @@ const emptyForm: ProductForm = {
   sizes: '',
   gender: '',
   subcategory: '',
+  featured: false,
 }
 
 const GENDERS = ['men', 'women'] as const
@@ -180,6 +182,7 @@ export default function AdminProductsPage() {
       sizes: form.sizes.trim(),
       gender: form.gender || 'unisex',
       subcategory: form.subcategory || 'sneakers',
+      featured: form.featured,
     }
 
     if (editingProduct) {
@@ -207,6 +210,7 @@ export default function AdminProductsPage() {
       sizes: product.sizes || '',
       gender: (product.gender as any) || '',
       subcategory: (product.subcategory as any) || '',
+      featured: product.featured || false,
     })
     setImagePreview(product.image)
     setImagePreviews([])
@@ -246,6 +250,15 @@ export default function AdminProductsPage() {
             <option value="">Select Type</option>
             {SUBCATEGORIES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
           </select>
+          <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+            <input 
+              type="checkbox" 
+              className="w-4 h-4 rounded border-white/15 bg-black text-velvet-accent focus:ring-velvet-accent"
+              checked={form.featured}
+              onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
+            />
+            <span className="text-sm text-velvet-white">Featured Product (Show on Homepage)</span>
+          </label>
           <input className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Image URL (optional - use upload instead)" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} />
           <div className="md:col-span-2">
             <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
@@ -308,7 +321,8 @@ export default function AdminProductsPage() {
           <div className="col-span-1">Stock</div>
           <div className="col-span-2">Brand</div>
           <div className="col-span-1">Visible</div>
-          <div className="col-span-2">Price</div>
+          <div className="col-span-1">Featured</div>
+          <div className="col-span-1">Price</div>
           <div className="col-span-2 text-right">Actions</div>
         </div>
         <div className="divide-y divide-white/5">
@@ -321,7 +335,8 @@ export default function AdminProductsPage() {
               <div className="col-span-1 text-velvet-white">{product.stock}</div>
               <div className="col-span-2 text-velvet-muted">{product.brand}</div>
               <div className="col-span-1 text-velvet-muted">{product.isVisible ? 'Active' : 'Inactive'}</div>
-              <div className="col-span-2 text-velvet-white">{formatPrice(product.price)}</div>
+              <div className="col-span-1 text-velvet-muted">{product.featured ? 'Yes' : 'No'}</div>
+              <div className="col-span-1 text-velvet-white">{formatPrice(product.price)}</div>
               <div className="col-span-2 flex justify-end gap-2">
                 <button className="px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-velvet-white hover:bg-white/10" onClick={() => startEdit(product)}>Edit</button>
                 <button className="px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-amber-300 hover:bg-amber-400/10" onClick={() => toggleStock(product.id, !product.isVisible)}>
