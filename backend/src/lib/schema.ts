@@ -287,6 +287,18 @@ export const feedback = sqliteTable('feedback', {
 }));
 
 export type Feedback = typeof feedback.$inferSelect;
+
+// 🔑 Password Reset Tokens
+export const passwordResetTokens = sqliteTable('password_reset_tokens', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: text('token_hash').notNull().unique(),
+  expiresAt: text('expires_at').notNull(),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  userIdIdx: index('password_reset_tokens_user_id_idx').on(table.userId),
+  tokenHashIdx: uniqueIndex('password_reset_tokens_token_hash_idx').on(table.tokenHash),
+}));
  
 // 📂 Collections Table
 export const collections = sqliteTable('collections', {
@@ -318,3 +330,4 @@ export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;
 export type CollectionProduct = typeof collectionProducts.$inferSelect;
 export type OtpVerification = typeof otpVerifications.$inferSelect;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;

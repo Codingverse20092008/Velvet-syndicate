@@ -72,8 +72,8 @@ export async function authenticateUser(email: string, password: string): Promise
     throw new UnauthorizedError('Invalid credentials');
   }
 
-  // Block unverified users from logging in
-  if (!user.emailVerified) {
+  // Block unverified users from logging in (except admins)
+  if (!user.emailVerified && user.role !== 'admin') {
     throw new UnauthorizedError('Please verify your email first. Check your inbox for the OTP.');
   }
 
