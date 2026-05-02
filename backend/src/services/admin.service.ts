@@ -558,6 +558,25 @@ export async function deleteAdminProduct(productId: string): Promise<void> {
   logger.info({ productId }, 'CACHE_INVALIDATED:product_deleted');
 }
 
+export async function hardDeleteAdminProduct(productId: string): Promise<void> {
+  const existing = await db.query.products.findFirst({
+    where: eq(products.id, productId),
+    columns: { id: true },
+  });
+  if (!existing) throw new NotFoundError('Product');
+
+  try {
+    await db.delete(products).where(eq(products.id, productId));
+    await invalidateProductsCache();
+    logger.info({ productId }, 'product_hard_deleted');
+  } catch (error: any) {
+    if (error.message?.includes('FOREIGN KEY constraint failed')) {
+      throw new Error('Cannot delete this product because it is linked to existing orders. Please deactivate it instead to preserve order history.');
+    }
+    throw error;
+  }
+}
+
 export async function toggleAdminProductStock(productId: string, inStock: boolean): Promise<AdminProductItem> {
   return updateAdminProduct(productId, { isVisible: inStock });
 }

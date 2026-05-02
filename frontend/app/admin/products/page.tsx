@@ -49,6 +49,7 @@ export default function AdminProductsPage() {
     createProduct,
     updateProduct,
     deleteProduct,
+    hardDeleteProduct,
     toggleStock,
   } = useAdminStore()
   const [form, setForm] = useState<ProductForm>(emptyForm)
@@ -219,9 +220,20 @@ export default function AdminProductsPage() {
   const handleDeactivate = async (product: AdminProduct) => {
     if (!product.isVisible) return
 
-    const confirmed = window.confirm('Are you sure?')
+    const confirmed = window.confirm('Are you sure you want to deactivate this product? It will no longer be visible to customers, but historical orders will be preserved.')
     if (!confirmed) return
     await deleteProduct(product.id)
+  }
+
+  const handleHardDelete = async (product: AdminProduct) => {
+    const confirmed = window.confirm('WARNING: Are you sure you want to PERMANENTLY delete this product? This action cannot be undone. If this product has existing orders, the deletion will fail.')
+    if (!confirmed) return
+    try {
+      await hardDeleteProduct(product.id)
+      alert('Product permanently deleted.')
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete product.')
+    }
   }
 
   return (
@@ -349,6 +361,12 @@ export default function AdminProductsPage() {
                 >
                   {product.isVisible ? 'Deactivate' : 'Inactive'}
                 </button>
+                <button
+                  className="px-3 py-2 text-[10px] uppercase tracking-widest border border-red-500/50 rounded-lg text-red-500 hover:bg-red-500/20"
+                  onClick={() => handleHardDelete(product)}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))}
@@ -386,6 +404,12 @@ export default function AdminProductsPage() {
                 disabled={!product.isVisible}
               >
                 {product.isVisible ? 'Deactivate' : 'Inactive'}
+              </button>
+              <button
+                className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-red-500/50 rounded-lg text-red-500 hover:bg-red-500/20"
+                onClick={() => handleHardDelete(product)}
+              >
+                Delete
               </button>
             </div>
           </div>

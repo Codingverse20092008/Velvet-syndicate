@@ -7,6 +7,7 @@ import { ForbiddenError } from '../lib/errors';
 import {
   createAdminProduct,
   deleteAdminProduct,
+  hardDeleteAdminProduct,
   getAdminOrderById,
   getAdminOrders,
   getAdminOverview,
@@ -136,6 +137,12 @@ router.delete('/products/:id', asyncHandler(async (req: Request, res: Response) 
   await requireAdmin(req);
   await deleteAdminProduct(req.params.id);
   return successResponse(res, { message: 'Product deactivated' });
+}));
+
+router.delete('/products/:id/hard', asyncHandler(async (req: Request, res: Response) => {
+  await requireAdmin(req);
+  await hardDeleteAdminProduct(req.params.id);
+  return successResponse(res, { message: 'Product permanently deleted' });
 }));
 
 router.get('/users', asyncHandler(async (req: Request, res: Response) => {

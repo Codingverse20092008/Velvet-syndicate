@@ -120,6 +120,7 @@ interface AdminState {
   createProduct: (payload: Omit<AdminProduct, 'id' | 'slug' | 'createdAt' | 'isVisible'> & { featured?: boolean }) => Promise<void>
   updateProduct: (productId: string, payload: Partial<Omit<AdminProduct, 'id' | 'slug' | 'createdAt'>>) => Promise<void>
   deleteProduct: (productId: string) => Promise<void>
+  hardDeleteProduct: (productId: string) => Promise<void>
   toggleStock: (productId: string, inStock: boolean) => Promise<void>
   fetchUsers: () => Promise<void>
 }
@@ -273,6 +274,22 @@ export const useAdminStore = create<AdminState>((set, get) => ({
             ? { ...product, isVisible: false }
             : product
         ),
+        isLoading: false,
+      }))
+    } catch (err) {
+      set({ error: (err as Error).message, isLoading: false })
+      throw err
+    }
+  },
+
+  hardDeleteProduct: async (productId) => {
+    set({ isLoading: true, error: null })
+    try {
+      const res = await apiFetch(`/admin/products/${productId}/hard`, { method: 'DELETE' })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to permanently delete product')
+      set((state) => ({
+        products: state.products.filter((product) => product.id !== productId),
         isLoading: false,
       }))
     } catch (err) {
