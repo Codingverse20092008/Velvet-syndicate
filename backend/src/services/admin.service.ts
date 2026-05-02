@@ -9,7 +9,7 @@ import {
   products,
   users,
 } from '../lib/schema';
-import { NotFoundError, ValidationError } from '../lib/errors';
+import { NotFoundError, ValidationError, ConflictError } from '../lib/errors';
 import { logger } from '../lib/logger';
 import crypto from 'node:crypto';
 import { invalidateProductsCache } from '../lib/cache';
@@ -571,7 +571,7 @@ export async function hardDeleteAdminProduct(productId: string): Promise<void> {
     logger.info({ productId }, 'product_hard_deleted');
   } catch (error: any) {
     if (error.message?.includes('FOREIGN KEY constraint failed')) {
-      throw new Error('Cannot delete this product because it is linked to existing orders. Please deactivate it instead to preserve order history.');
+      throw new ConflictError('Cannot delete this product because it is linked to existing orders. Please deactivate it instead to preserve order history.');
     }
     throw error;
   }
