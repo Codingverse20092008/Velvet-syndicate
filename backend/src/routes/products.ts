@@ -16,6 +16,7 @@ const mapProduct = (p: any) => ({
   slug: p.slug ?? '',
   description: p.description ?? '',
   price: Number(p.price ?? 0),
+  image: p.imageUrl ?? '',
   category: p.category ?? 'footwear',
   gender: p.gender ?? 'unisex',
   productType: p.productType ?? 'sneakers',
