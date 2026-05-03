@@ -10,11 +10,13 @@ export interface AuthUser {
   id: string;
   email: string;
   role: string;
-  name?: string;
-  phone?: string | null;
-  address?: string | null;
-  avatar?: string | null;
-  createdAt?: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  avatar: string | null;
+  bankAccountNo?: string | null;
+  bankIfsc?: string | null;
+  createdAt: string;
 }
 
 /**
@@ -94,6 +96,8 @@ export async function getUserFromRequest(req: Request): Promise<AuthUser> {
         phone: users.phone,
         address: users.address,
         avatar: users.avatar,
+        bankAccountNo: users.bankAccountNo,
+        bankIfsc: users.bankIfsc,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -106,7 +110,7 @@ export async function getUserFromRequest(req: Request): Promise<AuthUser> {
     }
 
     logger.debug({ userId: user[0].id, email: user[0].email }, 'User authenticated');
-    return user[0];
+    return user[0] as AuthUser;
   } catch (error) {
     if (error instanceof UnauthorizedError) throw error;
     logger.warn({ error: (error as Error).message }, 'Token verification failed');

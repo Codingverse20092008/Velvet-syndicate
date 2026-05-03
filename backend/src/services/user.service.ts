@@ -134,6 +134,8 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
       phone: users.phone,
       address: users.address,
       avatar: users.avatar,
+      bankAccountNo: users.bankAccountNo,
+      bankIfsc: users.bankIfsc,
       role: users.role,
       createdAt: users.createdAt,
     })
@@ -141,7 +143,7 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
     .where(eq(users.id, userId))
     .limit(1);
 
-  return user.length > 0 ? user[0] : null;
+  return user.length > 0 ? user[0] as UserProfile : null;
 }
 
 function mapRecommendationProduct(product: any): RecommendationProduct {

@@ -68,9 +68,9 @@ router.patch('/bank-details', asyncHandler(async (req: Request, res: Response) =
 
   const updatedUser = await updateUserProfile(user.id, {
     name: user.name,
-    phone: user.phone ?? null,
-    address: (user as any).address ?? null,
-    avatar: (user as any).avatar ?? null,
+    phone: user.phone,
+    address: user.address,
+    avatar: user.avatar,
     bankAccountNo: parsed.bankAccountNo,
     bankIfsc: parsed.bankIfsc,
   });

@@ -72,6 +72,10 @@ export interface AdminProductItem {
   stock: number;
   isVisible: boolean;
   createdAt: string;
+  color?: string | null;
+  sizes?: string | null;
+  gender?: string | null;
+  subcategory?: string | null;
 }
 
 export interface AdminUserItem {
@@ -81,6 +85,8 @@ export interface AdminUserItem {
   phone: string | null;
   totalOrders: number;
   createdAt: string;
+  bankAccountNo?: string | null;
+  bankIfsc?: string | null;
 }
 
 const STATUS_TRANSITIONS: Record<AdminOrderStatus, AdminOrderStatus[]> = {
