@@ -29,6 +29,8 @@ interface Product {
   description: string
   price: number
   category: string
+  image?: string // Standardized key
+  imageUrl?: string // Alternative key
   featured: boolean
   variants: Variant[]
 }
@@ -82,7 +84,7 @@ export default function ProductPage() {
   useEffect(() => {
     if (!product) return
     events.viewProduct(product.id)
-    const primaryImage = product.variants?.[0]?.images?.[0] || ''
+    const primaryImage = product.variants?.[0]?.images?.[0] || product.image || product.imageUrl || ''
     const entry = {
       id: product.id,
       name: product.name,

@@ -147,14 +147,16 @@ export async function getUserById(userId: string): Promise<UserProfile | null> {
 }
 
 function mapRecommendationProduct(product: any): RecommendationProduct {
+  const mainImage = product.imageUrl || product.image_url || '';
   return {
     id: product.id,
     name: product.name,
     slug: product.slug,
     price: Number(product.price ?? 0),
     brand: product.brand,
-    imageUrl: product.imageUrl,
-  };
+    imageUrl: mainImage,
+    image: mainImage, // Add for consistency
+  } as any; // Cast because interface might need updating
 }
 
 export async function getActiveOrder(userId: string): Promise<UserActiveOrder | null> {

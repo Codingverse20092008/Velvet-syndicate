@@ -276,22 +276,26 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
     args: [],
   });
 
-  return (result.rows as any[]).map((row) => ({
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    description: row.description,
-    price: Number(row.price ?? 0),
-    image: row.imageUrl,
-    brand: row.brand,
-    stock: Number(row.stock ?? 0),
-    isVisible: Boolean(row.isVisible),
-    createdAt: row.createdAt,
-    color: row.color || null,
-    sizes: row.sizes || null,
-    gender: row.gender || null,
-    subcategory: row.subcategory || null,
-  }));
+  return (result.rows as any[]).map((row) => {
+    const mainImage = row.imageUrl || row.image_url || '';
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      price: row.price,
+      image: mainImage,
+      imageUrl: mainImage,
+      brand: row.brand,
+      stock: row.stock,
+      isVisible: Boolean(row.isVisible),
+      createdAt: row.createdAt,
+      color: row.color,
+      sizes: row.sizes,
+      gender: row.gender,
+      subcategory: row.subcategory,
+    };
+  });
 }
 
 export async function createAdminProduct(data: {

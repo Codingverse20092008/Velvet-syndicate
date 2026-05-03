@@ -9,35 +9,45 @@ import { successResponse } from '../lib/api-response-express';
 const router = Router();
 
 // Function to map product from DB to standardized API format
-const mapProduct = (p: any) => ({
-  id: p.id,
-  name: p.name ?? '',
-  brand: p.brand ?? '',
-  slug: p.slug ?? '',
-  description: p.description ?? '',
-  price: Number(p.price ?? 0),
-  image: p.imageUrl ?? '',
-  category: p.category ?? 'footwear',
-  gender: p.gender ?? 'unisex',
-  productType: p.productType ?? 'sneakers',
-  featured: Boolean(p.featured),
-  variants: (p.variants || []).map((v: any) => ({
-    id: v.id,
-    name: v.name ?? '',
-    color: v.color ?? '',
-    slug: v.slug,
-    images: (v.images || []).map((img: any) => img.imageUrl),
-    sizes: (v.sizes || []).map((s: any) => ({
-      size: s.size,
-      stock: Number(s.stock ?? 0)
-    })).sort((a: any, b: any) => {
-      const numA = parseFloat(a.size);
-      const numB = parseFloat(b.size);
-      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
-      return String(a.size).localeCompare(String(b.size));
-    })
-  }))
-});
+const mapProduct = (p: any) => {
+  // Handle both Drizzle (imageUrl) and raw SQL (image_url)
+  const mainImage = p.imageUrl || p.image_url || '';
+  
+  return {
+    id: p.id,
+    name: p.name ?? '',
+    brand: p.brand ?? '',
+    slug: p.slug ?? '',
+    description: p.description ?? '',
+    price: Number(p.price ?? 0),
+    image: mainImage,
+    imageUrl: mainImage, // Add this for frontend compatibility
+    category: p.category ?? 'footwear',
+    gender: p.gender ?? 'unisex',
+    productType: p.productType ?? 'sneakers',
+    featured: Boolean(p.featured),
+    variants: (p.variants || []).map((v: any) => ({
+      id: v.id,
+      name: v.name ?? '',
+      color: v.color ?? '',
+      slug: v.slug,
+      images: (v.images || []).map((img: any) => {
+        // Handle images being strings or objects with imageUrl/image_url
+        if (typeof img === 'string') return img;
+        return img.imageUrl || img.image_url || '';
+      }),
+      sizes: (v.sizes || []).map((s: any) => ({
+        size: s.size,
+        stock: Number(s.stock ?? 0)
+      })).sort((a: any, b: any) => {
+        const numA = parseFloat(a.size);
+        const numB = parseFloat(b.size);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return String(a.size).localeCompare(String(b.size));
+      })
+    }))
+  };
+};
 
 // GET /api/products
 router.get('/', asyncHandler(async (req: Request, res: Response) => {

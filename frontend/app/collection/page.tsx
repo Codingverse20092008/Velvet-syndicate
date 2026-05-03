@@ -14,7 +14,8 @@ interface Product {
   category: string
   gender: string
   productType: string
-  imageUrl?: string
+  image?: string // Standardized key
+  imageUrl?: string // Alternative key
   variants: {
     id: string
     color: string
@@ -46,16 +47,20 @@ export default function CollectionPage() {
     fetchProducts()
   }, [])
 
-  // Get product image - prioritize variants.images, then imageUrl, then fallback
+  // Get product image - prioritize variants.images, then image/imageUrl, then fallback
   const getProductImage = (product: Product): string => {
-    // First try variant images
+    // First try variant images (standard way for multi-image products)
     if (product.variants && product.variants.length > 0) {
       const firstVariant = product.variants[0]
       if (firstVariant.images && firstVariant.images.length > 0) {
         return getFullImageUrl(firstVariant.images[0])
       }
     }
-    // Then try imageUrl
+    // Then try standardized image field
+    if (product.image) {
+      return getFullImageUrl(product.image)
+    }
+    // Then try legacy/alternative imageUrl field
     if (product.imageUrl) {
       return getFullImageUrl(product.imageUrl)
     }

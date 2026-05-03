@@ -10,23 +10,43 @@ const TOKEN_KEY = 'velvet_access_token'
 const REFRESH_TOKEN_KEY = 'velvet_refresh_token'
 
 // Helper to get full image URL (handles relative paths from backend)
-export const getFullImageUrl = (url: string | undefined | null): string => {
+export const getFullImageUrl = (url: any): string => {
+  // If url is null, undefined, or empty string, return placeholder
   if (!url) return '/images/placeholder-product.png'
   
-  let finalUrl = url
-  // If URL is already absolute, use it
-  if (url.startsWith('http://') || url.startsWith('https://')) {
+  // If url is an object (common bug when backend returns relations), extract imageUrl
+  let finalUrl = ''
+  if (typeof url === 'string') {
     finalUrl = url
-  }
-  // If URL starts with /uploads, prepend the API URL
-  else if (url.startsWith('/uploads')) {
-    const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL
-    finalUrl = `${baseUrl}${url}`
+  } else if (typeof url === 'object') {
+    finalUrl = url.imageUrl || url.image_url || ''
+    if (!finalUrl) return '/images/placeholder-product.png'
+  } else {
+    return '/images/placeholder-product.png'
   }
   
-  // Encode the URL to handle spaces and special characters (like parentheses)
-  // that are common in WhatsApp-saved images
-  return encodeURI(finalUrl)
+  // If URL is already absolute, use it
+  if (finalUrl.startsWith('http://') || finalUrl.startsWith('https://')) {
+    // Keep it as is
+  }
+  // If URL starts with /uploads, prepend the API URL
+  else if (finalUrl.startsWith('/uploads')) {
+    const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL
+    finalUrl = `${baseUrl}${finalUrl}`
+  }
+  // If it's a relative path but not starting with /uploads, maybe it's just the filename
+  else if (!finalUrl.startsWith('/') && finalUrl.includes('.')) {
+    const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL
+    finalUrl = `${baseUrl}/uploads/products/${finalUrl}`
+  }
+  
+  // Encode the URL to handle spaces and special characters
+  try {
+    return encodeURI(finalUrl)
+  } catch (e) {
+    console.error('Failed to encode image URL:', finalUrl, e)
+    return finalUrl
+  }
 }
 
 // Token storage helpers
