@@ -4,14 +4,23 @@ import { env } from './env';
 import { logger } from './logger';
 
 // Configure Cloudinary only if credentials are provided
-const isConfigured = !!(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
+const isConfigured = !!(
+  env.CLOUDINARY_URL || 
+  (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET)
+);
 
 if (isConfigured) {
-  cloudinary.config({
-    cloud_name: env.CLOUDINARY_CLOUD_NAME,
-    api_key: env.CLOUDINARY_API_KEY,
-    api_secret: env.CLOUDINARY_API_SECRET,
-  });
+  if (env.CLOUDINARY_URL) {
+    cloudinary.config({
+      cloudinary_url: env.CLOUDINARY_URL,
+    });
+  } else {
+    cloudinary.config({
+      cloud_name: env.CLOUDINARY_CLOUD_NAME,
+      api_key: env.CLOUDINARY_API_KEY,
+      api_secret: env.CLOUDINARY_API_SECRET,
+    });
+  }
   logger.info('Cloudinary configured for permanent storage');
 } else {
   logger.warn('Cloudinary not configured. Falling back to ephemeral local storage.');
