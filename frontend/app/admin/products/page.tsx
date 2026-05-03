@@ -5,7 +5,7 @@ import { useAdminStore, AdminProduct } from '@/store/adminStore'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, getFullImageUrl } from '@/lib/api'
 
 type ProductForm = {
   name: string
@@ -64,22 +64,6 @@ export default function AdminProductsPage() {
 
   const title = useMemo(() => (editingProduct ? 'Edit Product' : 'Add Product'), [editingProduct])
 
-  const getFullImageUrl = (url: string | undefined | null): string => {
-    // Handle undefined/null
-    if (!url) return ''
-    // If URL is already absolute, return it
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url
-    }
-    // If URL starts with /uploads, prepend the API URL
-    if (url.startsWith('/uploads')) {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
-      // Remove trailing slash from API URL if present
-      const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl
-      return `${baseUrl}${url}`
-    }
-    return url
-  }
 
   const handleImageUpload = async (file: File) => {
     setUploadingImage(true)

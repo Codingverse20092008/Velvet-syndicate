@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, getFullImageUrl } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { Upload, X, Layers, Plus, Pencil, Trash2, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
@@ -211,7 +211,15 @@ export default function AdminCollectionsPage() {
                 }} />
               </label>
               {formData.imageUrl && (
-                <div className="mt-2 text-xs text-velvet-muted">Image selected: {formData.imageUrl}</div>
+                <div className="mt-3 relative w-32 aspect-video group">
+                  <img src={getFullImageUrl(formData.imageUrl)} alt="Preview" className="w-full h-full object-cover rounded-lg border border-white/10" />
+                  <button 
+                    onClick={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
               )}
             </div>
 

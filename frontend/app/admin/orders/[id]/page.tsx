@@ -7,7 +7,7 @@ import { useAdminStore, AdminOrderStatus } from '@/store/adminStore'
 import { formatPrice } from '@/lib/utils'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { Truck, Package, CheckCircle, XCircle, AlertCircle, Clock, ArrowRight, RotateCcw, Landmark } from 'lucide-react'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, getFullImageUrl } from '@/lib/api'
 
 interface AdminOrderDetailsProps {
   params: Promise<{ id: string }>
@@ -294,7 +294,7 @@ export default function AdminOrderDetailsPage({ params }: AdminOrderDetailsProps
               <div key={item.id} className="py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   {item.imageUrl && (
-                    <img src={item.imageUrl} alt={item.productName} className="w-16 h-16 object-cover rounded-lg bg-white/5" />
+                    <img src={getFullImageUrl(item.imageUrl)} alt={item.productName} className="w-16 h-16 object-cover rounded-lg bg-white/5" />
                   )}
                   <div>
                     <div className="text-velvet-white font-medium">{item.productName}</div>
