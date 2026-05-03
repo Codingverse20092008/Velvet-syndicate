@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+// Force redeploy - Production Wipe Complete
 import './globals.css'
 import { Navigation } from '@/components/layout/Navigation'
 import { Footer } from '@/components/layout/Footer'
