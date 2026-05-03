@@ -41,6 +41,11 @@ export function Footer() {
                   About
                 </Link>
               </li>
+              <li>
+                <Link href="/policies" className="text-sm text-velvet-muted hover:text-velvet-white transition-colors interactive">
+                  Policies
+                </Link>
+              </li>
             </ul>
           </div>
 

@@ -62,6 +62,10 @@ export default function ProductPage() {
         setProduct(p)
         if (p.variants && p.variants.length > 0) {
           setSelectedVariantId(p.variants[0].id)
+          // Auto-select size if there's only one
+          if (p.variants[0].sizes && p.variants[0].sizes.length === 1) {
+            setSelectedSize(p.variants[0].sizes[0].size)
+          }
         }
       } else {
         setProduct(null)
@@ -252,7 +256,9 @@ export default function ProductPage() {
               {selectedSize && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-velvet-muted">Selected Size</span>
-                  <span className="text-velvet-white font-medium">UK {selectedSize}</span>
+                  <span className="text-velvet-white font-medium">
+                    {selectedSize === 'Standard' ? 'Standard' : `UK ${selectedSize}`}
+                  </span>
                 </div>
               )}
               
@@ -270,7 +276,7 @@ export default function ProductPage() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-velvet-muted">Returns</span>
-                <span className="text-velvet-white">30 days</span>
+                <span className="text-velvet-white">7 days</span>
               </div>
             </motion.div>
           </motion.div>

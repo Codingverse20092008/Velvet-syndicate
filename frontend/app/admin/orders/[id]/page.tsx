@@ -6,7 +6,8 @@ import { format } from 'date-fns'
 import { useAdminStore, AdminOrderStatus } from '@/store/adminStore'
 import { formatPrice } from '@/lib/utils'
 import { StatusBadge } from '@/components/admin/StatusBadge'
-import { Truck, Package, CheckCircle, XCircle, AlertCircle, Clock, ArrowRight } from 'lucide-react'
+import { Truck, Package, CheckCircle, XCircle, AlertCircle, Clock, ArrowRight, RotateCcw, Landmark } from 'lucide-react'
+import { apiFetch } from '@/lib/api'
 
 interface AdminOrderDetailsProps {
   params: Promise<{ id: string }>
@@ -29,10 +30,28 @@ export default function AdminOrderDetailsPage({ params }: AdminOrderDetailsProps
   const { currentOrder, isLoading, error, fetchOrderById, updateOrderStatus } = useAdminStore()
   const [updating, setUpdating] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [bankDetails, setBankDetails] = useState<{ bankAccountNo: string | null; bankIfsc: string | null; name: string } | null>(null)
+  const [bankLoading, setBankLoading] = useState(false)
+  const [returnUpdating, setReturnUpdating] = useState(false)
+  const [returnMsg, setReturnMsg] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrderById(id)
   }, [fetchOrderById, id])
+
+  // Fetch bank details when there is a return/exchange request
+  useEffect(() => {
+    if (!currentOrder) return
+    const returnStatus = (currentOrder as any).returnStatus
+    if (returnStatus && returnStatus !== 'NONE') {
+      setBankLoading(true)
+      apiFetch(`/admin/users/${currentOrder.userId}/bank-details`)
+        .then(r => r.json())
+        .then(d => { if (d.success) setBankDetails(d.data?.bankDetails ?? null) })
+        .catch(() => {})
+        .finally(() => setBankLoading(false))
+    }
+  }, [currentOrder?.id, (currentOrder as any)?.returnStatus])
 
   const handleStatusUpdate = async (newStatus: AdminOrderStatus) => {
     if (newStatus === 'CANCELLED' && !showCancelConfirm) {
@@ -55,12 +74,35 @@ export default function AdminOrderDetailsPage({ params }: AdminOrderDetailsProps
     return [statusFlow[currentIndex + 1]]
   }
 
+  const handleReturnStatusUpdate = async (newStatus: string) => {
+    if (!currentOrder) return
+    setReturnUpdating(true)
+    setReturnMsg(null)
+    try {
+      const res = await apiFetch(`/admin/orders/${currentOrder.id}/return-status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ returnStatus: newStatus }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed')
+      setReturnMsg(`Status updated to ${newStatus.replace(/_/g, ' ')}`)
+      await fetchOrderById(id)
+    } catch (err: any) {
+      setReturnMsg(err.message || 'Error updating status')
+    } finally {
+      setReturnUpdating(false)
+    }
+  }
+
   if (isLoading || !currentOrder || currentOrder.id !== id) {
     return <div className="text-velvet-muted">Loading order details...</div>
   }
 
   const nextStatuses = getNextStatuses(currentOrder.status)
   const canCancel = ['PENDING', 'CONFIRMED'].includes(currentOrder.status)
+  const returnStatus = (currentOrder as any).returnStatus as string
+  const returnReason = (currentOrder as any).returnReason as string | null
+  const hasReturnRequest = returnStatus && returnStatus !== 'NONE'
 
   return (
     <div className="space-y-6">
@@ -166,6 +208,80 @@ export default function AdminOrderDetailsPage({ params }: AdminOrderDetailsProps
               Yes, Cancel Order
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Return / Exchange Admin Panel */}
+      {hasReturnRequest && (
+        <div className="bg-amber-500/10 border border-amber-400/30 rounded-2xl p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <RotateCcw size={18} className="text-amber-400" />
+            <h2 className="font-heading text-lg text-amber-300">
+              {returnStatus.includes('RETURN') ? 'Return' : 'Exchange'} Request
+            </h2>
+            <span className="ml-auto px-3 py-1 rounded-full text-[10px] uppercase tracking-widest bg-amber-400/20 text-amber-300">
+              {returnStatus.replace(/_/g, ' ')}
+            </span>
+          </div>
+
+          {returnReason && (
+            <div className="mb-4">
+              <div className="text-[10px] uppercase tracking-widest text-velvet-muted mb-1">Customer Reason</div>
+              <div className="text-sm text-velvet-white">{returnReason}</div>
+            </div>
+          )}
+
+          {/* Bank Details for Refund */}
+          <div className="p-4 bg-black/30 border border-white/10 rounded-xl mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Landmark size={14} className="text-velvet-accent" />
+              <span className="text-[10px] uppercase tracking-widest text-velvet-muted">Customer Bank Details (for Refund)</span>
+            </div>
+            {bankLoading ? (
+              <div className="text-xs text-velvet-muted">Loading bank details...</div>
+            ) : bankDetails?.bankAccountNo ? (
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-velvet-muted">Account No</span>
+                  <span className="text-velvet-white font-mono tracking-widest">{bankDetails.bankAccountNo}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-velvet-muted">IFSC</span>
+                  <span className="text-velvet-white font-mono">{bankDetails.bankIfsc}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-velvet-muted">Account Name</span>
+                  <span className="text-velvet-white">{bankDetails.name}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-amber-300">⚠ Customer has not added bank details yet. Contact them directly.</div>
+            )}
+          </div>
+
+          {returnMsg && (
+            <p className="text-sm text-amber-100 mb-3">{returnMsg}</p>
+          )}
+
+          {/* Approve / Reject buttons */}
+          {(returnStatus === 'RETURN_REQUESTED' || returnStatus === 'EXCHANGE_REQUESTED') && (
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => handleReturnStatusUpdate(returnStatus === 'RETURN_REQUESTED' ? 'RETURN_APPROVED' : 'EXCHANGE_APPROVED')}
+                disabled={returnUpdating}
+                className="px-4 py-2 rounded-lg text-sm bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border border-emerald-500/30 transition-colors disabled:opacity-50"
+              >
+                {returnUpdating ? 'Updating...' : `Approve ${returnStatus.includes('RETURN') ? 'Return' : 'Exchange'}`}
+              </button>
+              <button
+                onClick={() => handleReturnStatusUpdate(returnStatus === 'RETURN_REQUESTED' ? 'RETURN_REJECTED' : 'EXCHANGE_REJECTED')}
+                disabled={returnUpdating}
+                className="px-4 py-2 rounded-lg text-sm bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30 transition-colors disabled:opacity-50"
+              >
+                {returnUpdating ? 'Updating...' : `Reject ${returnStatus.includes('RETURN') ? 'Return' : 'Exchange'}`}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

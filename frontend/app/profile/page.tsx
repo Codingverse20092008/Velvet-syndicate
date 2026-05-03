@@ -75,6 +75,26 @@ export default function ProfilePage() {
           <ProfileForm />
         </motion.div>
 
+        {/* Bank Details */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: EASE }}
+          className="mt-6"
+        >
+          <Link
+            href="/profile/bank-details"
+            className="flex items-center justify-between p-5 bg-velvet-card border border-white/10 rounded-2xl hover:border-white/20 transition-colors group"
+          >
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-1">Refund Details</p>
+              <p className="text-sm text-velvet-white">Bank Account Details</p>
+              <p className="text-xs text-velvet-muted mt-1">Add your bank account for return refunds</p>
+            </div>
+            <span className="text-velvet-muted group-hover:text-velvet-white transition-colors text-lg">→</span>
+          </Link>
+        </motion.div>
+
         {/* Account Info */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

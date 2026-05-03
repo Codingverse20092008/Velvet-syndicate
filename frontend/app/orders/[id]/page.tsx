@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { 
   ChevronLeft, Loader2, MapPin, 
-  Calendar, CreditCard, Hash, Package, RefreshCcw, WifiOff, XCircle
+  Calendar, CreditCard, Hash, Package, RefreshCcw, WifiOff, XCircle, RotateCcw, ArrowLeftRight
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -43,6 +43,19 @@ const CANCEL_REASONS = [
   'Other reason',
 ]
 
+const RETURN_EXCHANGE_REASONS = [
+  'Wrong size received',
+  'Product is defective or damaged',
+  'Product does not match description',
+  'Wrong product delivered',
+  'Sizing issue - too small',
+  'Sizing issue - too large',
+  'Quality not as expected',
+  'Changed my mind',
+  'Found a better price elsewhere',
+  'Other reason',
+]
+
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const { id } = params
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
@@ -52,6 +65,11 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0])
   const [cancelMessage, setCancelMessage] = useState<string | null>(null)
   const [isCancelSubmitting, setIsCancelSubmitting] = useState(false)
+
+  const [returnExchangeOpen, setReturnExchangeOpen] = useState<'RETURN' | 'EXCHANGE' | null>(null)
+  const [returnExchangeReason, setReturnExchangeReason] = useState(RETURN_EXCHANGE_REASONS[0])
+  const [returnExchangeMessage, setReturnExchangeMessage] = useState<string | null>(null)
+  const [isReturnExchangeSubmitting, setIsReturnExchangeSubmitting] = useState(false)
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -120,6 +138,28 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const totalAmount = Number(currentOrder.total ?? currentOrder.totalAmount ?? 0)
   const isNetworkWarningVisible = Boolean(error)
   const canRequestCancel = currentOrder.status === 'PENDING' || currentOrder.status === 'CONFIRMED'
+  const canReturnExchange = currentOrder.status === 'DELIVERED' && (currentOrder as any).returnStatus === 'NONE'
+  const existingReturnStatus = (currentOrder as any).returnStatus
+
+  const submitReturnExchange = async (type: 'RETURN' | 'EXCHANGE') => {
+    setIsReturnExchangeSubmitting(true)
+    setReturnExchangeMessage(null)
+    try {
+      const res = await apiFetch(`/orders/${currentOrder.id}/return-exchange-request`, {
+        method: 'POST',
+        body: JSON.stringify({ type, reason: returnExchangeReason }),
+      })
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Could not submit request')
+      setReturnExchangeMessage(data.data?.message || `${type === 'RETURN' ? 'Return' : 'Exchange'} request submitted.`)
+      setReturnExchangeOpen(null)
+      await fetchOrderById(currentOrder.id)
+    } catch (err) {
+      setReturnExchangeMessage((err as Error).message)
+    } finally {
+      setIsReturnExchangeSubmitting(false)
+    }
+  }
 
   const submitCancelRequest = async () => {
     setIsCancelSubmitting(true)
@@ -244,6 +284,78 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                           className="rounded-xl border border-white/10 px-4 py-3 text-[10px] uppercase tracking-widest text-velvet-muted hover:text-white"
                         >
                           Keep Order
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* Return / Exchange Panel */}
+            {(canReturnExchange || (existingReturnStatus && existingReturnStatus !== 'NONE')) && (
+              <div className="bg-velvet-dark border border-white/10 rounded-2xl p-6">
+                <h2 className="text-sm font-heading text-velvet-white tracking-wide uppercase mb-1">Return or Exchange</h2>
+                <p className="text-sm text-velvet-muted mb-5">
+                  {existingReturnStatus && existingReturnStatus !== 'NONE'
+                    ? `Status: ${existingReturnStatus.replace(/_/g, ' ')}`
+                    : 'Not happy? Request a return or exchange within 7 days of delivery.'}
+                </p>
+
+                {returnExchangeMessage && (
+                  <p className="mb-4 text-sm text-amber-100">{returnExchangeMessage}</p>
+                )}
+
+                {canReturnExchange && (
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={() => setReturnExchangeOpen(returnExchangeOpen === 'RETURN' ? null : 'RETURN')}
+                      className="inline-flex items-center gap-2 rounded-xl border border-amber-300/30 px-4 py-3 text-[10px] uppercase tracking-widest text-amber-200 hover:bg-amber-400/10 transition-colors"
+                    >
+                      <RotateCcw size={14} /> Return Request
+                    </button>
+                    <button
+                      onClick={() => setReturnExchangeOpen(returnExchangeOpen === 'EXCHANGE' ? null : 'EXCHANGE')}
+                      className="inline-flex items-center gap-2 rounded-xl border border-blue-300/30 px-4 py-3 text-[10px] uppercase tracking-widest text-blue-200 hover:bg-blue-400/10 transition-colors"
+                    >
+                      <ArrowLeftRight size={14} /> Exchange Request
+                    </button>
+                  </div>
+                )}
+
+                <AnimatePresence>
+                  {returnExchangeOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 6 }}
+                      className="mt-6 border-t border-white/10 pt-6"
+                    >
+                      <label className="text-[10px] uppercase tracking-widest text-velvet-muted">
+                        Reason for {returnExchangeOpen === 'RETURN' ? 'Return' : 'Exchange'}
+                      </label>
+                      <select
+                        value={returnExchangeReason}
+                        onChange={(e) => setReturnExchangeReason(e.target.value)}
+                        className="mt-3 w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-velvet-white outline-none focus:border-amber-300/50"
+                      >
+                        {RETURN_EXCHANGE_REASONS.map((r) => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                      </select>
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          onClick={() => submitReturnExchange(returnExchangeOpen)}
+                          disabled={isReturnExchangeSubmitting}
+                          className="rounded-xl bg-velvet-white px-4 py-3 text-[10px] uppercase tracking-widest text-black disabled:opacity-60 hover:bg-velvet-accent transition-colors"
+                        >
+                          {isReturnExchangeSubmitting ? 'Submitting...' : `Submit ${returnExchangeOpen === 'RETURN' ? 'Return' : 'Exchange'}`}
+                        </button>
+                        <button
+                          onClick={() => setReturnExchangeOpen(null)}
+                          className="rounded-xl border border-white/10 px-4 py-3 text-[10px] uppercase tracking-widest text-velvet-muted hover:text-white"
+                        >
+                          Cancel
                         </button>
                       </div>
                     </motion.div>

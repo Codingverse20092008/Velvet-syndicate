@@ -253,7 +253,34 @@ export default function AdminProductsPage() {
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Price" type="number" min="0" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Stock" type="number" min="0" value={form.stock} onChange={(e) => setForm((prev) => ({ ...prev, stock: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Color (e.g., Red, Blue, Black)" value={form.color} onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))} />
-          <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Sizes (comma-separated: 7,8,9,10,11,12)" value={form.sizes} onChange={(e) => setForm((prev) => ({ ...prev, sizes: e.target.value }))} />
+          <div className="md:col-span-2 bg-black border border-white/15 rounded-xl p-4">
+            <span className="text-sm text-velvet-white block mb-3">Available Sizes</span>
+            <div className="flex flex-wrap gap-2">
+              {['6', '7', '8', '9', '10', '11', '12', 'Standard'].map(size => {
+                const isSelected = form.sizes.split(',').map(s => s.trim()).includes(size);
+                return (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      const currentSizes = form.sizes ? form.sizes.split(',').map(s => s.trim()).filter(Boolean) : [];
+                      const newSizes = currentSizes.includes(size)
+                        ? currentSizes.filter(s => s !== size)
+                        : [...currentSizes, size];
+                      setForm(prev => ({ ...prev, sizes: newSizes.join(',') }));
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm transition-colors border ${
+                      isSelected 
+                        ? 'bg-velvet-accent text-black border-velvet-accent' 
+                        : 'bg-black text-velvet-white border-white/15 hover:border-white/30'
+                    }`}
+                  >
+                    {size}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
           <select className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" value={form.gender} onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value as any }))}>
             <option value="">Select Gender</option>
             {GENDERS.map(g => <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</option>)}

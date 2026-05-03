@@ -151,4 +151,34 @@ router.get('/users', asyncHandler(async (req: Request, res: Response) => {
   return successResponse(res, { users });
 }));
 
+// GET /api/admin/users/:userId/bank-details - View customer bank details for refund
+router.get('/users/:userId/bank-details', asyncHandler(async (req: Request, res: Response) => {
+  await requireAdmin(req);
+  const { db } = await import('../lib/db');
+  const { users } = await import('../lib/schema');
+  const { eq } = await import('drizzle-orm');
+  const [user] = await db
+    .select({ bankAccountNo: users.bankAccountNo, bankIfsc: users.bankIfsc, name: users.name, email: users.email })
+    .from(users)
+    .where(eq(users.id, req.params.userId))
+    .limit(1);
+  if (!user) throw new (await import('../lib/errors')).NotFoundError('User');
+  return successResponse(res, { bankDetails: user });
+}));
+
+// PATCH /api/admin/orders/:id/return-status - Admin approve/reject return or exchange
+router.patch('/orders/:id/return-status', asyncHandler(async (req: Request, res: Response) => {
+  await requireAdmin(req);
+  const schema = z.object({
+    returnStatus: z.enum(['RETURN_APPROVED', 'RETURN_REJECTED', 'EXCHANGE_APPROVED', 'EXCHANGE_REJECTED']),
+  });
+  const { returnStatus } = schema.parse(req.body);
+  const { db } = await import('../lib/db');
+  const { orders } = await import('../lib/schema');
+  const { eq } = await import('drizzle-orm');
+  await db.update(orders).set({ returnStatus: returnStatus as any, updatedAt: new Date().toISOString() }).where(eq(orders.id, req.params.id));
+  const [updated] = await db.select().from(orders).where(eq(orders.id, req.params.id)).limit(1);
+  return successResponse(res, { order: updated, message: `Return status updated to ${returnStatus}` });
+}));
+
 export default router;

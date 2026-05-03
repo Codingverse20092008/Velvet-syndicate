@@ -15,6 +15,10 @@ export function SizeSelector({
   onSelectSize,
   stock,
 }: SizeSelectorProps) {
+  if (availableSizes.length === 1 && availableSizes[0] === 'Standard') {
+    return null;
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">

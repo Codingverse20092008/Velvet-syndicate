@@ -15,6 +15,11 @@ const updateProfileSchema = z.object({
   avatar: z.string().regex(/^data:image\/[a-zA-Z]+;base64,/, 'Invalid image format').nullable().optional(),
 });
 
+const bankDetailsSchema = z.object({
+  bankAccountNo: z.string().min(9, 'Account number must be at least 9 digits').max(18, 'Account number too long').regex(/^\d+$/, 'Account number must contain only digits').nullable(),
+  bankIfsc: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC code format (e.g. SBIN0001234)').nullable(),
+});
+
 // PATCH /api/user/profile - Update user profile
 router.patch('/profile', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
@@ -49,8 +54,30 @@ router.get('/profile', asyncHandler(async (req: Request, res: Response) => {
       address: user.address,
       avatar: user.avatar,
       role: user.role,
+      bankAccountNo: (user as any).bankAccountNo ?? null,
+      bankIfsc: (user as any).bankIfsc ?? null,
       createdAt: user.createdAt,
     }
+  });
+}));
+
+// PATCH /api/user/bank-details - Save bank details for refunds
+router.patch('/bank-details', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const parsed = bankDetailsSchema.parse(req.body);
+
+  const updatedUser = await updateUserProfile(user.id, {
+    name: user.name,
+    phone: user.phone ?? null,
+    address: (user as any).address ?? null,
+    avatar: (user as any).avatar ?? null,
+    bankAccountNo: parsed.bankAccountNo,
+    bankIfsc: parsed.bankIfsc,
+  });
+
+  return successResponse(res, {
+    message: 'Bank details saved successfully',
+    user: updatedUser,
   });
 }));
 

@@ -9,6 +9,8 @@ interface UpdateProfileData {
   phone: string | null;
   address: string | null;
   avatar: string | null;
+  bankAccountNo?: string | null;
+  bankIfsc?: string | null;
 }
 
 interface UserProfile {
@@ -18,6 +20,8 @@ interface UserProfile {
   phone: string | null;
   address: string | null;
   avatar: string | null;
+  bankAccountNo: string | null;
+  bankIfsc: string | null;
   role: string;
   createdAt: string;
 }
@@ -82,15 +86,20 @@ export async function updateUserProfile(
   }
 
   // Update user
+  const updateData: Record<string, any> = {
+    name: data.name,
+    phone: data.phone,
+    address: data.address,
+    avatar: data.avatar,
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (data.bankAccountNo !== undefined) updateData.bankAccountNo = data.bankAccountNo;
+  if (data.bankIfsc !== undefined) updateData.bankIfsc = data.bankIfsc;
+
   await db
     .update(users)
-    .set({
-      name: data.name,
-      phone: data.phone,
-      address: data.address,
-      avatar: data.avatar,
-      updatedAt: new Date().toISOString(),
-    })
+    .set(updateData)
     .where(eq(users.id, userId));
 
   logger.info({ userId }, 'User profile updated');
@@ -104,6 +113,8 @@ export async function updateUserProfile(
       phone: users.phone,
       address: users.address,
       avatar: users.avatar,
+      bankAccountNo: users.bankAccountNo,
+      bankIfsc: users.bankIfsc,
       role: users.role,
       createdAt: users.createdAt,
     })

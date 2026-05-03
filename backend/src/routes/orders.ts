@@ -11,7 +11,10 @@ import { asyncHandler } from '../lib/api-handler-express';
 import { successResponse } from '../lib/api-response-express';
 import { z } from 'zod';
 import { checkRateLimit } from '../lib/rate-limit';
-import { RateLimitError } from '../lib/errors';
+import { RateLimitError, NotFoundError, ValidationError } from '../lib/errors';
+import { db } from '../lib/db';
+import { orders } from '../lib/schema';
+import { eq, and } from 'drizzle-orm';
 
 const router = Router();
 
@@ -37,6 +40,22 @@ const cancelOrderSchema = z.object({
   ]),
 });
 
+const returnExchangeSchema = z.object({
+  type: z.enum(['RETURN', 'EXCHANGE']),
+  reason: z.enum([
+    'Wrong size received',
+    'Product is defective or damaged',
+    'Product does not match description',
+    'Wrong product delivered',
+    'Sizing issue - too small',
+    'Sizing issue - too large',
+    'Quality not as expected',
+    'Changed my mind',
+    'Found a better price elsewhere',
+    'Other reason',
+  ]),
+});
+
 function parseAddressSnapshot(value: string) {
   try {
     return JSON.parse(value);
@@ -57,15 +76,17 @@ function mapOrderForClient(order: any) {
     addressSnapshot: parseAddressSnapshot(order.shippingAddress),
     shippingAddress: order.shippingAddress,
     items: order.items ?? [],
+    returnStatus: order.returnStatus ?? 'NONE',
+    returnReason: order.returnReason ?? null,
   };
 }
 
 // GET /api/orders
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
-  const orders = await getOrdersByUserId(user.id);
+  const orderList = await getOrdersByUserId(user.id);
 
-  return successResponse(res, { orders: orders.map(mapOrderForClient) });
+  return successResponse(res, { orders: orderList.map(mapOrderForClient) });
 }));
 
 // GET /api/orders/status/:jobId
@@ -104,6 +125,49 @@ router.post('/:id/cancel-request', asyncHandler(async (req: Request, res: Respon
   });
 }));
 
+// POST /api/orders/:id/return-exchange-request
+router.post('/:id/return-exchange-request', asyncHandler(async (req: Request, res: Response) => {
+  const user = await getUserFromRequest(req);
+  const data = returnExchangeSchema.parse(req.body);
+
+  // Find the order
+  const [order] = await db
+    .select()
+    .from(orders)
+    .where(and(eq(orders.id, req.params.id), eq(orders.userId, user.id)))
+    .limit(1);
+
+  if (!order) throw new NotFoundError('Order');
+
+  // Only allow return/exchange on DELIVERED orders
+  if (order.status !== 'DELIVERED') {
+    throw new ValidationError('Return/Exchange can only be requested for delivered orders.');
+  }
+
+  // Only allow if no existing return/exchange pending
+  if (order.returnStatus !== 'NONE') {
+    throw new ValidationError(`A ${order.returnStatus.toLowerCase().replace('_', ' ')} is already in progress.`);
+  }
+
+  const newStatus = data.type === 'RETURN' ? 'RETURN_REQUESTED' : 'EXCHANGE_REQUESTED';
+
+  await db
+    .update(orders)
+    .set({
+      returnStatus: newStatus as any,
+      returnReason: data.reason,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(orders.id, req.params.id));
+
+  const [updated] = await db.select().from(orders).where(eq(orders.id, req.params.id)).limit(1);
+
+  return successResponse(res, {
+    order: mapOrderForClient(updated),
+    message: `${data.type === 'RETURN' ? 'Return' : 'Exchange'} request submitted successfully.`,
+  });
+}));
+
 // POST /api/orders
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
@@ -125,3 +189,4 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 export default router;
+

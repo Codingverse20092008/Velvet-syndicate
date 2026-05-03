@@ -310,6 +310,7 @@ export async function createAdminProduct(data: {
   const sizeList = data.sizes
     ? data.sizes.split(',').map(s => s.trim()).filter(s => s)
     : [];
+  if (sizeList.length === 0) sizeList.push('Standard');
 
   // Calculate stock per size (divide total stock evenly)
   const stockPerSize = sizeList.length > 0 ? Math.floor(data.stock / sizeList.length) : 0;
@@ -491,9 +492,10 @@ export async function updateAdminProduct(
       let sizeList: string[];
       if (data.sizes !== undefined) {
         if (data.sizes === '') {
-          sizeList = [];
+          sizeList = ['Standard'];
         } else {
           sizeList = data.sizes.split(',').map(s => s.trim()).filter(s => s);
+          if (sizeList.length === 0) sizeList = ['Standard'];
         }
       } else {
         // Get existing sizes
@@ -503,7 +505,7 @@ export async function updateAdminProduct(
         });
         sizeList = existingSizes.map(s => s.size);
         if (sizeList.length === 0) {
-          sizeList = [];
+          sizeList = ['Standard'];
         }
       }
 

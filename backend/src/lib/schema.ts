@@ -11,6 +11,8 @@ export const users = sqliteTable('users', {
   phone: text('phone'),
   address: text('address'),
   avatar: text('avatar'),
+  bankAccountNo: text('bank_account_no'),
+  bankIfsc: text('bank_ifsc'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
@@ -149,6 +151,8 @@ export const orders = sqliteTable('orders', {
   paymentMethod: text('payment_method').notNull().default('COD'),
   shippingAddress: text('shipping_address').notNull(),
   idempotencyKey: text('idempotency_key'),
+  returnStatus: text('return_status', { enum: ['NONE', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURN_REJECTED', 'EXCHANGE_REQUESTED', 'EXCHANGE_APPROVED', 'EXCHANGE_REJECTED'] }).notNull().default('NONE'),
+  returnReason: text('return_reason'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
