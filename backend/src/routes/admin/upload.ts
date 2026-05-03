@@ -6,6 +6,7 @@ import multer from 'multer';
 import path from 'path';
 import crypto from 'node:crypto';
 import fs from 'fs';
+import { cloudinaryStorage, isConfigured } from '../../lib/cloudinary';
 
 const router = Router();
 
@@ -30,17 +31,19 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Multer config - store to disk
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    const name = `${crypto.randomUUID()}${ext}`;
-    cb(null, name);
-  },
-});
+// Multer config - determine storage engine
+const storage = isConfigured && cloudinaryStorage 
+  ? cloudinaryStorage 
+  : multer.diskStorage({
+      destination: (_req, _file, cb) => {
+        cb(null, uploadsDir);
+      },
+      filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname) || '.jpg';
+        const name = `${crypto.randomUUID()}${ext}`;
+        cb(null, name);
+      },
+    });
 
 const upload = multer({
   storage,
@@ -84,9 +87,9 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
     }
 
-    console.log('File uploaded:', file.filename);
-    // Return the URL path that can be used as the image field
-    const imageUrl = `/uploads/products/${file.filename}`;
+    console.log('File uploaded:', file.filename || (file as any).path);
+    // If using Cloudinary, multer-storage-cloudinary provides the secure_url in 'path' or 'secure_url'
+    const imageUrl = (file as any).path || (file as any).secure_url || `/uploads/products/${file.filename}`;
 
     console.log('Returning imageUrl:', imageUrl);
     return successResponse(res, { imageUrl, message: 'Image uploaded' });
@@ -121,7 +124,7 @@ router.post('/multiple', asyncHandler(async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'No files uploaded' });
     }
 
-    const imageUrls = files.map(f => `/uploads/products/${f.filename}`);
+    const imageUrls = files.map(f => (f as any).path || (f as any).secure_url || `/uploads/products/${f.filename}`);
     console.log('Multiple files uploaded:', files.length, 'URLs:', imageUrls);
 
     return successResponse(res, { imageUrls, message: 'Images uploaded' });
