@@ -37,39 +37,50 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
+  const dragTransition = { power: 0, timeConstant: 200 }
+  const [dragDirection, setDragDirection] = useState(0)
+
+  const onDragEnd = (event: any, info: any) => {
+    const swipeThreshold = 50
+    if (info.offset.x > swipeThreshold) {
+      prevImage()
+    } else if (info.offset.x < -swipeThreshold) {
+      nextImage()
+    }
+  }
+
   return (
-    <div className="relative group">
-      {/* Main Image */}
-      <motion.div
-        className="aspect-[4/5] bg-velvet-dark overflow-hidden relative"
-        onClick={() => setIsZoomed(true)}
-        whileHover={{ scale: 1.01 }}
-        transition={{ duration: 0.8, ease: [0.215, 0.61, 0.355, 1] }}
-      >
-        <AnimatePresence mode="wait">
+    <div className="relative group -mx-6 md:mx-0">
+      {/* Main Image Container */}
+      <div className="relative aspect-[4/5] bg-velvet-dark overflow-hidden touch-pan-y">
+        <AnimatePresence initial={false} custom={dragDirection} mode="popLayout">
           <motion.div
             key={currentIndex}
-            className="w-full h-full relative"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            custom={dragDirection}
+            className="w-full h-full relative cursor-zoom-in"
+            initial={{ opacity: 0, x: dragDirection > 0 ? -100 : 100 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: dragDirection > 0 ? 100 : -100 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={onDragEnd}
+            onClick={() => setIsZoomed(true)}
           >
             {isExternalUrl(getImageSrc(currentIndex)) ? (
-              // External images - use unoptimized img tag
               <img
                 src={getImageSrc(currentIndex)}
                 alt={`${productName} - ${currentIndex + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover select-none pointer-events-none"
                 onError={() => handleImageError(currentIndex)}
               />
             ) : (
-              // Local images - use Next.js Image optimization
               <Image
                 src={getImageSrc(currentIndex)}
                 alt={`${productName} - ${currentIndex + 1}`}
                 fill
-                className="object-cover"
+                className="object-cover select-none pointer-events-none"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 priority={currentIndex === 0}
                 unoptimized={isExternalUrl(getImageSrc(currentIndex))}
@@ -79,26 +90,39 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           </motion.div>
         </AnimatePresence>
 
-        
-        {/* Zoom Hint */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+        {/* Pagination Dots (Mobile) */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 md:hidden">
+            {images.map((_, index) => (
+              <div
+                key={index}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                  index === currentIndex ? 'bg-velvet-accent w-4' : 'bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Zoom Hint (Desktop Only) */}
+        <div className="hidden md:flex absolute inset-0 items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
           <span className="text-[10px] tracking-[0.4em] uppercase text-velvet-white border border-white/20 px-6 py-2 backdrop-blur-sm">
             Enlarge Presence
           </span>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows (Desktop Only) */}
       {images.length > 1 && (
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex justify-between px-4 pointer-events-none">
+        <div className="hidden md:flex absolute inset-x-0 top-1/2 -translate-y-1/2 justify-between px-4 pointer-events-none">
           <button
-            onClick={(e) => { e.stopPropagation(); prevImage(); }}
+            onClick={(e) => { e.stopPropagation(); setDragDirection(1); prevImage(); }}
             className="p-3 bg-black/40 border border-white/5 text-velvet-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto hover:border-velvet-accent"
           >
             <ChevronLeft size={20} />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); nextImage(); }}
+            onClick={(e) => { e.stopPropagation(); setDragDirection(-1); nextImage(); }}
             className="p-3 bg-black/40 border border-white/5 text-velvet-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto hover:border-velvet-accent"
           >
             <ChevronRight size={20} />
@@ -106,14 +130,17 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
         </div>
       )}
 
-      {/* Thumbnails */}
+      {/* Thumbnails (Desktop Only) */}
       {images.length > 1 && (
-        <div className="flex gap-4 mt-6">
+        <div className="hidden md:flex gap-4 mt-6 overflow-x-auto pb-2 no-scrollbar">
           {images.map((img, index) => (
             <button
               key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`relative w-20 aspect-[4/5] overflow-hidden border transition-all duration-500 luxury-ease ${
+              onClick={() => {
+                setDragDirection(index > currentIndex ? -1 : 1)
+                setCurrentIndex(index)
+              }}
+              className={`relative w-20 aspect-[4/5] shrink-0 overflow-hidden border transition-all duration-500 luxury-ease ${
                 index === currentIndex
                   ? 'border-velvet-accent'
                   : 'border-white/10 opacity-50 hover:opacity-100'

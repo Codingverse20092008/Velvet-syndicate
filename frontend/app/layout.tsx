@@ -7,7 +7,10 @@ import { CartDrawer } from '@/components/ui/CartDrawer'
 import { AuthProvider } from './providers'
 import { ActiveOrderBanner } from '@/components/user/ActiveOrderBanner'
 import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
-import { FeedbackButton } from '@/components/feedback/FeedbackButton'
+import { SplashScreen } from '@/components/ui/SplashScreen'
+import { SocialProof } from '@/components/ui/SocialProof'
+import { PrivacyAssurance } from '@/components/ui/PrivacyAssurance'
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 
 export const metadata: Metadata = {
   title: 'Velvet Syndicate | Wear the Unspoken',
@@ -26,6 +29,8 @@ export const metadata: Metadata = {
   },
 }
 
+import { MainWrapper } from '@/components/layout/MainWrapper'
+
 export default function RootLayout({
   children,
 }: {
@@ -39,14 +44,19 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet" />
       </head>
       <body>
+        <SplashScreen />
+        <SocialProof />
+        <PrivacyAssurance />
+        <MobileBottomNav />
         <AuthProvider>
           <Navigation />
           <ActiveOrderBanner />
           <ReturnVisitTracker />
-          <main>{children}</main>
-          <Footer />
+          <MainWrapper>{children}</MainWrapper>
+          <div className="hidden md:block">
+            <Footer />
+          </div>
           <CartDrawer />
-          <FeedbackButton />
         </AuthProvider>
       </body>
     </html>

@@ -115,17 +115,17 @@ export function SearchBar({ autoFocus = false }: SearchBarProps) {
   }, [])
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-full md:max-w-[280px]">
-      {/* Luxury Minimal Input */}
+    <div ref={containerRef} className="relative w-full">
+      {/* Luxury Minimal Input - Extended & Perfected Padding */}
       <div
-        className={`flex items-center gap-3 h-11 px-4 rounded-full bg-white/10 backdrop-blur-md border transition-all duration-500 ease-luxury ${
+        className={`flex items-center gap-5 h-12 px-6 rounded-xl bg-white/5 backdrop-blur-xl border transition-all duration-700 ease-luxury ${
           isFocused 
-            ? 'border-white/40 ring-1 ring-white/20' 
-            : 'border-white/20 hover:border-white/30'
+            ? 'border-velvet-accent/50 bg-white/10 ring-4 ring-velvet-accent/5 shadow-[0_0_20px_rgba(74,125,156,0.1)]' 
+            : 'border-white/10 hover:border-white/20'
         }`}
       >
         <Search
-          size={14}
+          size={16}
           className={`flex-shrink-0 transition-colors duration-300 ${isFocused ? 'text-white/60' : 'text-white/30'}`}
         />
         <input

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
@@ -21,6 +22,8 @@ export function Navigation() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const pathname = usePathname()
 
   return (
     <motion.nav
@@ -51,7 +54,7 @@ export function Navigation() {
             </Link>
           </div>
 
-          {/* Center Links — Hidden on mobile when search is open */}
+          {/* Center Links — Removed About */}
           <div className={`items-center gap-6 md:gap-10 flex-shrink-0 ${isSearchOpen ? 'hidden md:flex' : 'flex'}`}>
             <Link
               href="/collection"
@@ -59,21 +62,15 @@ export function Navigation() {
             >
               Collection
             </Link>
-            <Link
-              href="/about"
-              className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors duration-300 interactive hidden xs:block"
-            >
-              About
-            </Link>
           </div>
 
           {/* Right side: Search + Actions */}
           <div className="flex items-center gap-3 md:gap-5 flex-1 justify-end">
 
-            {/* Search Container */}
-            <div className={`flex-1 transition-all duration-500 ${isSearchOpen ? 'max-w-full' : 'max-w-[260px]'}`}>
-              {/* Desktop: Always SearchBar. Mobile: Toggleable */}
-              <div className="hidden md:block">
+            {/* Search Container - Perfected Spacing */}
+            <div className={`flex-1 mx-2 md:mx-12 transition-all duration-500 ${isSearchOpen ? 'max-w-full' : 'max-w-[200px] md:max-w-2xl'}`}>
+              {/* Desktop: SearchBar */}
+              <div className="hidden md:block w-full">
                 <SearchBar />
               </div>
               
@@ -108,8 +105,8 @@ export function Navigation() {
               <Search size={17} />
             </button>
 
-            {/* Home */}
-            <div className={`${isSearchOpen ? 'hidden md:block' : 'block'} flex items-center`}>
+            {/* Home - Desktop Only */}
+            <div className="hidden md:block">
               <Link
                 href="/"
                 className="text-velvet-muted hover:text-velvet-white transition-colors interactive"
@@ -119,14 +116,14 @@ export function Navigation() {
               </Link>
             </div>
 
-            {/* Auth */}
-            <div className={`${isSearchOpen ? 'hidden md:flex' : 'flex'} items-center gap-4`}>
+            {/* Auth - Desktop Only */}
+            <div className="hidden md:flex items-center gap-4">
               {isAuthenticated ? (
                 <div className="flex items-center gap-4">
                   {user?.role === 'admin' && (
                     <Link
                       href="/admin"
-                      className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive hidden md:block"
+                      className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive"
                     >
                       Admin
                     </Link>
@@ -139,7 +136,7 @@ export function Navigation() {
                   </Link>
                   <button
                     onClick={() => useAuthStore.getState().logout()}
-                    className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive hidden md:block"
+                    className="text-[10px] tracking-widest uppercase text-velvet-muted hover:text-velvet-white transition-colors interactive"
                   >
                     Logout
                   </button>
@@ -154,8 +151,8 @@ export function Navigation() {
               )}
             </div>
 
-            {/* Cart */}
-            <div className={`${isSearchOpen ? 'hidden md:block' : 'block'}`}>
+            {/* Cart - Desktop Only */}
+            <div className="hidden md:block">
               <button
                 onClick={toggleCart}
                 className="relative text-velvet-muted hover:text-velvet-white transition-colors interactive"

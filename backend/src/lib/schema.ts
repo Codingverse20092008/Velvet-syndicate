@@ -59,6 +59,9 @@ export const products = sqliteTable('products', {
   isVisible: integer('is_visible', { mode: 'boolean' }).notNull().default(true),
   features: text('features'),
   careInstructions: text('care_instructions'),
+  isOutOfStock: integer('is_out_of_stock', { mode: 'boolean' }).notNull().default(false),
+  isOnSale: integer('is_on_sale', { mode: 'boolean' }).notNull().default(false),
+  salePercentage: integer('sale_percentage').notNull().default(0),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({

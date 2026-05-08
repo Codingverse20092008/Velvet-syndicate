@@ -156,8 +156,8 @@ export default function ProductPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
-      {/* Back Link */}
-      <div className="max-w-7xl mx-auto px-6 mb-8">
+      {/* Back Link - Desktop Only */}
+      <div className="max-w-7xl mx-auto px-6 mb-4 md:mb-8 hidden md:block">
         <Link
           href="/collection"
           className="inline-flex items-center gap-2 text-sm text-velvet-muted hover:text-velvet-white transition-colors interactive"
@@ -185,17 +185,24 @@ export default function ProductPage() {
 
           {/* Product Info */}
           <motion.div
-            className="flex flex-col justify-center"
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
+            className="flex flex-col"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1, ease: [0.215, 0.61, 0.355, 1] }}
           >
-            <h1 className="font-heading text-4xl md:text-5xl text-velvet-white mb-3">
-              {product.name}
-            </h1>
-            <p className="text-2xl text-velvet-accent mb-8">
-              {formatPrice(product.price)}
-            </p>
+            <div className="mb-6">
+              <h1 className="font-heading text-3xl md:text-5xl text-velvet-white mb-2 leading-tight">
+                {product.name}
+              </h1>
+              <div className="flex items-baseline gap-3">
+                <span className="text-2xl md:text-3xl text-velvet-accent font-medium">
+                  {formatPrice(product.price)}
+                </span>
+                <span className="text-xs text-emerald-500 font-medium uppercase tracking-widest">
+                  In Stock & Ready
+                </span>
+              </div>
+            </div>
 
             <motion.div
               className="prose prose-invert mb-8"
@@ -210,6 +217,7 @@ export default function ProductPage() {
 
             {/* Size Selector */}
             <motion.div
+              id="size-selector"
               className="mb-8"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -223,9 +231,9 @@ export default function ProductPage() {
               />
             </motion.div>
 
-            {/* Add to Cart */}
+            {/* Actions - Desktop Only */}
             <motion.div
-              className="mb-8"
+              className="mb-8 hidden md:flex flex-col gap-3"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
@@ -238,6 +246,19 @@ export default function ProductPage() {
                 isLoading={isAdding}
               >
                 {selectedSize ? 'Add to Selection' : 'Select a Size'}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={() => {
+                  if (!selectedSize) return;
+                  handleAddToCart();
+                  setTimeout(() => router.push('/checkout'), 800);
+                }}
+                disabled={!selectedSize}
+              >
+                Buy Now
               </Button>
             </motion.div>
 
@@ -287,7 +308,7 @@ export default function ProductPage() {
 
       {/* Story Section */}
       <motion.section
-        className="max-w-4xl mx-auto px-6 mt-32 text-center"
+        className="max-w-4xl mx-auto px-6 mt-32 md:mt-32 mb-20 md:mb-0 text-center"
         initial={{ opacity: 0, y: 40 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -302,6 +323,39 @@ export default function ProductPage() {
           doesn&apos;t announce itself—it simply exists.
         </p>
       </motion.section>
+      {/* Sticky Bottom Bar - Mobile Only (Elevated to clear bottom nav) */}
+      <div className="fixed bottom-[72px] left-0 right-0 z-40 md:hidden bg-black/90 backdrop-blur-2xl border-t border-white/10 p-3 flex gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+        <Button
+          variant="outline"
+          className="flex-1 py-3.5 text-[10px] tracking-[0.2em] border-white/20"
+          onClick={handleAddToCart}
+          disabled={!selectedSize}
+          isLoading={isAdding}
+        >
+          {isAdding ? 'Adding...' : 'Selection'}
+        </Button>
+        <Button
+          className="flex-1 py-3.5 text-[10px] tracking-[0.2em] bg-velvet-white text-black hover:bg-white/90 border-none font-bold"
+          onClick={() => {
+            if (!selectedSize) {
+              const sizeSelector = document.getElementById('size-selector')
+              sizeSelector?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              return;
+            }
+            handleAddToCart();
+            setTimeout(() => router.push('/checkout'), 800);
+          }}
+          disabled={!selectedSize}
+        >
+          Buy Now
+        </Button>
+      </div>
+
+      <style jsx global>{`
+        .pb-safe-offset-4 {
+          padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+        }
+      `}</style>
     </div>
   )
 }

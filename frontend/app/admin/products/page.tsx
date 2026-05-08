@@ -20,6 +20,9 @@ type ProductForm = {
   gender: 'men' | 'women' | ''
   subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | ''
   featured: boolean
+  isOutOfStock: boolean
+  isOnSale: boolean
+  salePercentage: string
 }
 
 const emptyForm: ProductForm = {
@@ -35,6 +38,9 @@ const emptyForm: ProductForm = {
   gender: '',
   subcategory: '',
   featured: false,
+  isOutOfStock: false,
+  isOnSale: false,
+  salePercentage: '',
 }
 
 const GENDERS = ['men', 'women'] as const
@@ -168,6 +174,9 @@ export default function AdminProductsPage() {
       gender: form.gender || 'unisex',
       subcategory: form.subcategory || 'sneakers',
       featured: form.featured,
+      isOutOfStock: form.isOutOfStock,
+      isOnSale: form.isOnSale,
+      salePercentage: Number(form.salePercentage || 0),
     }
 
     if (editingProduct) {
@@ -196,6 +205,9 @@ export default function AdminProductsPage() {
       gender: (product.gender as any) || '',
       subcategory: (product.subcategory as any) || '',
       featured: product.featured || false,
+      isOutOfStock: product.isOutOfStock || false,
+      isOnSale: product.isOnSale || false,
+      salePercentage: String(product.salePercentage || ''),
     })
     setImagePreview(product.image)
     setImagePreviews([])
@@ -273,15 +285,57 @@ export default function AdminProductsPage() {
             <option value="">Select Type</option>
             {SUBCATEGORIES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
           </select>
-          <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-            <input 
-              type="checkbox" 
-              className="w-4 h-4 rounded border-white/15 bg-black text-velvet-accent focus:ring-velvet-accent"
-              checked={form.featured}
-              onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
-            />
-            <span className="text-sm text-velvet-white">Featured Product (Show on Homepage)</span>
-          </label>
+          
+          {/* Inventory & Sales Toggles */}
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-white/15 bg-black text-velvet-accent focus:ring-velvet-accent"
+                checked={form.featured}
+                onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
+              />
+              <span className="text-sm text-velvet-white">Featured</span>
+            </label>
+
+            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-white/15 bg-black text-red-500 focus:ring-red-500"
+                checked={form.isOutOfStock}
+                onChange={(e) => setForm((prev) => ({ ...prev, isOutOfStock: e.target.checked }))}
+              />
+              <span className="text-sm text-velvet-white">Out of Stock</span>
+            </label>
+
+            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-white/15 bg-black text-emerald-500 focus:ring-emerald-500"
+                checked={form.isOnSale}
+                onChange={(e) => setForm((prev) => ({ ...prev, isOnSale: e.target.checked }))}
+              />
+              <span className="text-sm text-velvet-white">On Sale</span>
+            </label>
+          </div>
+
+          {form.isOnSale && (
+            <div className="md:col-span-2">
+              <div className="flex items-center gap-4 bg-black border border-emerald-500/20 rounded-xl px-4 py-3">
+                <span className="text-sm text-emerald-400 shrink-0">Sale Percentage (%)</span>
+                <input 
+                  className="bg-transparent border-none outline-none text-sm text-velvet-white w-full" 
+                  placeholder="e.g., 20" 
+                  type="number" 
+                  min="0" 
+                  max="100"
+                  value={form.salePercentage} 
+                  onChange={(e) => setForm((prev) => ({ ...prev, salePercentage: e.target.value }))} 
+                />
+              </div>
+            </div>
+          )}
+
           <input className="md:col-span-2 bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Image URL (optional - use upload instead)" value={form.image} onChange={(e) => setForm((prev) => ({ ...prev, image: e.target.value }))} />
           <div className="md:col-span-2">
             <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
@@ -340,37 +394,48 @@ export default function AdminProductsPage() {
       {/* Desktop Table View */}
       <div className="hidden md:block bg-velvet-card border border-white/10 rounded-2xl overflow-hidden">
         <div className="grid grid-cols-12 px-5 py-4 text-[10px] uppercase tracking-widest text-velvet-muted border-b border-white/5">
-          <div className="col-span-4">Product</div>
+          <div className="col-span-3">Product</div>
           <div className="col-span-1">Stock</div>
-          <div className="col-span-2">Brand</div>
+          <div className="col-span-2">Status</div>
           <div className="col-span-1">Visible</div>
           <div className="col-span-1">Featured</div>
-          <div className="col-span-1">Price</div>
+          <div className="col-span-2">Price</div>
           <div className="col-span-2 text-right">Actions</div>
         </div>
         <div className="divide-y divide-white/5">
           {products.map((product) => (
             <div key={product.id} className="grid grid-cols-12 px-5 py-4 items-center">
-              <div className="col-span-4">
-                <div className="text-velvet-white">{product.name}</div>
-                <div className="text-xs text-velvet-muted mt-1 line-clamp-1">{product.description}</div>
+              <div className="col-span-3">
+                <div className="text-velvet-white flex items-center gap-2">
+                  {product.name}
+                  {product.isOnSale && <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1.5 py-0.5 rounded border border-emerald-500/20">-{product.salePercentage}%</span>}
+                </div>
+                <div className="text-xs text-velvet-muted mt-1 line-clamp-1">{product.brand}</div>
               </div>
               <div className="col-span-1 text-velvet-white">{product.stock}</div>
-              <div className="col-span-2 text-velvet-muted">{product.brand}</div>
+              <div className="col-span-2">
+                {product.isOutOfStock ? (
+                  <span className="text-red-400 text-[10px] uppercase tracking-widest bg-red-400/10 px-2 py-1 rounded">Out of Stock</span>
+                ) : product.isOnSale ? (
+                  <span className="text-emerald-400 text-[10px] uppercase tracking-widest bg-emerald-400/10 px-2 py-1 rounded">On Sale</span>
+                ) : (
+                  <span className="text-velvet-muted text-[10px] uppercase tracking-widest">Normal</span>
+                )}
+              </div>
               <div className="col-span-1 text-velvet-muted">{product.isVisible ? 'Active' : 'Inactive'}</div>
               <div className="col-span-1 text-velvet-muted">{product.featured ? 'Yes' : 'No'}</div>
-              <div className="col-span-1 text-velvet-white">{formatPrice(product.price)}</div>
+              <div className="col-span-2">
+                <div className="text-velvet-white">{formatPrice(product.price)}</div>
+                {product.isOnSale && (
+                  <div className="text-[10px] text-velvet-muted line-through">
+                    {formatPrice(product.price / (1 - (product.salePercentage || 0) / 100))}
+                  </div>
+                )}
+              </div>
               <div className="col-span-2 flex justify-end gap-2">
                 <button className="px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-velvet-white hover:bg-white/10" onClick={() => startEdit(product)}>Edit</button>
                 <button className="px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-amber-300 hover:bg-amber-400/10" onClick={() => toggleStock(product.id, !product.isVisible)}>
                   {product.isVisible ? 'Hide' : 'Show'}
-                </button>
-                <button
-                  className="px-3 py-2 text-[10px] uppercase tracking-widest border border-red-400/20 rounded-lg text-red-300 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                  onClick={() => handleDeactivate(product)}
-                  disabled={!product.isVisible}
-                >
-                  {product.isVisible ? 'Deactivate' : 'Inactive'}
                 </button>
                 <button
                   className="px-3 py-2 text-[10px] uppercase tracking-widest border border-red-500/50 rounded-lg text-red-500 hover:bg-red-500/20"
@@ -393,10 +458,16 @@ export default function AdminProductsPage() {
           <div key={product.id} className="bg-velvet-card border border-white/10 rounded-2xl p-4">
             <div className="flex items-start justify-between mb-3">
               <div className="flex-1 min-w-0">
-                <div className="text-velvet-white font-medium truncate">{product.name}</div>
+                <div className="text-velvet-white font-medium truncate flex items-center gap-2">
+                  {product.name}
+                  {product.isOnSale && <span className="text-emerald-400 text-[10px]">-{product.salePercentage}%</span>}
+                </div>
                 <div className="text-xs text-velvet-muted mt-1">{product.brand}</div>
               </div>
-              <div className="text-velvet-white font-heading ml-4">{formatPrice(product.price)}</div>
+              <div className="text-right">
+                <div className="text-velvet-white font-heading">{formatPrice(product.price)}</div>
+                {product.isOutOfStock && <div className="text-[8px] text-red-400 uppercase tracking-widest font-bold">Out of Stock</div>}
+              </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-velvet-muted mb-3">
               <span>Stock: {product.stock}</span>
@@ -408,13 +479,6 @@ export default function AdminProductsPage() {
               <button className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-velvet-white hover:bg-white/10" onClick={() => startEdit(product)}>Edit</button>
               <button className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-white/20 rounded-lg text-amber-300 hover:bg-amber-400/10" onClick={() => toggleStock(product.id, !product.isVisible)}>
                 {product.isVisible ? 'Hide' : 'Show'}
-              </button>
-              <button
-                className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-red-400/20 rounded-lg text-red-300 hover:bg-red-500/10 disabled:opacity-40 disabled:cursor-not-allowed"
-                onClick={() => handleDeactivate(product)}
-                disabled={!product.isVisible}
-              >
-                {product.isVisible ? 'Deactivate' : 'Inactive'}
               </button>
               <button
                 className="flex-1 px-3 py-2 text-[10px] uppercase tracking-widest border border-red-500/50 rounded-lg text-red-500 hover:bg-red-500/20"

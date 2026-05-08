@@ -62,10 +62,10 @@ export const globalLimiter = createLimiter({
   keyPrefix: 'global',
 });
 
-// 2. Auth Limiter (5 req/15min)
+// 2. Auth Limiter (10 req/15min)
 export const authLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 10,
   message: 'Too many login attempts, please try again later.',
   keyPrefix: 'auth',
 });

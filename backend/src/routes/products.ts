@@ -26,6 +26,9 @@ const mapProduct = (p: any) => {
     gender: p.gender ?? 'unisex',
     productType: p.productType ?? 'sneakers',
     featured: Boolean(p.featured),
+    isOutOfStock: Boolean(p.isOutOfStock || p.is_out_of_stock),
+    isOnSale: Boolean(p.isOnSale || p.is_on_sale),
+    salePercentage: Number(p.salePercentage || p.sale_percentage || 0),
     variants: (p.variants || []).map((v: any) => ({
       id: v.id,
       name: v.name ?? '',

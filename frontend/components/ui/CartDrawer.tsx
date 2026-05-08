@@ -22,7 +22,7 @@ export function CartDrawer() {
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black/80 z-50"
+            className="fixed inset-0 bg-black/80 z-[100]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -31,7 +31,7 @@ export function CartDrawer() {
 
           {/* Drawer */}
           <motion.div
-            className="fixed right-0 top-0 h-full w-full max-w-md bg-velvet-dark z-50 border-l border-white/10"
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-velvet-dark z-[100] border-l border-white/10"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}

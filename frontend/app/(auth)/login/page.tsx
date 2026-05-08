@@ -46,116 +46,109 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <motion.div
-        className="w-full max-w-md"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2, ease: [0.215, 0.61, 0.355, 1] }}
-      >
-        {/* Header */}
-        <div className="text-center mb-12">
-          <motion.h1
-            className="font-heading text-3xl tracking-widest text-velvet-white mb-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            WELCOME BACK
-          </motion.h1>
-          <motion.p
-            className="text-sm text-velvet-muted tracking-wide"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-          >
-            Enter the Syndicate
-          </motion.p>
-          {message && (
-            <motion.p
-              className="text-[10px] uppercase tracking-[0.2em] text-velvet-accent mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              {message}
-            </motion.p>
-          )}
-        </div>
-
-        {/* Form */}
-        <motion.form
-          onSubmit={handleSubmit}
-          className="space-y-8"
+    <>
+      {/* Header */}
+      <div className="text-center mb-6 md:mb-12">
+        <motion.h1
+          className="font-heading text-3xl tracking-widest text-velvet-white mb-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
         >
+          WELCOME BACK
+        </motion.h1>
+        <motion.p
+          className="text-sm text-velvet-muted tracking-wide"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
+        >
+          Enter the Syndicate
+        </motion.p>
+        {message && (
+          <motion.p
+            className="text-[10px] uppercase tracking-[0.2em] text-velvet-accent mt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            {message}
+          </motion.p>
+        )}
+      </div>
+
+      {/* Form */}
+      <motion.form
+        onSubmit={handleSubmit}
+        className="space-y-5 md:space-y-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.6 }}
+      >
+        <Input
+          type="email"
+          label="Email"
+          placeholder="your@email.com"
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          error={errors.email}
+          required
+        />
+
+        <div className="relative">
           <Input
-            type="email"
-            label="Email"
-            placeholder="your@email.com"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            error={errors.email}
+            type="password"
+            label="Password"
+            placeholder="••••••••"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            error={errors.password}
             required
           />
-
-          <div className="relative">
-            <Input
-              type="password"
-              label="Password"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              error={errors.password}
-              required
-            />
-            <Link 
-              href="/forgot-password" 
-              className="absolute right-0 -bottom-6 text-[10px] uppercase tracking-widest text-velvet-muted hover:text-velvet-white transition-colors interactive"
-            >
-              Forgot Password?
-            </Link>
-          </div>
-
-          {errors.form && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-velvet-muted text-center space-y-2"
-            >
-              <p>{errors.form}</p>
-              {errors.form.toLowerCase().includes('verify') && (
-                <Link 
-                  href={`/verify-otp?email=${encodeURIComponent(formData.email)}`}
-                  className="block text-velvet-accent hover:text-velvet-white transition-colors uppercase text-[10px] tracking-widest"
-                >
-                  Verify Now
-                </Link>
-              )}
-            </motion.div>
-          )}
-
-          <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
-            Enter
-          </Button>
-        </motion.form>
-
-        {/* Switch to Signup */}
-        <motion.p
-          className="text-center mt-8 text-sm text-velvet-muted"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.8 }}
-        >
-          New to Velvet Syndicate?{' '}
-          <Link href={`/signup?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors interactive">
-            Create Account
+          <Link 
+            href="/forgot-password" 
+            className="absolute right-0 -bottom-6 text-[10px] uppercase tracking-widest text-velvet-muted hover:text-velvet-white transition-colors interactive"
+          >
+            Forgot Password?
           </Link>
-        </motion.p>
-      </motion.div>
-    </div>
+        </div>
+
+        {errors.form && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-sm text-velvet-muted text-center space-y-2"
+          >
+            <p>{errors.form}</p>
+            {errors.form.toLowerCase().includes('verify') && (
+              <Link 
+                href={`/verify-otp?email=${encodeURIComponent(formData.email)}`}
+                className="block text-velvet-accent hover:text-velvet-white transition-colors uppercase text-[10px] tracking-widest"
+              >
+                Verify Now
+              </Link>
+            )}
+          </motion.div>
+        )}
+
+        <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
+          Enter
+        </Button>
+      </motion.form>
+
+      {/* Switch to Signup */}
+      <motion.p
+        className="text-center mt-8 text-sm text-velvet-muted"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.8 }}
+      >
+        New to Velvet Syndicate?{' '}
+        <Link href={`/signup?redirect=${encodeURIComponent(redirectPath)}`} className="text-velvet-white hover:text-velvet-accent transition-colors interactive">
+          Create Account
+        </Link>
+      </motion.p>
+    </>
   )
 }
 

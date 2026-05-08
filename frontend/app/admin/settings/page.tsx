@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Bell, Shield, CreditCard, Truck, Save } from 'lucide-react'
+import { Settings, Bell, Shield, CreditCard, Truck, Save, TrendingUp } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 
 interface ShippingSettings {
@@ -12,10 +12,15 @@ interface ShippingSettings {
   enableCOD: boolean
   codVerificationRequired: boolean
   maxCODOrderValue: number
+  // Social Proof
+  enableSocialProof: boolean
+  minVisitors: number
+  maxVisitors: number
+  activityInterval: number
 }
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'shipping'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'security' | 'shipping' | 'marketing'>('general')
   const [isSaving, setIsSaving] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [settings, setSettings] = useState<ShippingSettings>({
@@ -25,6 +30,10 @@ export default function AdminSettingsPage() {
     enableCOD: true,
     codVerificationRequired: false,
     maxCODOrderValue: 50000,
+    enableSocialProof: true,
+    minVisitors: 480,
+    maxVisitors: 712,
+    activityInterval: 90,
   })
 
   useEffect(() => {
@@ -51,6 +60,7 @@ export default function AdminSettingsPage() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'shipping', label: 'Shipping', icon: Truck },
+    { id: 'marketing', label: 'Marketing', icon: TrendingUp },
   ]
 
   return (
@@ -204,6 +214,56 @@ export default function AdminSettingsPage() {
         </motion.div>
       )}
 
+      {/* Marketing / Social Proof */}
+      {activeTab === 'marketing' && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <div className="bg-velvet-card border border-white/10 rounded-2xl p-6">
+            <h3 className="font-heading text-lg text-velvet-white mb-4">Social Proof Settings</h3>
+            <div className="space-y-6">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={settings.enableSocialProof}
+                  onChange={(e) => setSettings({...settings, enableSocialProof: e.target.checked})}
+                  className="w-4 h-4 rounded border-white/30 bg-black text-velvet-accent" 
+                />
+                <span className="text-sm text-velvet-white font-medium uppercase tracking-widest">Enable Social Proof Activity</span>
+              </label>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-velvet-muted block mb-2">Min Live Viewers</label>
+                  <input
+                    type="number"
+                    value={settings.minVisitors}
+                    onChange={(e) => setSettings({...settings, minVisitors: Number(e.target.value)})}
+                    className="w-full bg-black border border-white/15 rounded-lg px-3 py-2 text-sm text-velvet-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-velvet-muted block mb-2">Max Live Viewers</label>
+                  <input
+                    type="number"
+                    value={settings.maxVisitors}
+                    onChange={(e) => setSettings({...settings, maxVisitors: Number(e.target.value)})}
+                    className="w-full bg-black border border-white/15 rounded-lg px-3 py-2 text-sm text-velvet-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-velvet-muted block mb-2">Activity Interval (Seconds)</label>
+                  <input
+                    type="number"
+                    value={settings.activityInterval}
+                    onChange={(e) => setSettings({...settings, activityInterval: Number(e.target.value)})}
+                    className="w-full bg-black border border-white/15 rounded-lg px-3 py-2 text-sm text-velvet-white"
+                  />
+                  <p className="text-[10px] text-velvet-muted mt-1">Recommended: 90 seconds (1:30 min)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
       {/* Shipping */}
       {activeTab === 'shipping' && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">

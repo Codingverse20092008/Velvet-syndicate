@@ -57,6 +57,9 @@ export interface AdminProduct {
   gender?: string
   subcategory?: string
   featured?: boolean
+  isOutOfStock?: boolean
+  isOnSale?: boolean
+  salePercentage?: number
 }
 
 export interface AdminUser {

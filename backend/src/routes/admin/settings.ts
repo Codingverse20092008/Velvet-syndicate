@@ -16,6 +16,11 @@ const settingsSchema = z.object({
   enableCOD: z.boolean().default(true),
   codVerificationRequired: z.boolean().default(false),
   maxCODOrderValue: z.number().default(50000),
+  // Social Proof Settings
+  enableSocialProof: z.boolean().default(true),
+  minVisitors: z.number().default(480),
+  maxVisitors: z.number().default(712),
+  activityInterval: z.number().default(90), // in seconds
 });
 
 // Admin middleware - check if user is admin
@@ -41,6 +46,10 @@ const defaultSettings = {
   enableCOD: true,
   codVerificationRequired: false,
   maxCODOrderValue: 50000,
+  enableSocialProof: true,
+  minVisitors: 480,
+  maxVisitors: 712,
+  activityInterval: 90,
 };
 
 // GET /api/admin/settings - Get settings
@@ -107,6 +116,29 @@ router.get('/public/shipping', asyncHandler(async (req: Request, res: Response) 
       shippingFee: 20,
       deliveryEstimate: '7-8',
       freeShippingThreshold: 0,
+    });
+  }
+}));
+
+// Public endpoint to get social proof settings
+router.get('/public/social-proof', asyncHandler(async (req: Request, res: Response) => {
+  try {
+    const cached = await cacheGet<string>(SETTINGS_KEY);
+    const settings = cached ? JSON.parse(cached) : defaultSettings;
+
+    return successResponse(res, { 
+      enabled: settings.enableSocialProof ?? true,
+      minVisitors: settings.minVisitors ?? 480,
+      maxVisitors: settings.maxVisitors ?? 712,
+      activityInterval: settings.activityInterval ?? 90,
+    });
+  } catch (error) {
+    console.error('Failed to fetch public social proof settings:', error);
+    return successResponse(res, { 
+      enabled: true,
+      minVisitors: 480,
+      maxVisitors: 712,
+      activityInterval: 90,
     });
   }
 }));

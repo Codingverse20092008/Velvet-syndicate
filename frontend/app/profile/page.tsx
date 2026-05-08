@@ -8,6 +8,7 @@ import { ProfileForm } from '@/components/profile/ProfileForm'
 import { UserStats } from '@/components/profile/UserStats'
 import { useAuthStore } from '@/store/authStore'
 import { LogoutButton } from '@/components/profile/LogoutButton'
+import { MobileFooterLinks } from '@/components/layout/MobileFooterLinks'
 
 const EASE = [0.22, 1, 0.36, 1]
 
@@ -125,6 +126,8 @@ export default function ProfilePage() {
             <LogoutButton />
           </div>
         </motion.div>
+
+        <MobileFooterLinks />
       </div>
     </div>
   )
