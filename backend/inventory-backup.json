@@ -1,6 +1,850 @@
 {
-  "products": [],
-  "variants": [],
-  "variantImages": [],
-  "sizes": []
+  "products": [
+    {
+      "id": "3502a26e-3328-4b48-bacc-9ecbc05ca914",
+      "name": "PUMA Suede XL Black White",
+      "slug": "puma-suede-xl-black-white",
+      "description": "PUMA Suede XL sneakers in a sleek black and white colorway combine classic street style with modern comfort. Featuring a premium suede upper, bold oversized laces, and a durable rubber sole, these sneakers deliver both style and everyday performance. Perfect for casual wear, these shoes elevate any outfit with a clean and timeless look.\n\nPremium suede upper\nIconic PUMA formstrip\nCushioned sole for comfort\nDurable rubber outsole\nStylish oversized lace design",
+      "price": 2800,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778266324/velvet-syndicate/products/ph28dieavu9bhkbgw8ur.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 18:55:35",
+      "updated_at": "2026-05-08T19:14:47.280Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "PUMA",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "69987bd7-bc2c-43d1-9cdc-23d799716dad",
+      "name": "Nike Air Max 270 Black Grey",
+      "slug": "nike-air-max-270-black-grey-1",
+      "description": "Nike Air Max 270 sneakers in a bold black and grey colorway offer a perfect blend of performance and street style. Designed with a breathable mesh upper and a large visible Air unit in the heel, these sneakers provide exceptional cushioning and all-day comfort. Ideal for both casual wear and light sports activities.\n\nBreathable mesh upper\nSignature Air Max cushioning\nLightweight and flexible design\nDurable rubber outsole\nModern sporty look",
+      "price": 2300,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267461/velvet-syndicate/products/eagddl2obncypyegkblf.jpg",
+      "category": "footwear",
+      "featured": 1,
+      "created_at": "2026-05-08 19:12:17",
+      "updated_at": "2026-05-08T19:12:36.327Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "men",
+      "product_type": "sports",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "75cc051c-3650-4519-967f-bac08c1bcc36",
+      "name": "Nike Air Force 1 Low Black White",
+      "slug": "nike-air-force-1-low-black-white-1",
+      "description": "Nike Air Force 1 Low sneakers in a clean black and white colorway deliver timeless style with everyday comfort. Built with a durable synthetic/leather upper and a thick cushioned sole, these sneakers provide excellent support and long-lasting wear. A versatile design that pairs easily with any outfit, making it a must-have for daily use.\n\nClassic low-top design\nDurable upper construction\nCushioned sole for comfort\nStrong grip rubber outsole\nMinimal and versatile style",
+      "price": 2400,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267612/velvet-syndicate/products/bfmr8lhyp0yqqglp6mf0.jpg",
+      "category": "footwear",
+      "featured": 1,
+      "created_at": "2026-05-08 19:14:09",
+      "updated_at": "2026-05-08T19:14:24.344Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "e46c824d-5432-49b8-b848-002d4923c364",
+      "name": "Air Jordan 1 Low Travis Scott Style White Black Blue",
+      "slug": "air-jordan-1-low-travis-scott-style-white-black-blue-1",
+      "description": "Air Jordan 1 Low Travis Scott–inspired sneakers feature a unique reverse swoosh design and a bold mix of white, black, and blue tones. Built for streetwear lovers, these sneakers combine premium styling with everyday comfort. The cushioned sole and durable upper make them perfect for daily wear while standing out with a trendy, hype look.\n\nIconic reverse swoosh design\nPremium leather/synthetic upper\nCushioned sole for all-day comfort\nDurable rubber outsole\nStreetwear-inspired style",
+      "price": 2600,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267767/velvet-syndicate/products/jhti6ccal5i7puvmzgth.jpg",
+      "category": "footwear",
+      "featured": 1,
+      "created_at": "2026-05-08 19:16:23",
+      "updated_at": "2026-05-08T19:16:39.544Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "c4f138e6-f20e-4443-a594-f8706152c33c",
+      "name": "Nike Air Force 1 Low Grey Cream",
+      "slug": "nike-air-force-1-low-grey-cream",
+      "description": "Nike Air Force 1 Low sneakers in a stylish grey and cream colorway bring a modern twist to a classic design. Featuring a durable upper with clean panel detailing and a bold contrasting sole, these sneakers offer both comfort and standout style. Perfect for everyday wear, they pair easily with any outfit while maintaining a premium streetwear look.\n\nClassic AF1-inspired design\nDurable synthetic/leather upper\nCushioned sole for comfort\nStrong grip outsole\nUnique grey contrast sole",
+      "price": 2500,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267828/velvet-syndicate/products/cpwpb8opvzwzlvtzqhun.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:18:08",
+      "updated_at": "2026-05-08T19:21:00.964Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "1a86b7a2-85da-4fd5-8e8b-ee5da076ee41",
+      "name": "Adidas Climawarm Black White",
+      "slug": "adidas-climawarm-black-white-1",
+      "description": "Adidas Climawarm-style sneakers are designed for performance and comfort. Featuring a breathable upper and a thick cushioned sole, these shoes provide excellent support for running, training, or everyday wear. The sleek black and white design gives a sporty and modern look while ensuring durability and grip.\n\nBreathable mesh upper\nThick cushioned sole\nLightweight and flexible design\nStrong grip outsole\nSporty everyday style",
+      "price": 2400,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267943/velvet-syndicate/products/mazeovctwqqhiifhaggw.jpg",
+      "category": "footwear",
+      "featured": 1,
+      "created_at": "2026-05-08 19:20:21",
+      "updated_at": "2026-05-08T19:20:37.635Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Adidas",
+      "gender": "men",
+      "product_type": "running",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "590af401-c6d3-4b76-86fa-50d3e87b9457",
+      "name": "Air Jordan 1 High Dior Style Grey Cream",
+      "slug": "air-jordan-1-high-dior-style-grey-cream-1",
+      "description": "Air Jordan 1 High Dior-inspired sneakers combine luxury aesthetics with iconic streetwear design. Featuring a premium grey and cream colorway with a signature patterned swoosh, these high-top sneakers deliver a bold and premium look. Designed for both comfort and style, they are perfect for elevating any outfit.\n\nHigh-top premium design\nDior-inspired patterned swoosh\nDurable leather/synthetic upper\nCushioned sole for all-day comfort\nLuxury streetwear appeal",
+      "price": 2700,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268099/velvet-syndicate/products/jlgzghwzt7gkxyzp1yci.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:22:49",
+      "updated_at": "2026-05-08T19:23:06.169Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "ffa557cb-31fe-433a-80cc-4c822c0913b4",
+      "name": "PUMA Court Style White Green Gum",
+      "slug": "puma-court-style-white-green-gum-1",
+      "description": "PUMA court-style sneakers in a fresh white and green colorway offer a perfect blend of simplicity and style. Featuring a clean upper design with a classic gum sole, these sneakers provide both comfort and a retro-inspired look. Ideal for everyday wear, they pair effortlessly with casual outfits.\n\nClean and minimal court-style design\nDurable synthetic/leather upper\nComfortable cushioned sole\nClassic gum outsole for better grip\nStylish everyday wear",
+      "price": 2700,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268225/velvet-syndicate/products/yjslpudlm1nihw5jiwre.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:24:44",
+      "updated_at": "2026-05-08T19:25:00.382Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Puma",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "f8c9d26b-3fd4-4e16-8753-ab91ad4a3d78",
+      "name": "Air Jordan 1 Low Travis Scott Olive Grey",
+      "slug": "air-jordan-1-low-travis-scott-olive-grey-1",
+      "description": "Air Jordan 1 Low Travis Scott–inspired sneakers in an olive grey and white colorway deliver a premium streetwear vibe. Featuring the iconic reverse swoosh design and a clean neutral palette, these sneakers are perfect for everyday wear while standing out with a hype look. Built for comfort and durability, they are a must-have for sneaker lovers.\n\nSignature reverse swoosh design\nPremium leather/synthetic upper\nCushioned sole for comfort\nDurable rubber outsole\nTrendy streetwear appeal",
+      "price": 2700,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268330/velvet-syndicate/products/ajwnord2jtqm9cgahkge.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:26:16",
+      "updated_at": "2026-05-08T19:26:36.162Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "9b158a99-f6a2-4e54-a4e8-a144f8a709d0",
+      "name": "Nike Air Force 1 Low White Blue “Keep” Style",
+      "slug": "nike-air-force-1-low-white-blue-keep-style-1",
+      "description": "Nike Air Force 1 Low sneakers in a fresh white and light blue colorway bring a modern and stylish touch to a classic design. Featuring subtle detailing and a clean finish, these sneakers are perfect for everyday wear. Built with a durable upper and cushioned sole, they offer both comfort and a standout look.\n\nClassic AF1-inspired silhouette\nClean white base with light blue accents\nDurable synthetic/leather upper\nCushioned sole for comfort\nStylish everyday wear",
+      "price": 2600,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268422/velvet-syndicate/products/fjzjpknhcjpqztzwip5q.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:27:29",
+      "updated_at": "2026-05-08T19:27:44.366Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "0489ec9a-a64f-4ae2-95cd-82fd0ba309ef",
+      "name": "Nike Dunk Low Multi-Color Graphic",
+      "slug": "nike-dunk-low-multi-color-graphic-1",
+      "description": "Nike Dunk Low–style sneakers in a vibrant multi-color graphic design are made to stand out. Featuring bold patterns and a unique artistic look, these sneakers are perfect for those who want to express their style. Built with a comfortable sole and durable upper, they combine fashion with everyday wearability.\n\nEye-catching multi-color graphic design\n\nDurable synthetic/leather upper\n\nComfortable cushioned sole\n\nStrong grip outsole\n\nPerfect for streetwear outfits",
+      "price": 2600,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268519/velvet-syndicate/products/xqfzjrmqx5lgrwk4ex7k.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:28:54",
+      "updated_at": "2026-05-08T19:29:30.430Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "e7b00e9a-0f3a-4631-b76b-0de2c365ef8e",
+      "name": "Nike Air Force 1 Low White Green Gum",
+      "slug": "nike-air-force-1-low-white-green-gum-1",
+      "description": "Nike Air Force 1 Low sneakers in a clean white and green colorway combine timeless streetwear style with everyday comfort. Featuring a premium white upper, deep green swoosh detailing, and a classic gum outsole, these sneakers offer a versatile and premium look that pairs effortlessly with any outfit.\n\nClassic AF1-inspired silhouette\nClean white upper with green swoosh\nStylish gum outsole for retro look\nCushioned sole for all-day comfort\nDurable everyday wear design",
+      "price": 1600,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268738/velvet-syndicate/products/qzztjz8aypug3rmg9gzg.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-08 19:32:43",
+      "updated_at": "2026-05-08T19:32:55.554Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    }
+  ],
+  "variants": [
+    {
+      "id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "product_id": "3502a26e-3328-4b48-bacc-9ecbc05ca914",
+      "name": "Black, White",
+      "color": "Black, White",
+      "slug": "puma-suede-xl-black-white",
+      "created_at": "2026-05-08 18:55:35"
+    },
+    {
+      "id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "product_id": "69987bd7-bc2c-43d1-9cdc-23d799716dad",
+      "name": "#808080",
+      "color": "#808080",
+      "slug": "nike-air-max-270-black-grey",
+      "created_at": "2026-05-08 19:12:17"
+    },
+    {
+      "id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "product_id": "75cc051c-3650-4519-967f-bac08c1bcc36",
+      "name": "Black, White",
+      "color": "Black, White",
+      "slug": "nike-air-force-1-low-black-white",
+      "created_at": "2026-05-08 19:14:09"
+    },
+    {
+      "id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "product_id": "e46c824d-5432-49b8-b848-002d4923c364",
+      "name": "White, Black, Blue, Cream",
+      "color": "White, Black, Blue, Cream",
+      "slug": "air-jordan-1-low-travis-scott-style-white-black-blue",
+      "created_at": "2026-05-08 19:16:23"
+    },
+    {
+      "id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "product_id": "c4f138e6-f20e-4443-a594-f8706152c33c",
+      "name": "Grey, Cream (Off-White)",
+      "color": "Grey, Cream (Off-White)",
+      "slug": "nike-air-force-1-low-grey-cream",
+      "created_at": "2026-05-08 19:18:08"
+    },
+    {
+      "id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "product_id": "1a86b7a2-85da-4fd5-8e8b-ee5da076ee41",
+      "name": "Black, White",
+      "color": "Black, White",
+      "slug": "adidas-climawarm-black-white",
+      "created_at": "2026-05-08 19:20:21"
+    },
+    {
+      "id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "product_id": "590af401-c6d3-4b76-86fa-50d3e87b9457",
+      "name": "Grey, Cream, Black",
+      "color": "Grey, Cream, Black",
+      "slug": "air-jordan-1-high-dior-style-grey-cream",
+      "created_at": "2026-05-08 19:22:49"
+    },
+    {
+      "id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "product_id": "ffa557cb-31fe-433a-80cc-4c822c0913b4",
+      "name": "White, Green, Gum (Light Brown Sole)",
+      "color": "White, Green, Gum (Light Brown Sole)",
+      "slug": "puma-court-style-white-green-gum",
+      "created_at": "2026-05-08 19:24:44"
+    },
+    {
+      "id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "product_id": "f8c9d26b-3fd4-4e16-8753-ab91ad4a3d78",
+      "name": "Olive Grey, White, Cream",
+      "color": "Olive Grey, White, Cream",
+      "slug": "air-jordan-1-low-travis-scott-olive-grey",
+      "created_at": "2026-05-08 19:26:16"
+    },
+    {
+      "id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "product_id": "9b158a99-f6a2-4e54-a4e8-a144f8a709d0",
+      "name": "White, Light Blue",
+      "color": "White, Light Blue",
+      "slug": "nike-air-force-1-low-white-blue-keep-style",
+      "created_at": "2026-05-08 19:27:29"
+    },
+    {
+      "id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "product_id": "0489ec9a-a64f-4ae2-95cd-82fd0ba309ef",
+      "name": "Multi-color (Pink, Blue, Red, White, Black, Orange sole)",
+      "color": "Multi-color (Pink, Blue, Red, White, Black, Orange sole)",
+      "slug": "nike-dunk-low-multi-color-graphic",
+      "created_at": "2026-05-08 19:28:54"
+    },
+    {
+      "id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "product_id": "e7b00e9a-0f3a-4631-b76b-0de2c365ef8e",
+      "name": "White, Green, Gum Brown",
+      "color": "White, Green, Gum Brown",
+      "slug": "nike-air-force-1-low-white-green-gum",
+      "created_at": "2026-05-08 19:32:43"
+    }
+  ],
+  "variantImages": [
+    {
+      "id": "e21d0790-a83f-4eb6-b52c-f88ab3728464",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267461/velvet-syndicate/products/eagddl2obncypyegkblf.jpg"
+    },
+    {
+      "id": "6e69d756-6450-49de-87e4-d40c8a7140c1",
+      "variant_id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267612/velvet-syndicate/products/bfmr8lhyp0yqqglp6mf0.jpg"
+    },
+    {
+      "id": "4036de78-e058-4740-850e-ecbe5e8079e0",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778266324/velvet-syndicate/products/ph28dieavu9bhkbgw8ur.jpg"
+    },
+    {
+      "id": "3a34e35e-ebc2-4593-8343-11746c3f1ea1",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267767/velvet-syndicate/products/jhti6ccal5i7puvmzgth.jpg"
+    },
+    {
+      "id": "72a183ec-e436-4bfb-a1f8-01d9af4740a1",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267943/velvet-syndicate/products/mazeovctwqqhiifhaggw.jpg"
+    },
+    {
+      "id": "0fad6b09-e6d9-4600-89d5-ea25a261e94e",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267828/velvet-syndicate/products/cpwpb8opvzwzlvtzqhun.jpg"
+    },
+    {
+      "id": "7c98a748-dc60-46e1-8ecc-1c453c72326d",
+      "variant_id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268099/velvet-syndicate/products/jlgzghwzt7gkxyzp1yci.jpg"
+    },
+    {
+      "id": "374d5754-178d-4a27-a3bb-4ab80e6f8d62",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268225/velvet-syndicate/products/yjslpudlm1nihw5jiwre.jpg"
+    },
+    {
+      "id": "b336dafa-2589-41d8-858b-0f9b8ed82f1b",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268330/velvet-syndicate/products/ajwnord2jtqm9cgahkge.jpg"
+    },
+    {
+      "id": "2d4ff74e-3796-4ede-9ff7-bb48b418498d",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268422/velvet-syndicate/products/fjzjpknhcjpqztzwip5q.jpg"
+    },
+    {
+      "id": "0c8ecae2-2e51-4383-b9df-2c4b2c04ba1d",
+      "variant_id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268519/velvet-syndicate/products/xqfzjrmqx5lgrwk4ex7k.jpg"
+    },
+    {
+      "id": "40cbf4fe-0f9f-45bb-a467-ad6db1a98712",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268738/velvet-syndicate/products/qzztjz8aypug3rmg9gzg.jpg"
+    }
+  ],
+  "sizes": [
+    {
+      "id": "821d077f-6c0e-4bf2-8b8f-60411ced1d16",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "6",
+      "stock": 6
+    },
+    {
+      "id": "ad42ac0b-c6f7-4ea4-a2ee-ca464be977e4",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "7",
+      "stock": 6
+    },
+    {
+      "id": "813d985b-e410-46aa-97ae-38256f33939c",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "8",
+      "stock": 6
+    },
+    {
+      "id": "8ef709a2-c487-4c7a-94ee-b3289cf3a2a9",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "9",
+      "stock": 6
+    },
+    {
+      "id": "59a7886d-61e2-4702-9c10-5cfde673a5f9",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "10",
+      "stock": 6
+    },
+    {
+      "id": "1c1fbb0a-7643-47a9-812c-320d44ce231d",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "11",
+      "stock": 5
+    },
+    {
+      "id": "7c4e7a08-2330-4948-b9bd-8af6a1d6ecfb",
+      "variant_id": "b0b86587-757e-48f4-8f3d-9b1d7da489e2",
+      "size": "12",
+      "stock": 5
+    },
+    {
+      "id": "1516a96c-3bc1-4574-a9b0-e6fe2d0259dc",
+      "variant_id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "size": "6",
+      "stock": 8
+    },
+    {
+      "id": "b1f7788e-7733-4b70-bfe1-79c4f8f4ddf3",
+      "variant_id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "size": "7",
+      "stock": 8
+    },
+    {
+      "id": "e1207e7a-cfcb-452d-ae7c-4aac258fdcd6",
+      "variant_id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "size": "8",
+      "stock": 8
+    },
+    {
+      "id": "5f43e236-c990-4605-bf3a-242c9a0a96c9",
+      "variant_id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "size": "9",
+      "stock": 8
+    },
+    {
+      "id": "3328a9da-eaca-420e-a6fe-29a3a92a1c43",
+      "variant_id": "550bda0e-81a6-4ac5-a0b7-40804ea6d346",
+      "size": "10",
+      "stock": 8
+    },
+    {
+      "id": "db7febfc-a7f7-44db-a07c-304e3219457c",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "10",
+      "stock": 2
+    },
+    {
+      "id": "6700df9f-8106-4746-8a2b-57072c8610a7",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "11",
+      "stock": 2
+    },
+    {
+      "id": "9df5b99f-d690-4c92-95e2-81471edaa0b9",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "cd6b378a-4709-44ec-a958-2d3f240eb370",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "d52a85b9-e374-4f96-aa8e-cc3e97cfe757",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "8",
+      "stock": 1
+    },
+    {
+      "id": "fd2a8fa9-a65a-4fe6-bf43-a3b3dd4424d3",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "9",
+      "stock": 1
+    },
+    {
+      "id": "1992bf1e-2642-4cad-8684-95e59cd8c21f",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "size": "6",
+      "stock": 9
+    },
+    {
+      "id": "26038061-2c34-4f2d-8db3-516c35cb0427",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "size": "7",
+      "stock": 9
+    },
+    {
+      "id": "33586181-6f7d-4aba-b298-058cd5706ffd",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "size": "8",
+      "stock": 8
+    },
+    {
+      "id": "cc479238-f97f-44d9-811d-76a600b044f1",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "size": "9",
+      "stock": 8
+    },
+    {
+      "id": "c8d8a3f0-03ee-4d0b-9fc6-5d9f047bdd0a",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "size": "11",
+      "stock": 8
+    },
+    {
+      "id": "f1c27b56-0394-4738-9595-00d2522957ad",
+      "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
+      "size": "12",
+      "stock": 8
+    },
+    {
+      "id": "980f7e8c-4fa9-4728-9cba-3af9a75cc89f",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "12",
+      "stock": 14
+    },
+    {
+      "id": "73fa8522-67b3-43d4-8d93-d6ecc9435869",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "7",
+      "stock": 14
+    },
+    {
+      "id": "042210bf-adca-412b-9382-5d1016c65509",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "6",
+      "stock": 13
+    },
+    {
+      "id": "2e09ccd2-6ef0-4a51-86ce-272a3ad5cd8e",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "9",
+      "stock": 13
+    },
+    {
+      "id": "78b5824f-fb50-477c-89f3-035c116ffa88",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "10",
+      "stock": 13
+    },
+    {
+      "id": "95e9ec72-a2c9-4727-a051-8aa6cbe58f29",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "11",
+      "stock": 13
+    },
+    {
+      "id": "41567078-d3d1-4cfc-bcde-5f8d3089a066",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "size": "10",
+      "stock": 4
+    },
+    {
+      "id": "405acdec-7797-4581-9f3e-57be5e2dc21c",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "size": "11",
+      "stock": 4
+    },
+    {
+      "id": "2fc1d50e-186e-49bd-9aa5-cd36333618cc",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "size": "12",
+      "stock": 3
+    },
+    {
+      "id": "f42982cc-de9f-4d08-b919-a1ea33343493",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "size": "7",
+      "stock": 3
+    },
+    {
+      "id": "e2411e41-da99-4ee6-88fd-0626fc3c5201",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "size": "8",
+      "stock": 3
+    },
+    {
+      "id": "b0d3d14b-d54a-41e1-9ece-b4cc71da5858",
+      "variant_id": "4ae04268-f9ee-4593-a473-d5f693792e54",
+      "size": "9",
+      "stock": 3
+    },
+    {
+      "id": "a682f787-7843-4d6d-a283-47c25bc9941f",
+      "variant_id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "9e6e883e-38e7-4871-b332-8b953952ce13",
+      "variant_id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "d1a4eee3-c602-42c6-80e5-edf6d47e9d8b",
+      "variant_id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "size": "8",
+      "stock": 2
+    },
+    {
+      "id": "87564b8e-4144-4792-9869-87bf1990bf93",
+      "variant_id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "size": "9",
+      "stock": 2
+    },
+    {
+      "id": "06baad00-8d82-44c4-8f1e-d7e415c67d01",
+      "variant_id": "eaf115b1-509e-4f2a-aa9a-bfa612fe6b3a",
+      "size": "11",
+      "stock": 2
+    },
+    {
+      "id": "2b5344be-b7fa-4003-9ed0-51309fde6989",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "26e800f7-5c59-464d-a3b1-40d7d7c8fe5e",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "24c78936-d1e4-470f-b800-973ccacf3d83",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "8",
+      "stock": 2
+    },
+    {
+      "id": "d2ba7b2d-cb6c-4985-8d42-5f506607236d",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "9",
+      "stock": 1
+    },
+    {
+      "id": "91ce32af-08dd-4466-8366-c042bb033488",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "10",
+      "stock": 1
+    },
+    {
+      "id": "744da694-341a-4137-b678-c9e48dcad454",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "11",
+      "stock": 1
+    },
+    {
+      "id": "9dfcff03-ff77-4017-bb5f-9f4732556271",
+      "variant_id": "658ac6a9-7962-4f52-9281-653340fac787",
+      "size": "12",
+      "stock": 1
+    },
+    {
+      "id": "3ddc26a6-d11f-4e4f-82af-a79846daccd5",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "size": "6",
+      "stock": 5
+    },
+    {
+      "id": "0be7dae3-a083-4e2f-b1ed-56d1041d4823",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "size": "7",
+      "stock": 5
+    },
+    {
+      "id": "fc05cdfd-ca53-4b09-bad9-13735aa80e6e",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "size": "8",
+      "stock": 5
+    },
+    {
+      "id": "f9c49849-9ac0-4ab5-ae01-d398c8c7beea",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "size": "10",
+      "stock": 5
+    },
+    {
+      "id": "0dd14b70-6378-40d4-bd8a-a417a6f45cfc",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "size": "9",
+      "stock": 5
+    },
+    {
+      "id": "0204a8d4-2f65-4f8f-819c-ce29e115a4c4",
+      "variant_id": "0208ae7c-7fb1-4ec4-b2e0-0ea9b57eaa92",
+      "size": "11",
+      "stock": 5
+    },
+    {
+      "id": "cd0d8d05-8cc4-4a4e-8a4d-0ba246d88ffe",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "6",
+      "stock": 6
+    },
+    {
+      "id": "85ed2140-3b6e-442c-a11f-19e70d18c88f",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "7",
+      "stock": 6
+    },
+    {
+      "id": "08f9b280-d441-4c11-9a11-b1e2458d7a4b",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "8",
+      "stock": 6
+    },
+    {
+      "id": "bf05369d-20a9-4612-9962-26a77ef9d9d8",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "9",
+      "stock": 6
+    },
+    {
+      "id": "ca977d25-2984-45d0-8b37-e00af767205d",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "10",
+      "stock": 6
+    },
+    {
+      "id": "f8a5b06b-45d2-460c-aba3-9cb9774791ac",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "11",
+      "stock": 5
+    },
+    {
+      "id": "14088285-e29e-4b3d-9f0e-841178aa6744",
+      "variant_id": "19450d52-88cf-4ebc-a2e5-bc0c812d2e47",
+      "size": "12",
+      "stock": 5
+    },
+    {
+      "id": "c655a737-f7fd-404c-914b-7eced7ef517b",
+      "variant_id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "size": "6",
+      "stock": 4
+    },
+    {
+      "id": "700ef461-d482-4816-93ea-0db19e1d2ed7",
+      "variant_id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "size": "7",
+      "stock": 4
+    },
+    {
+      "id": "707b064b-687d-41f5-b0e2-40ad3082e0b3",
+      "variant_id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "size": "8",
+      "stock": 4
+    },
+    {
+      "id": "a7b6a79f-df1b-462c-8492-e9e07ef262f7",
+      "variant_id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "size": "9",
+      "stock": 4
+    },
+    {
+      "id": "789d661f-7315-4f1a-9f5e-5209676f3fd4",
+      "variant_id": "232e2fd0-9e74-4406-928d-630c2be576fd",
+      "size": "10",
+      "stock": 4
+    },
+    {
+      "id": "5caca867-4659-40b2-9ba4-091f283ffc11",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "7",
+      "stock": 4
+    },
+    {
+      "id": "54aba284-cf6c-4e05-93bc-e07dfbc7a492",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "8",
+      "stock": 4
+    },
+    {
+      "id": "7cdf3f11-b7c4-4742-91e6-62cd08e0f1bc",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "9",
+      "stock": 3
+    },
+    {
+      "id": "31cd22e2-0d11-4d9d-9946-494f1ff9eef9",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "10",
+      "stock": 3
+    },
+    {
+      "id": "56db670a-71a2-4607-835b-85f4aa7fcbdf",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "11",
+      "stock": 3
+    },
+    {
+      "id": "5242d5be-d501-481c-bebe-02f0c38b59d0",
+      "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "12",
+      "stock": 3
+    }
+  ]
 }
