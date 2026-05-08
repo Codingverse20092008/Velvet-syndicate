@@ -5,6 +5,7 @@ import { asyncHandler } from '../lib/api-handler-express';
 import { checkRateLimit } from '../lib/rate-limit';
 import { RateLimitError } from '../lib/errors';
 import { successResponse } from '../lib/api-response-express';
+import { logger } from '../lib/logger';
 
 const router = Router();
 
