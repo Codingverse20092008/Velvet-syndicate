@@ -77,7 +77,7 @@ export default function CollectionPage() {
       .filter((v): v is string => typeof v === 'string' && v !== '')
       .map(v => v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()) // Normalize casing
     
-    return ['All', ...new Set(values)].sort()
+    return ['All', ...Array.from(new Set(values))].sort()
   }
 
   const categories = getUniqueOptions('category')
