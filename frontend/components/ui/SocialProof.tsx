@@ -110,8 +110,8 @@ export function SocialProof() {
       {/* Live Visitor Counter */}
       <div className="fixed top-20 md:top-24 right-4 md:left-6 md:right-auto z-40">
         <motion.div 
-          initial={{ opacity: 0, x: 20, md: { x: -20 } }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-3 md:px-4 py-1 md:py-1.5 shadow-lg"
         >
           <div className="relative">
