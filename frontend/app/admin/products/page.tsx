@@ -17,7 +17,7 @@ type ProductForm = {
   brand: string
   color: string
   sizes: string
-  gender: 'men' | 'women' | ''
+  gender: 'men' | 'women' | 'unisex' | ''
   subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | ''
   featured: boolean
   isOutOfStock: boolean
@@ -43,7 +43,7 @@ const emptyForm: ProductForm = {
   salePercentage: '',
 }
 
-const GENDERS = ['men', 'women'] as const
+const GENDERS = ['men', 'women', 'unisex'] as const
 const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const
 
 export default function AdminProductsPage() {

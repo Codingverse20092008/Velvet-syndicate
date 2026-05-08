@@ -76,6 +76,10 @@ export interface AdminProductItem {
   sizes?: string | null;
   gender?: string | null;
   subcategory?: string | null;
+  featured?: boolean;
+  isOutOfStock?: boolean;
+  isOnSale?: boolean;
+  salePercentage?: number;
 }
 
 export interface AdminUserItem {
@@ -264,6 +268,10 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
         p.created_at as createdAt,
         p.gender,
         p.product_type as subcategory,
+        p.featured,
+        p.is_out_of_stock as isOutOfStock,
+        p.is_on_sale as isOnSale,
+        p.sale_percentage as salePercentage,
         COALESCE(GROUP_CONCAT(DISTINCT pv.color), '') as color,
         COALESCE(GROUP_CONCAT(DISTINCT ps.size), '') as sizes,
         COALESCE(SUM(ps.stock), 0) as stock
@@ -294,6 +302,10 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
       sizes: row.sizes,
       gender: row.gender,
       subcategory: row.subcategory,
+      featured: Boolean(row.featured),
+      isOutOfStock: Boolean(row.isOutOfStock),
+      isOnSale: Boolean(row.isOnSale),
+      salePercentage: row.salePercentage,
     };
   });
 }
@@ -311,6 +323,9 @@ export async function createAdminProduct(data: {
   gender: string;
   subcategory: string;
   featured: boolean;
+  isOutOfStock: boolean;
+  isOnSale: boolean;
+  salePercentage: number;
 }): Promise<AdminProductItem> {
   const productId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
@@ -339,6 +354,9 @@ export async function createAdminProduct(data: {
       gender: data.gender || 'unisex',
       productType: data.subcategory || 'sneakers',
       featured: data.featured || false,
+      isOutOfStock: data.isOutOfStock || false,
+      isOnSale: data.isOnSale || false,
+      salePercentage: data.salePercentage || 0,
       isVisible: true,
     });
 
@@ -404,6 +422,9 @@ export async function updateAdminProduct(
     subcategory: string;
     isVisible: boolean;
     featured: boolean;
+    isOutOfStock: boolean;
+    isOnSale: boolean;
+    salePercentage: number;
   }>
 ): Promise<AdminProductItem> {
   const existing = await db.query.products.findFirst({
@@ -426,6 +447,9 @@ export async function updateAdminProduct(
     if (data.subcategory !== undefined) patch.productType = data.subcategory;
     if (data.isVisible !== undefined) patch.isVisible = data.isVisible;
     if (data.featured !== undefined) patch.featured = data.featured;
+    if (data.isOutOfStock !== undefined) patch.isOutOfStock = data.isOutOfStock;
+    if (data.isOnSale !== undefined) patch.isOnSale = data.isOnSale;
+    if (data.salePercentage !== undefined) patch.salePercentage = data.salePercentage;
 
     if (data.name) {
       patch.slug = await generateUniqueSlug(data.name);
