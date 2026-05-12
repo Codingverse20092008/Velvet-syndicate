@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, MessageSquare, ThumbsUp, Calendar, User, Verified, Filter } from 'lucide-react'
+import { Star, MessageSquare, ThumbsUp, Calendar, User, Verified, Filter, Plus } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { ReviewSubmissionModal } from './ReviewSubmissionModal'
 
 interface Review {
   id: string
@@ -31,15 +32,17 @@ interface ReviewStats {
 
 interface ProductReviewsProps {
   productId: string
+  productName?: string
   className?: string
 }
 
-export function ProductReviews({ productId, className = '' }: ProductReviewsProps) {
+export function ProductReviews({ productId, productName, className = '' }: ProductReviewsProps) {
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'real' | 'fake'>('all')
   const [showMore, setShowMore] = useState(false)
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
   // Load reviews and stats
   const loadReviews = async () => {
@@ -82,6 +85,11 @@ export function ProductReviews({ productId, className = '' }: ProductReviewsProp
     } catch (error) {
       console.error('Failed to mark review as helpful:', error)
     }
+  }
+
+  // Handle review submission
+  const handleReviewSubmitted = () => {
+    loadReviews() // Reload reviews to show the new one
   }
 
   // Render stars
@@ -138,7 +146,16 @@ export function ProductReviews({ productId, className = '' }: ProductReviewsProp
       <div className={`text-center py-12 ${className}`}>
         <MessageSquare size={48} className="mx-auto text-gray-500 mb-4" />
         <p className="text-gray-400 mb-2">No reviews yet</p>
-        <p className="text-gray-500 text-sm">Be the first to review this product</p>
+        <p className="text-gray-500 text-sm mb-6">Be the first to review this product</p>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsReviewModalOpen(true)}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-velvet-accent text-black rounded-lg hover:bg-velvet-accent/90 transition-colors font-medium"
+        >
+          <Plus size={16} />
+          Write First Review
+        </motion.button>
       </div>
     )
   }
@@ -146,17 +163,29 @@ export function ProductReviews({ productId, className = '' }: ProductReviewsProp
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Customer Reviews</h2>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="flex">
-              {renderStars(Math.round(stats.averageRating))}
+      <div className="flex justify-between items-start">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-2">Customer Reviews</h2>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="flex">
+                {renderStars(Math.round(stats.averageRating))}
+              </div>
+              <span className="text-white font-bold text-lg">{stats.averageRating.toFixed(1)}</span>
             </div>
-            <span className="text-white font-bold text-lg">{stats.averageRating.toFixed(1)}</span>
+            <span className="text-gray-400">{stats.totalReviews} reviews</span>
           </div>
-          <span className="text-gray-400">{stats.totalReviews} reviews</span>
         </div>
+        
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setIsReviewModalOpen(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-velvet-accent text-black rounded-lg hover:bg-velvet-accent/90 transition-colors font-medium"
+        >
+          <Plus size={16} />
+          Write Review
+        </motion.button>
       </div>
 
       {/* Rating Distribution */}
@@ -308,6 +337,15 @@ export function ProductReviews({ productId, className = '' }: ProductReviewsProp
           </button>
         </div>
       )}
+
+      {/* Review Submission Modal */}
+      <ReviewSubmissionModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        productId={productId}
+        productName={productName || 'This Product'}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </div>
   )
 }

@@ -354,7 +354,7 @@ export default function ProductPage() {
 
       {/* Product Reviews */}
       <div className="max-w-7xl mx-auto px-6 mt-16">
-        <ProductReviews productId={product.id} />
+        <ProductReviews productId={product.id} productName={product.name} />
       </div>
 
       <style jsx global>{`
