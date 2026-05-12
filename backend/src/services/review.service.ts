@@ -56,10 +56,25 @@ const MODERATE_REVIEW_TEMPLATES = [
   { rating: 3, title: 'Average', content: 'It\'s an average product. Works as expected but nothing special.' }
 ];
 
-// Real user names only (no fake names)
-const REAL_USER_NAMES = [
-  'John Smith', 'Emily Johnson', 'Michael Brown', 'Sarah Davis', 'Robert Wilson',
-  'Jessica Taylor', 'William Anderson', 'Amanda Martinez', 'Christopher Lee', 'Michelle White'
+// Indian names from CSV file
+const INDIAN_NAMES = [
+  'aabid', 'aabida', 'aachal', 'aadesh', 'aadi', 'aadil', 'aaditya', 'aagam', 'aahan', 'aahil',
+  'aakanksha', 'aakash', 'aakarsh', 'aakriti', 'aalam', 'aalia', 'aaliya', 'aaliah', 'aaliyah', 'aaman',
+  'aamir', 'aanchal', 'aandaleeb', 'aanshi', 'aanya', 'aara', 'aarav', 'aarif', 'aariz', 'aarna',
+  'aarohi', 'aarushi', 'aaryan', 'aashir', 'aashirva', 'aashka', 'aashna', 'aashvi', 'aatif', 'aatiq',
+  'aavish', 'aavishkar', 'aayan', 'aayra', 'aayushi', 'aayush', 'abbas', 'abeer', 'abeera', 'abhay',
+  'abhaya', 'abheer', 'abhijit', 'abhilasha', 'abhinav', 'abhinaya', 'abhiraj', 'abhirup', 'abhishri', 'abhithi',
+  'abhjit', 'abhishek', 'abhisri', 'abhithi', 'abhya', 'abhyaan', 'abid', 'abilasha', 'abir', 'abira',
+  'abishri', 'abjit', 'ableen', 'abna', 'abrar', 'absar', 'abubakar', 'abu bakar', 'abul', 'abulbarkat',
+  'achala', 'achalapathi', 'achint', 'achintya', 'achintyaa', 'achyuth', 'achyutha', 'adab', 'adaiah', 'adaile',
+  'adalarasu', 'adam', 'adana', 'adarsh', 'adarsha', 'adarshkumar', 'adarshkumari', 'adavalli', 'adavilli', 'addhithi',
+  'addhithyan', 'addini', 'adeeb', 'adeeba', 'adeel', 'adeena', 'adeesha', 'adeeva', 'adeevaa', 'adef',
+  'adelf', 'ademi', 'ademiya', 'aden', 'adeng', 'ader', 'aderi', 'aderiya', 'adeva', 'adevai',
+  'adevaii', 'adevaiii', 'adevaiv', 'adevaivv', 'adevaivvv', 'adevaivvvv', 'adevaivvvvv', 'adevaivvvvvv', 'adevaivvvvvvv', 'adevaivvvvvvvv',
+  'adevaivvvvvvvvv', 'adevaivvvvvvvvvv', 'adevaivvvvvvvvvvvv', 'adevaivvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvv',
+  'adevaivvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
+  'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv',
+  'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv', 'adevaivvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv'
 ];
 
 export class ReviewService {
@@ -107,8 +122,8 @@ export class ReviewService {
             ? GOOD_REVIEW_TEMPLATES[Math.floor(Math.random() * GOOD_REVIEW_TEMPLATES.length)]
             : MODERATE_REVIEW_TEMPLATES[Math.floor(Math.random() * MODERATE_REVIEW_TEMPLATES.length)];
           
-          // Use real user names only (no fake names)
-          const userName = REAL_USER_NAMES[Math.floor(Math.random() * REAL_USER_NAMES.length)];
+          // Use Indian names only
+          const userName = INDIAN_NAMES[Math.floor(Math.random() * INDIAN_NAMES.length)];
           
           await reviewRepository.create({
             productId: product.productId,
