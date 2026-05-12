@@ -107,21 +107,43 @@ export class ProductRepository {
   }
 
   async searchRaw(q: string, tokens: string[], limit: number, offset: number) {
-    const searchPattern = `%${q}%`;
+    // More robust search with better tokenization and SQL safety
+    const cleanQuery = q.trim().toLowerCase();
+    const searchTokens = cleanQuery
+      .split(/\s+/)
+      .filter(token => token.length >= 2)
+      .slice(0, 5); // Limit to 5 tokens for performance
+
+    if (searchTokens.length === 0) {
+      return { items: [], total: 0 };
+    }
+
+    // Build safe WHERE clause with parameterized queries
+    const nameConditions = searchTokens.map(() => `LOWER(name) LIKE ?`).join(' AND ');
+    const brandConditions = searchTokens.map(() => `LOWER(brand) LIKE ?`).join(' AND ');
+    
     const whereSql = `
       (LOWER(name) LIKE ?) OR 
-      (LOWER(brand) LIKE ?) OR
-      (${tokens.map(() => `LOWER(name) LIKE ?`).join(' OR ')})
+      (LOWER(brand) LIKE ?) OR 
+      (${nameConditions}) OR
+      (${brandConditions})
     `;
-    const whereArgs = [searchPattern, searchPattern, ...tokens.map(t => `%${t}%`)];
 
-    // Using raw SQL for relevance ranking
+    // Build arguments array safely
+    const baseArgs = [
+      `%${cleanQuery}%`, // name exact match
+      `%${cleanQuery}%`, // brand exact match
+      ...searchTokens.flatMap(token => [`%${token}%`, `%${token}%`]) // token matches
+    ];
+
+    // Using raw SQL for relevance ranking with safety
     const rawResults = await dbClient.execute({
       sql: `
         SELECT id, name, brand, slug, price, image_url,
           (CASE 
             WHEN LOWER(name) = ? THEN 3
             WHEN LOWER(name) LIKE ? THEN 2
+            WHEN LOWER(brand) = ? THEN 2
             ELSE 1
           END) as score
         FROM products 
@@ -129,7 +151,7 @@ export class ProductRepository {
         ORDER BY score DESC, created_at DESC
         LIMIT ? OFFSET ?
       `,
-      args: [q, `${q}%`, ...whereArgs, limit, offset],
+      args: [cleanQuery, `%${cleanQuery}%`, cleanQuery, ...baseArgs, limit, offset],
     });
 
     const ids = rawResults.rows.map((r: any) => r.id as string);
@@ -156,7 +178,7 @@ export class ProductRepository {
         FROM products 
         WHERE is_visible = 1 AND (${whereSql})
       `,
-      args: whereArgs,
+      args: baseArgs,
     });
 
     return {
