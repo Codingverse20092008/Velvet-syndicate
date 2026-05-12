@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, MessageSquare, ThumbsUp, Calendar, User, Verified, Filter, Plus } from 'lucide-react'
+import { Star, MessageSquare, ThumbsUp, Calendar, User, Filter, Plus } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { ReviewSubmissionModal } from './ReviewSubmissionModal'
 
@@ -260,47 +260,25 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
             >
               <div className="flex items-start gap-4">
                 {/* User Avatar */}
-                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0">
-                  {review.isFake ? (
-                    <img
-                      src={review.fakeUserAvatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'}
-                      alt={review.fakeUserName}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-velvet-accent to-black flex items-center justify-center">
-                      <span className="text-white text-sm font-bold">
-                        {review.userName?.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
+                <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-velvet-accent to-black flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">
+                    {review.userName?.charAt(0).toUpperCase() || 'U'}
+                  </span>
                 </div>
 
                 {/* Review Content */}
                 <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-white">
-                          {review.isFake ? review.fakeUserName : review.userName}
-                        </p>
-                        {review.isVerified && !review.isFake && (
-                          <Verified size={14} className="text-green-400" />
-                        )}
-                        {review.isFake && (
-                          <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
-                            Social Proof
-                          </span>
-                        )}
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium text-white">
+                      {review.userName || 'Anonymous User'}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <div className="flex">
+                        {renderStars(review.rating)}
                       </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex">
-                          {renderStars(review.rating)}
-                        </div>
-                        <span className="text-gray-400 text-sm">
-                          {formatDate(review.createdAt)}
-                        </span>
-                      </div>
+                      <span className="text-gray-400 text-sm">
+                        {formatDate(review.createdAt)}
+                      </span>
                     </div>
                   </div>
 

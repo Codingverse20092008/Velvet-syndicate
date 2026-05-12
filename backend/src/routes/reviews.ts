@@ -26,11 +26,10 @@ const updateReviewSchema = z.object({
 // GET /api/reviews/product/:productId - Get reviews for a product
 router.get('/product/:productId', asyncHandler(async (req: Request, res: Response) => {
   const { productId } = req.params;
-  const { isFake, limit = 20, offset = 0 } = req.query;
+  const { limit = 20, offset = 0 } = req.query;
   
   try {
     const reviews = await reviewService.getProductReviews(productId, {
-      isFake: isFake === 'true' ? true : isFake === 'false' ? false : undefined,
       limit: Number(limit),
       offset: Number(offset),
     });
@@ -39,56 +38,18 @@ router.get('/product/:productId', asyncHandler(async (req: Request, res: Respons
   } catch (error) {
     logger.error({ error, productId }, 'Failed to get product reviews');
     
-    // Temporary fallback: return hardcoded test data to verify frontend works
-    const testReviews = [
-      {
-        id: 'test_1',
-        productId: productId,
-        userId: null,
-        rating: 5,
-        title: 'Excellent!',
-        content: 'Great product, very satisfied with the purchase.',
-        isFake: true,
-        isVerified: false,
-        helpfulCount: 0,
-        fakeUserName: 'Test User',
-        fakeUserAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'test_2',
-        productId: productId,
-        userId: null,
-        rating: 4,
-        title: 'Good Quality',
-        content: 'Nice product, good value for money.',
-        isFake: true,
-        isVerified: false,
-        helpfulCount: 0,
-        fakeUserName: 'Test User 2',
-        fakeUserAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ];
-    
-    const paginatedReviews = testReviews.slice(Number(offset), Number(offset) + Number(limit));
-    
+    // Return empty reviews structure on error
     return successResponse(res, {
-      reviews: paginatedReviews,
+      reviews: [],
       stats: {
-        totalReviews: testReviews.length,
-        averageRating: 4.5,
-        ratingDistribution: [
-          { rating: 5, count: 1 },
-          { rating: 4, count: 1 }
-        ]
+        totalReviews: 0,
+        averageRating: 0,
+        ratingDistribution: []
       },
       pagination: {
         limit: Number(limit),
         offset: Number(offset),
-        hasMore: testReviews.length > Number(offset) + Number(limit)
+        hasMore: false
       }
     });
   }
@@ -160,7 +121,7 @@ router.post('/:id/helpful', asyncHandler(async (req: Request, res: Response) => 
   const { allowed } = await checkRateLimit(`helpful:${ip}`);
   if (!allowed) throw new RateLimitError();
   
-  const review = await reviewService.markReviewHelpful(id);
+  const review = await reviewService.markHelpful(id);
   
   return successResponse(res, { review });
 }));
@@ -177,7 +138,7 @@ router.post('/generate-fake', asyncHandler(async (req: Request, res: Response) =
 // POST /api/reviews/generate-manual - Generate fake reviews for existing products (admin only)
 router.post('/generate-manual', asyncHandler(async (req: Request, res: Response) => {
   const { limit = 3 } = req.body;
-  const result = await reviewService.generateFakeReviewsForExisting(limit);
+  const result = await reviewService.generateFakeReviews();
   
   logger.info({ action: 'Admin triggered manual fake review generation', result });
   
@@ -186,7 +147,7 @@ router.post('/generate-manual', asyncHandler(async (req: Request, res: Response)
 
 // POST /api/reviews/generate-for-new - Generate reviews for new products (admin only)
 router.post('/generate-for-new', asyncHandler(async (req: Request, res: Response) => {
-  const result = await reviewService.generateReviewsForNewProducts();
+  const result = await reviewService.generateFakeReviews();
   
   logger.info({ action: 'Admin triggered new product review generation', result });
   

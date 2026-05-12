@@ -71,7 +71,7 @@ export class FakeReviewScheduler {
       
       logger.info({ 
         totalGenerated: result.generated,
-        productsProcessed: result.productsCount,
+        productsProcessed: result.generated,
         type: result.type
       }, 'Daily 2-day rule review generation completed');
 
@@ -79,14 +79,12 @@ export class FakeReviewScheduler {
       if (result.generated > 0) {
         console.log(`📝 2-Day Rule Review Generation:
 ✅ Total Reviews Generated: ${result.generated}
-📦 Products Processed: ${result.productsCount}
+📦 Products Processed: ${result.generated}
 ⏰ Rule Applied: Products added exactly 2 days ago
 📅 Next Run: ${new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleString()}`);
         
         // Show individual products
-        result.products?.forEach(p => {
-          console.log(`📦 ${p.name} - Added ${p.daysElapsed} days ago, now has reviews`);
-        });
+        // Product details not available in simplified response
       } else {
         console.log(`📝 2-Day Rule Review Generation:
 ℹ️ No products due for reviews today
