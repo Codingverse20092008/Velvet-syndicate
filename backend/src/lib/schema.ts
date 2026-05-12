@@ -200,6 +200,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   addresses: many(addresses),
   orders: many(orders),
+  reviews: many(reviews),
   cart: one(cart, { fields: [users.id], references: [cart.userId] }),
 }));
 
@@ -221,6 +222,7 @@ export const productsRelations = relations(products, ({ many }) => ({
   variants: many(productVariants),
   cartItems: many(cartItems),
   orderItems: many(orderItems),
+  reviews: many(reviews),
 }));
 
 export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
@@ -333,8 +335,39 @@ export const collectionProducts = sqliteTable('collection_products', {
   uniqueItemIdx: uniqueIndex('collection_products_unique_idx').on(table.collectionId, table.productId),
 }));
 
+// ⭐ Product Reviews Table
+export const reviews = sqliteTable('reviews', {
+  id: text('id').primaryKey(),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  userId: text('user_id'), // nullable - for fake reviews
+  rating: integer('rating').notNull(), // 1-5
+  title: text('title'),
+  content: text('content').notNull(),
+  isFake: integer('is_fake', { mode: 'boolean' }).notNull().default(false), // distinguishes fake vs real reviews
+  isVerified: integer('is_verified', { mode: 'boolean' }).notNull().default(false), // for real purchases
+  helpfulCount: integer('helpful_count').notNull().default(0),
+  fakeUserName: text('fake_user_name'), // for fake reviews
+  fakeUserAvatar: text('fake_user_avatar'), // for fake reviews
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  productIdIdx: index('reviews_product_id_idx').on(table.productId),
+  userIdIdx: index('reviews_user_id_idx').on(table.userId),
+  ratingIdx: index('reviews_rating_idx').on(table.rating),
+  isFakeIdx: index('reviews_is_fake_idx').on(table.isFake),
+  createdAtIdx: index('reviews_created_at_idx').on(table.createdAt),
+}));
+
+// Review Relations
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  product: one(products, { fields: [reviews.productId], references: [products.id] }),
+  user: one(users, { fields: [reviews.userId], references: [users.id] }),
+}));
+
 export type Collection = typeof collections.$inferSelect;
 export type NewCollection = typeof collections.$inferInsert;
 export type CollectionProduct = typeof collectionProducts.$inferSelect;
 export type OtpVerification = typeof otpVerifications.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
+export type Review = typeof reviews.$inferSelect;
+export type NewReview = typeof reviews.$inferInsert;

@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ProductGallery } from '@/components/product/ProductGallery'
 import { SizeSelector } from '@/components/product/SizeSelector'
+import { ProductReviews } from '@/components/product/ProductReviews'
 import { Button } from '@/components/ui/Button'
 import { useCartStore } from '@/store/cartStore'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
@@ -349,6 +350,11 @@ export default function ProductPage() {
         >
           Buy Now
         </Button>
+      </div>
+
+      {/* Product Reviews */}
+      <div className="max-w-7xl mx-auto px-6 mt-16">
+        <ProductReviews productId={product.id} />
       </div>
 
       <style jsx global>{`

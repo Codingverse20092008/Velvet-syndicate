@@ -251,6 +251,69 @@
       "is_out_of_stock": 0,
       "is_on_sale": 0,
       "sale_percentage": 0
+    },
+    {
+      "id": "3b071acb-1518-4b08-ab05-2a1afe5fdf3c",
+      "name": "Addidas samba white",
+      "slug": "addidas-samba-white-1",
+      "description": "Features...........\nPremium leather-style upper\nSoft suede toe overlay\nClassic black stripe detailing\nDurable gum rubber outsole\nComfortable cushioned inner lining\nLightweight low-top construction\nEveryday streetwear essential",
+      "price": 1499,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778314991/velvet-syndicate/products/jd1yq6p37cmqixmwfzil.webp",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-09 08:27:49",
+      "updated_at": "2026-05-09T08:51:32.726Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Adidas",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "ccfee33f-dfdb-4e1d-93f1-6da64a89f9bc",
+      "name": "Air force White",
+      "slug": "air-force-white",
+      "description": "the shoe that's famous for its effortlessly cool and minimalist look. This sneaker has taken the world by storm with its casual beauty that's hard to resist. What sets the Air Force White apart is its plain white design that exudes simplicity and style. It's the go-to shoe for those who appreciate a clean and understated aesthetic. Whether you're dressing up or down, this shoe effortlessly complements any outfit, making it a versatile choice for any occasion\n\nCare Instructions\n\nClean with less wet cloth, Don't wash in washing",
+      "price": 1499,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316061/velvet-syndicate/products/vzu8vqdi8kdjzzupkhtu.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-09 08:43:28",
+      "updated_at": "2026-05-09 08:43:28",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
+    },
+    {
+      "id": "38105342-6310-430a-b93a-1b57e2b9af0f",
+      "name": "NIKE SB DUNK THERE SKATEBOARD",
+      "slug": "nike-sb-dunk-there-skateboard-1",
+      "description": "Nike SB Dunk Low “There Skateboard” inspired sneakers feature a bold black, grey, and green color combination with detailed artistic graphics for a premium streetwear aesthetic. Built with a cushioned sole and durable upper, these sneakers offer comfort, grip, and standout style for daily wear or skate-inspired outfits.\nPremium SB Dunk-inspired design\nArtistic graphic detailing\nCushioned sole for comfort\nDurable rubber outsole\nTrendy streetwear look",
+      "price": 3150,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778563394/velvet-syndicate/products/eszz7gj5psnucxgpit3z.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-12 05:26:25",
+      "updated_at": "2026-05-12T05:26:40.826Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike SB",
+      "gender": "unisex",
+      "product_type": "sports",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0
     }
   ],
   "variants": [
@@ -349,6 +412,30 @@
       "color": "White, Green, Gum Brown",
       "slug": "nike-air-force-1-low-white-green-gum",
       "created_at": "2026-05-08 19:32:43"
+    },
+    {
+      "id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "product_id": "3b071acb-1518-4b08-ab05-2a1afe5fdf3c",
+      "name": "White",
+      "color": "White",
+      "slug": "samba",
+      "created_at": "2026-05-09 08:27:49"
+    },
+    {
+      "id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "product_id": "ccfee33f-dfdb-4e1d-93f1-6da64a89f9bc",
+      "name": "White",
+      "color": "White",
+      "slug": "air-force-white",
+      "created_at": "2026-05-09 08:43:28"
+    },
+    {
+      "id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "product_id": "38105342-6310-430a-b93a-1b57e2b9af0f",
+      "name": "Black, Grey, Green",
+      "color": "Black, Grey, Green",
+      "slug": "nike-sb-dunk-there-skateboard",
+      "created_at": "2026-05-12 05:26:26"
     }
   ],
   "variantImages": [
@@ -411,6 +498,31 @@
       "id": "40cbf4fe-0f9f-45bb-a467-ad6db1a98712",
       "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268738/velvet-syndicate/products/qzztjz8aypug3rmg9gzg.jpg"
+    },
+    {
+      "id": "5d003872-99a6-4d98-8975-369a41452005",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316061/velvet-syndicate/products/vzu8vqdi8kdjzzupkhtu.jpg"
+    },
+    {
+      "id": "58630e85-55da-44d7-8fa4-b0b9a84b27c5",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316067/velvet-syndicate/products/lymoqvzkze0grvj9tmvc.jpg"
+    },
+    {
+      "id": "9fd56424-cdb5-49a7-9efa-765cb48cbec6",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778314991/velvet-syndicate/products/jd1yq6p37cmqixmwfzil.webp"
+    },
+    {
+      "id": "133b9967-1227-4dd0-ade3-98adfa20a115",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316682/velvet-syndicate/products/juybib2l2ittqrkkcd9c.webp"
+    },
+    {
+      "id": "c65d0ddb-caa9-444f-b759-c3265996113a",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778563394/velvet-syndicate/products/eszz7gj5psnucxgpit3z.jpg"
     }
   ],
   "sizes": [
@@ -843,6 +955,54 @@
     {
       "id": "5242d5be-d501-481c-bebe-02f0c38b59d0",
       "variant_id": "f21b5ea9-47f3-4a92-8f40-07e6be18193f",
+      "size": "12",
+      "stock": 3
+    },
+    {
+      "id": "409a06d9-12d9-4ec5-b271-bd6c15b40d1a",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "Standard",
+      "stock": 0
+    },
+    {
+      "id": "6ca6d215-51b8-48ec-bc12-1c982591d6e7",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "6",
+      "stock": 4
+    },
+    {
+      "id": "f7c5b85d-9714-4700-8650-7c5e2c343027",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "7",
+      "stock": 4
+    },
+    {
+      "id": "2b870d02-e413-497d-a4aa-067463886014",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "8",
+      "stock": 4
+    },
+    {
+      "id": "b094daf4-600b-4c78-aacc-3bac1dd0c069",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "9",
+      "stock": 3
+    },
+    {
+      "id": "53f9fdaa-eece-4d88-a602-539f89c2d540",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "10",
+      "stock": 3
+    },
+    {
+      "id": "cc59ce9d-2e51-40fd-b3bf-f951dc6a7bad",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "11",
+      "stock": 3
+    },
+    {
+      "id": "b4d5fd85-db65-40e3-951d-fe42df78266c",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
       "size": "12",
       "stock": 3
     }

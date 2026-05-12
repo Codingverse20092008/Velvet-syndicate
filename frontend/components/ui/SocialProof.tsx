@@ -20,11 +20,6 @@ const ACTIONS = [
   { text: 'just logged in', icon: <LogIn size={14} className="text-blue-400" /> },
   { text: 'is viewing', icon: <ExternalLink size={14} className="text-velvet-muted" /> }
 ]
-const PRODUCTS = [
-  'Nike Air Force 1', 'Nike Dunk Low', 'Nike Air Jordan 1 Retro Low', 'PUMA Suede XL', 
-  'PUMA Park Lifestyle OG', 'ASIAN MEXICO-11 Casual', 'Boldfit Sneakers for Man',
-  'Nike Air Max 2090', 'ASIAN Casual Sneaker', 'Campus Siren Running', 'Boldfit Badminton Shoes'
-]
 
 export function SocialProof() {
   const [settings, setSettings] = useState({
@@ -36,24 +31,38 @@ export function SocialProof() {
   const [visitorCount, setVisitorCount] = useState(542)
   const [currentActivity, setCurrentActivity] = useState<{ name: string, action: typeof ACTIONS[0], product?: string } | null>(null)
   const [isVisible, setIsVisible] = useState(false)
+  const [products, setProducts] = useState<string[]>([])
 
-  // Load settings
+  // Load settings and products
   useEffect(() => {
-    const loadSettings = async () => {
+    const loadData = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/admin/settings/public/social-proof`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data?.success && data?.data) {
-            setSettings(data.data)
-            setVisitorCount(data.data.minVisitors + Math.floor(Math.random() * (data.data.maxVisitors - data.data.minVisitors)))
+        // Load settings
+        const settingsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/admin/settings/public/social-proof`)
+        if (settingsRes.ok) {
+          const settingsData = await settingsRes.json()
+          if (settingsData?.success && settingsData?.data) {
+            setSettings(settingsData.data)
+            setVisitorCount(settingsData.data.minVisitors + Math.floor(Math.random() * (settingsData.data.maxVisitors - settingsData.data.minVisitors)))
+          }
+        }
+
+        // Load real products
+        const productsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/products?limit=50`)
+        if (productsRes.ok) {
+          const productsData = await productsRes.json()
+          if (productsData?.success && productsData?.data?.products) {
+            const productNames = productsData.data.products
+              .filter((p: any) => p.name && p.name.trim())
+              .map((p: any) => p.name.trim())
+            setProducts(productNames)
           }
         }
       } catch (err) {
-        console.error('Failed to load social proof settings', err)
+        console.error('Failed to load social proof data', err)
       }
     }
-    loadSettings()
+    loadData()
   }, [])
 
   // Visitor count fluctuation - Every 1 Minute
@@ -78,7 +87,7 @@ export function SocialProof() {
       const name = NAMES[Math.floor(Math.random() * NAMES.length)]
       const action = ACTIONS[Math.floor(Math.random() * ACTIONS.length)]
       const product = action.text.includes('purchased') || action.text.includes('cart') 
-        ? PRODUCTS[Math.floor(Math.random() * PRODUCTS.length)] 
+        ? products.length > 0 ? products[Math.floor(Math.random() * products.length)] : undefined
         : undefined
 
       setCurrentActivity({ name, action, product })

@@ -20,6 +20,7 @@ import addressRoutes from './src/routes/address';
 import eventsRoutes from './src/routes/events';
 import feedbackRoutes from './src/routes/feedback';
 import metricsRoutes from './src/routes/metrics';
+import reviewsRoutes from './src/routes/reviews';
 import { runReconciliation } from './src/services/reconciliation.service';
 import { sendAlert } from './src/lib/alerts';
 import { orderQueue } from './src/lib/queue';
@@ -27,6 +28,7 @@ import adminRoutes from './src/routes/admin';
 import { dbClient } from './src/lib/db';
 import { redis } from './src/lib/redis';
 import { logger } from './src/lib/logger';
+import { fakeReviewScheduler } from './src/scripts/fake-review-scheduler';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -276,6 +278,7 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/metrics', metricsRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 // Error handling
 app.use(errorHandler);
@@ -308,6 +311,14 @@ if (require.main === module) {
   }, 60000);
 
   logger.info('Background monitoring services started');
+
+  // 3. Fake Review Scheduler (Start once)
+  try {
+    fakeReviewScheduler.start();
+    logger.info('Fake review scheduler started');
+  } catch (err) {
+    logger.error({ err }, 'Failed to start fake review scheduler');
+  }
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────────
   const shutdown = async (signal: string) => {
