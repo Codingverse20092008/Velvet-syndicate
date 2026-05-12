@@ -20,31 +20,43 @@ export class ReviewRepository {
       conditions.push(eq(reviews.isFake, isFake));
     }
 
-    return await db
-      .select({
-        id: reviews.id,
-        productId: reviews.productId,
-        userId: reviews.userId,
-        rating: reviews.rating,
-        title: reviews.title,
-        content: reviews.content,
-        isFake: reviews.isFake,
-        isVerified: reviews.isVerified,
-        helpfulCount: reviews.helpfulCount,
-        fakeUserName: reviews.fakeUserName,
-        fakeUserAvatar: reviews.fakeUserAvatar,
-        createdAt: reviews.createdAt,
-        updatedAt: reviews.updatedAt,
-        productName: products.name,
-        userName: users.name,
-      })
-      .from(reviews)
-      .leftJoin(products, eq(reviews.productId, products.id))
-      .leftJoin(users, eq(reviews.userId, users.id))
-      .where(and(...conditions))
-      .orderBy(desc(reviews.createdAt))
-      .limit(limit)
-      .offset(offset);
+    try {
+      return await db
+        .select({
+          id: reviews.id,
+          productId: reviews.productId,
+          userId: reviews.userId,
+          rating: reviews.rating,
+          title: reviews.title,
+          content: reviews.content,
+          isFake: reviews.isFake,
+          isVerified: reviews.isVerified,
+          helpfulCount: reviews.helpfulCount,
+          fakeUserName: reviews.fakeUserName,
+          fakeUserAvatar: reviews.fakeUserAvatar,
+          createdAt: reviews.createdAt,
+          updatedAt: reviews.updatedAt,
+          productName: products.name,
+          userName: users.name,
+        })
+        .from(reviews)
+        .leftJoin(products, eq(reviews.productId, products.id))
+        .leftJoin(users, eq(reviews.userId, users.id))
+        .where(and(...conditions))
+        .orderBy(desc(reviews.createdAt))
+        .limit(limit)
+        .offset(offset);
+    } catch (error) {
+      // Fallback to simpler query without joins if there's an error
+      console.error('Error in complex query, falling back to simple query:', error);
+      return await db
+        .select()
+        .from(reviews)
+        .where(and(...conditions))
+        .orderBy(desc(reviews.createdAt))
+        .limit(limit)
+        .offset(offset);
+    }
   }
 
   // Find all reviews with filters
