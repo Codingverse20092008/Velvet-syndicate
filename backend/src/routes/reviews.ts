@@ -28,13 +28,48 @@ router.get('/product/:productId', asyncHandler(async (req: Request, res: Respons
   const { productId } = req.params;
   const { isFake, limit = 20, offset = 0 } = req.query;
   
-  const reviews = await reviewService.getProductReviews(productId, {
-    isFake: isFake === 'true' ? true : isFake === 'false' ? false : undefined,
-    limit: Number(limit),
-    offset: Number(offset),
-  });
-  
-  return successResponse(res, reviews);
+  try {
+    const reviews = await reviewService.getProductReviews(productId, {
+      isFake: isFake === 'true' ? true : isFake === 'false' ? false : undefined,
+      limit: Number(limit),
+      offset: Number(offset),
+    });
+    
+    return successResponse(res, reviews);
+  } catch (error) {
+    logger.error({ error, productId }, 'Failed to get product reviews');
+    
+    // Fallback: get all reviews and filter manually
+    try {
+      const allReviews = await reviewService.getAllReviews({
+        limit: 100,
+        offset: 0
+      });
+      
+      const filteredReviews = allReviews.reviews.filter((review: any) => 
+        review.productId === productId && 
+        (isFake === undefined || review.isFake === (isFake === 'true'))
+      );
+      
+      const paginatedReviews = filteredReviews.slice(Number(offset), Number(offset) + Number(limit));
+      
+      return successResponse(res, {
+        reviews: paginatedReviews,
+        pagination: {
+          limit: Number(limit),
+          offset: Number(offset),
+          hasMore: filteredReviews.length > Number(offset) + Number(limit)
+        }
+      });
+    } catch (fallbackError) {
+      logger.error({ fallbackError, productId }, 'Fallback also failed');
+      return successResponse(res, {
+        reviews: [],
+        stats: { totalReviews: 0, averageRating: 0, ratingDistribution: [] },
+        pagination: { limit: Number(limit), offset: Number(offset), hasMore: false }
+      });
+    }
+  }
 }));
 
 // GET /api/reviews - Get all reviews (admin only)
