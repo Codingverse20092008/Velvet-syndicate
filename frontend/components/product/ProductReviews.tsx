@@ -40,7 +40,7 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
   const [reviews, setReviews] = useState<Review[]>([])
   const [stats, setStats] = useState<ReviewStats | null>(null)
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'real' | 'fake'>('all')
+  const [filter, setFilter] = useState<'all'>('all')
   const [showMore, setShowMore] = useState(false)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
 
@@ -50,14 +50,7 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
       setLoading(true)
       
       // Load reviews
-      const reviewParams = new URLSearchParams()
-      reviewParams.append('productId', productId)
-      reviewParams.append('limit', '20')
-      
-      if (filter === 'real') reviewParams.append('isFake', 'false')
-      if (filter === 'fake') reviewParams.append('isFake', 'true')
-      
-      const reviewsRes = await apiFetch(`/reviews/product/${productId}?${reviewParams.toString()}`)
+      const reviewsRes = await apiFetch(`/reviews/product/${productId}?limit=20`)
       const reviewsData = await reviewsRes.json()
       
       if (reviewsData?.success) {
@@ -73,7 +66,7 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
 
   useEffect(() => {
     loadReviews()
-  }, [productId, filter])
+  }, [productId])
 
   // Mark review as helpful
   const markHelpful = async (reviewId: string) => {
@@ -213,39 +206,6 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-            filter === 'all' 
-              ? 'bg-velvet-accent text-black' 
-              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-          }`}
-        >
-          All ({stats.totalReviews})
-        </button>
-        <button
-          onClick={() => setFilter('real')}
-          className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-            filter === 'real' 
-              ? 'bg-velvet-accent text-black' 
-              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-          }`}
-        >
-          Verified ({stats.realReviews})
-        </button>
-        <button
-          onClick={() => setFilter('fake')}
-          className={`px-4 py-2 rounded-lg text-sm transition-colors ${
-            filter === 'fake' 
-              ? 'bg-velvet-accent text-black' 
-              : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-          }`}
-        >
-          Social Proof ({stats.fakeReviews})
-        </button>
-      </div>
 
       {/* Reviews List */}
       <div className="space-y-4">
@@ -262,7 +222,7 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
                 {/* User Avatar */}
                 <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-velvet-accent to-black flex items-center justify-center">
                   <span className="text-white text-sm font-bold">
-                    {review.userName?.charAt(0).toUpperCase() || 'U'}
+                    {(review.fakeUserName || review.userName || 'Anonymous User').charAt(0).toUpperCase()}
                   </span>
                 </div>
 
@@ -270,7 +230,7 @@ export function ProductReviews({ productId, productName, className = '' }: Produ
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="font-medium text-white">
-                      {review.userName || 'Anonymous User'}
+                      {review.fakeUserName || review.userName || 'Anonymous User'}
                     </p>
                     <div className="flex items-center gap-2">
                       <div className="flex">
