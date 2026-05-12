@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { LayoutDashboard, Package, ShoppingBag, Users, Award, Settings, Menu, X, Layers } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingBag, Users, Award, Settings, Menu, X, Layers, MessageSquare } from 'lucide-react'
 
 const mainLinks = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -13,6 +13,10 @@ const mainLinks = [
   { href: '/admin/products', label: 'Inventory', icon: Package },
   { href: '/admin/collections', label: 'Collections', icon: Layers },
   { href: '/admin/loyalty', label: 'Loyalty Points', icon: Award },
+]
+
+const reviewLinks = [
+  { href: '/admin/reviews', label: 'Review Management', icon: MessageSquare },
 ]
 
 const systemLinks = [
@@ -76,6 +80,27 @@ export function AdminSidebar() {
         <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
           <div className="text-[10px] uppercase tracking-widest text-velvet-muted px-4 py-2">Main</div>
           {mainLinks.map((link) => {
+            const Icon = link.icon
+            const active = isActive(link.href)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 ${
+                  active
+                    ? 'bg-white/10 border-white/20 text-velvet-white shadow-[0_0_20px_rgba(255,255,255,0.05)]'
+                    : 'bg-transparent border-transparent text-velvet-muted hover:text-velvet-white hover:bg-white/5'
+                }`}
+              >
+                <Icon size={16} />
+                <span className="text-[10px] uppercase tracking-[0.15em] font-bold">{link.label}</span>
+              </Link>
+            )
+          })}
+          
+          <div className="text-[10px] uppercase tracking-widest text-velvet-muted px-4 py-2 mt-6">Reviews</div>
+          {reviewLinks.map((link) => {
             const Icon = link.icon
             const active = isActive(link.href)
             return (
