@@ -21,6 +21,7 @@ import eventsRoutes from './src/routes/events';
 import feedbackRoutes from './src/routes/feedback';
 import metricsRoutes from './src/routes/metrics';
 import reviewsRoutes from './src/routes/reviews';
+import setupReviewsRoutes from './src/routes/setup-reviews';
 import { runReconciliation } from './src/services/reconciliation.service';
 import { sendAlert } from './src/lib/alerts';
 import { orderQueue } from './src/lib/queue';
@@ -279,6 +280,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/reviews', reviewsRoutes);
+app.use('/api/setup-reviews', setupReviewsRoutes);
 
 // Error handling
 app.use(errorHandler);
