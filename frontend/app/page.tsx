@@ -7,6 +7,7 @@ import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { apiFetch, getFullImageUrl } from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
+import { SummerCrazyDealsBanner } from '@/components/home/SummerCrazyDealsBanner'
 
 // Hero3D with 3D rotating shoes
 const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => ({ default: mod.Hero3D })), {
@@ -97,6 +98,8 @@ export default function HomePage() {
       <section className="relative h-screen">
         <Hero3D />
       </section>
+
+      <SummerCrazyDealsBanner />
 
       {/* Featured Products */}
       <section className="relative py-20 px-6 bg-velvet-black">

@@ -7,7 +7,7 @@ const EASE = [0.22, 1, 0.36, 1]
 
 // Strict category system (only these allowed)
 const GENDERS = ['men', 'women'] as const
-const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const
+const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers', 'streetwear'] as const
 
 type Gender = typeof GENDERS[number]
 type Subcategory = typeof SUBCATEGORIES[number]

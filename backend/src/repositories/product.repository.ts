@@ -13,6 +13,7 @@ export class ProductRepository {
       minPrice,
       maxPrice,
       featured, 
+      summerSale,
       sort = 'createdAt', 
       limit = 50, 
       offset = 0,
@@ -28,6 +29,7 @@ export class ProductRepository {
     if (minPrice !== undefined) conditions.push(gte(products.price, minPrice));
     if (maxPrice !== undefined) conditions.push(lte(products.price, maxPrice));
     if (featured !== undefined) conditions.push(eq(products.featured, featured));
+    if (summerSale !== undefined) conditions.push(eq(products.isSummerSale, summerSale));
 
     // Cursor-based pagination (Enterprise Level)
     if (cursor && sort === 'createdAt') {

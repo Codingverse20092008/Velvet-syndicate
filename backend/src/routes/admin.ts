@@ -49,11 +49,13 @@ const productCreateSchema = z.object({
   color: z.string().default('Default'),
   sizes: z.string().default('7,8,9,10,11,12'),
   gender: z.enum(['men', 'women', 'unisex']).default('unisex'),
-  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).default('sneakers'),
+  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers', 'streetwear']).default('sneakers'),
   featured: z.boolean().default(false),
   isOutOfStock: z.boolean().default(false),
   isOnSale: z.boolean().default(false),
+  summerSale: z.boolean().default(false),
   salePercentage: z.number().int().min(0).max(100).default(0),
+  salePrice: z.number().positive().optional(),
 });
 
 const productUpdateSchema = z.object({
@@ -67,12 +69,14 @@ const productUpdateSchema = z.object({
   color: z.string().optional(),
   sizes: z.string().optional(),
   gender: z.enum(['men', 'women', 'unisex']).optional(),
-  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
+  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers', 'streetwear']).optional(),
   isVisible: z.boolean().optional(),
   featured: z.boolean().optional(),
   isOutOfStock: z.boolean().optional(),
   isOnSale: z.boolean().optional(),
+  summerSale: z.boolean().optional(),
   salePercentage: z.number().int().min(0).max(100).optional(),
+  salePrice: z.number().positive().optional(),
 });
 
 const productStockToggleSchema = z.object({

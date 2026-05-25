@@ -80,6 +80,8 @@ export interface AdminProductItem {
   isOutOfStock?: boolean;
   isOnSale?: boolean;
   salePercentage?: number;
+  salePrice?: number | null;
+  summerSale?: boolean;
 }
 
 export interface AdminUserItem {
@@ -152,6 +154,47 @@ async function generateUniqueSlug(baseName: string): Promise<string> {
     slug = `${baseSlug}-${suffix}`;
     suffix += 1;
   }
+}
+
+function resolveSaleFields(input: {
+  currentPrice: number;
+  price?: number;
+  salePrice?: number;
+  isOnSale?: boolean;
+  salePercentage?: number;
+}) {
+  const effectivePrice = input.price ?? input.currentPrice;
+  const requestedSalePrice = input.salePrice;
+
+  if (
+    requestedSalePrice !== undefined &&
+    Number.isFinite(requestedSalePrice) &&
+    requestedSalePrice > 0 &&
+    requestedSalePrice < effectivePrice
+  ) {
+    const pct = Math.max(1, Math.min(99, Math.round(((effectivePrice - requestedSalePrice) / effectivePrice) * 100)));
+    return {
+      isOnSale: true,
+      salePercentage: pct,
+      salePrice: Math.round(requestedSalePrice),
+    };
+  }
+
+  const pct = Math.max(0, Math.min(100, Math.round(input.salePercentage ?? 0)));
+  const onSale = Boolean(input.isOnSale ?? pct > 0);
+  if (!onSale || pct <= 0) {
+    return {
+      isOnSale: false,
+      salePercentage: 0,
+      salePrice: null,
+    };
+  }
+
+  return {
+    isOnSale: true,
+    salePercentage: pct,
+    salePrice: Math.max(0, Math.round(effectivePrice * (1 - pct / 100))),
+  };
 }
 
 export async function getAdminOverview(): Promise<AdminOverview> {
@@ -271,6 +314,7 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
         p.featured,
         p.is_out_of_stock as isOutOfStock,
         p.is_on_sale as isOnSale,
+        p.is_summer_sale as summerSale,
         p.sale_percentage as salePercentage,
         COALESCE(GROUP_CONCAT(DISTINCT pv.color), '') as color,
         COALESCE(GROUP_CONCAT(DISTINCT ps.size), '') as sizes,
@@ -305,7 +349,11 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
       featured: Boolean(row.featured),
       isOutOfStock: Boolean(row.isOutOfStock),
       isOnSale: Boolean(row.isOnSale),
+      summerSale: Boolean(row.summerSale),
       salePercentage: row.salePercentage,
+      salePrice: Boolean(row.isOnSale) && Number(row.salePercentage || 0) > 0
+        ? Math.max(0, Math.round(Number(row.price) * (1 - Number(row.salePercentage || 0) / 100)))
+        : null,
     };
   });
 }
@@ -326,6 +374,8 @@ export async function createAdminProduct(data: {
   isOutOfStock: boolean;
   isOnSale: boolean;
   salePercentage: number;
+  salePrice?: number;
+  summerSale: boolean;
 }): Promise<AdminProductItem> {
   const productId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
@@ -340,6 +390,13 @@ export async function createAdminProduct(data: {
   // Calculate stock per size (divide total stock evenly)
   const stockPerSize = sizeList.length > 0 ? Math.floor(data.stock / sizeList.length) : 0;
   const remainderStock = sizeList.length > 0 ? data.stock - (stockPerSize * sizeList.length) : 0;
+  const saleFields = resolveSaleFields({
+    currentPrice: data.price,
+    price: data.price,
+    salePrice: data.salePrice,
+    isOnSale: data.isOnSale,
+    salePercentage: data.salePercentage,
+  });
 
   await db.transaction(async (tx) => {
     await tx.insert(products).values({
@@ -355,8 +412,9 @@ export async function createAdminProduct(data: {
       productType: data.subcategory || 'sneakers',
       featured: data.featured || false,
       isOutOfStock: data.isOutOfStock || false,
-      isOnSale: data.isOnSale || false,
-      salePercentage: data.salePercentage || 0,
+      isOnSale: saleFields.isOnSale,
+      isSummerSale: data.summerSale || false,
+      salePercentage: saleFields.salePercentage,
       isVisible: true,
     });
 
@@ -385,15 +443,16 @@ export async function createAdminProduct(data: {
     }
 
     // Insert sizes with distributed stock
-    sizeList.forEach((size, index) => {
+    for (let index = 0; index < sizeList.length; index++) {
+      const size = sizeList[index];
       const sizeStock = stockPerSize + (index < remainderStock ? 1 : 0);
-      tx.insert(productSizes).values({
+      await tx.insert(productSizes).values({
         id: crypto.randomUUID(),
         variantId,
         size: size,
         stock: sizeStock,
       });
-    });
+    }
   });
 
   // Invalidate cache after product creation
@@ -425,11 +484,13 @@ export async function updateAdminProduct(
     isOutOfStock: boolean;
     isOnSale: boolean;
     salePercentage: number;
+    salePrice: number;
+    summerSale: boolean;
   }>
 ): Promise<AdminProductItem> {
   const existing = await db.query.products.findFirst({
     where: eq(products.id, productId),
-    columns: { id: true, slug: true },
+    columns: { id: true, slug: true, price: true, isOnSale: true, salePercentage: true },
   });
   if (!existing) throw new NotFoundError('Product');
 
@@ -448,8 +509,29 @@ export async function updateAdminProduct(
     if (data.isVisible !== undefined) patch.isVisible = data.isVisible;
     if (data.featured !== undefined) patch.featured = data.featured;
     if (data.isOutOfStock !== undefined) patch.isOutOfStock = data.isOutOfStock;
-    if (data.isOnSale !== undefined) patch.isOnSale = data.isOnSale;
-    if (data.salePercentage !== undefined) patch.salePercentage = data.salePercentage;
+    if (data.summerSale !== undefined) patch.isSummerSale = data.summerSale;
+    // Summer sale products should be immediately discoverable on customer listing pages.
+    // If admin enables summer sale and doesn't explicitly set visibility, auto-activate it.
+    if (data.summerSale === true && data.isVisible === undefined) {
+      patch.isVisible = true;
+    }
+
+    if (
+      data.price !== undefined ||
+      data.salePrice !== undefined ||
+      data.isOnSale !== undefined ||
+      data.salePercentage !== undefined
+    ) {
+      const saleFields = resolveSaleFields({
+        currentPrice: Number(existing.price ?? 0),
+        price: data.price,
+        salePrice: data.salePrice,
+        isOnSale: data.isOnSale ?? Boolean(existing.isOnSale),
+        salePercentage: data.salePercentage ?? Number(existing.salePercentage ?? 0),
+      });
+      patch.isOnSale = saleFields.isOnSale;
+      patch.salePercentage = saleFields.salePercentage;
+    }
 
     if (data.name) {
       patch.slug = await generateUniqueSlug(data.name);
@@ -543,11 +625,17 @@ export async function updateAdminProduct(
         }
       }
 
+      const existingSizeRows = await tx.query.productSizes.findMany({
+        where: eq(productSizes.variantId, firstVariantId),
+        columns: { stock: true },
+      });
+      const existingTotalStock = existingSizeRows.reduce((sum, row) => sum + Number(row.stock ?? 0), 0);
+
       // Delete existing sizes for this variant
       await tx.delete(productSizes).where(eq(productSizes.variantId, firstVariantId));
 
-      // Calculate stock per size
-      const totalStock = data.stock ?? 0;
+      // Calculate stock per size. Preserve existing stock when caller does not send stock.
+      const totalStock = data.stock ?? existingTotalStock;
       const stockPerSize = sizeList.length > 0 ? Math.floor(totalStock / sizeList.length) : 0;
       const remainderStock = sizeList.length > 0 ? totalStock - (stockPerSize * sizeList.length) : 0;
 

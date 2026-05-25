@@ -13,6 +13,12 @@ const router = Router();
 const mapProduct = (p: any) => {
   // Handle both Drizzle (imageUrl) and raw SQL (image_url)
   const mainImage = p.imageUrl || p.image_url || '';
+  const price = Number(p.price ?? 0);
+  const salePercentage = Number(p.salePercentage || p.sale_percentage || 0);
+  const isOnSale = Boolean(p.isOnSale || p.is_on_sale);
+  const salePrice = isOnSale && salePercentage > 0
+    ? Math.max(0, Math.round(price * (1 - salePercentage / 100)))
+    : null;
   
   try {
     return {
@@ -21,7 +27,8 @@ const mapProduct = (p: any) => {
       brand: p.brand ?? '',
       slug: p.slug ?? '',
       description: p.description ?? '',
-      price: Number(p.price ?? 0),
+      price,
+      salePrice,
       image: mainImage,
       imageUrl: mainImage,
       category: p.category ?? 'footwear',
@@ -29,8 +36,9 @@ const mapProduct = (p: any) => {
       productType: p.productType ?? 'sneakers',
       featured: Boolean(p.featured),
       isOutOfStock: Boolean(p.isOutOfStock || p.is_out_of_stock),
-      isOnSale: Boolean(p.isOnSale || p.is_on_sale),
-      salePercentage: Number(p.salePercentage || p.sale_percentage || 0),
+      isOnSale,
+      summerSale: Boolean(p.isSummerSale || p.is_summer_sale),
+      salePercentage,
       variants: (p.variants || []).map((v: any) => ({
         id: v.id,
         name: v.name ?? '',

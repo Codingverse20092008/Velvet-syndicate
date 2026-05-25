@@ -18,11 +18,13 @@ type ProductForm = {
   color: string
   sizes: string
   gender: 'men' | 'women' | 'unisex' | ''
-  subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | ''
+  subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | 'streetwear' | ''
   featured: boolean
   isOutOfStock: boolean
   isOnSale: boolean
   salePercentage: string
+  salePrice: string
+  summerSale: boolean
 }
 
 const emptyForm: ProductForm = {
@@ -41,10 +43,12 @@ const emptyForm: ProductForm = {
   isOutOfStock: false,
   isOnSale: false,
   salePercentage: '',
+  salePrice: '',
+  summerSale: false,
 }
 
 const GENDERS = ['men', 'women', 'unisex'] as const
-const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers'] as const
+const SUBCATEGORIES = ['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers', 'streetwear'] as const
 
 export default function AdminProductsPage() {
   const {
@@ -176,7 +180,9 @@ export default function AdminProductsPage() {
       featured: form.featured,
       isOutOfStock: form.isOutOfStock,
       isOnSale: form.isOnSale,
+      summerSale: form.summerSale,
       salePercentage: Number(form.salePercentage || 0),
+      salePrice: form.isOnSale && form.salePrice ? Number(form.salePrice) : undefined,
     }
 
     if (editingProduct) {
@@ -208,6 +214,8 @@ export default function AdminProductsPage() {
       isOutOfStock: product.isOutOfStock || false,
       isOnSale: product.isOnSale || false,
       salePercentage: String(product.salePercentage || ''),
+      salePrice: product.salePrice ? String(product.salePrice) : '',
+      summerSale: product.summerSale || false,
     })
     setImagePreview(product.image)
     setImagePreviews([])
@@ -287,7 +295,7 @@ export default function AdminProductsPage() {
           </select>
           
           {/* Inventory & Sales Toggles */}
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
             <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
               <input 
                 type="checkbox" 
@@ -317,21 +325,44 @@ export default function AdminProductsPage() {
               />
               <span className="text-sm text-velvet-white">On Sale</span>
             </label>
+
+            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+              <input 
+                type="checkbox" 
+                className="w-4 h-4 rounded border-white/15 bg-black text-amber-400 focus:ring-amber-400"
+                checked={form.summerSale}
+                onChange={(e) => setForm((prev) => ({ ...prev, summerSale: e.target.checked }))}
+              />
+              <span className="text-sm text-velvet-white">Add to Summer Sale</span>
+            </label>
           </div>
 
           {form.isOnSale && (
             <div className="md:col-span-2">
-              <div className="flex items-center gap-4 bg-black border border-emerald-500/20 rounded-xl px-4 py-3">
-                <span className="text-sm text-emerald-400 shrink-0">Sale Percentage (%)</span>
-                <input 
-                  className="bg-transparent border-none outline-none text-sm text-velvet-white w-full" 
-                  placeholder="e.g., 20" 
-                  type="number" 
-                  min="0" 
-                  max="100"
-                  value={form.salePercentage} 
-                  onChange={(e) => setForm((prev) => ({ ...prev, salePercentage: e.target.value }))} 
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="flex items-center gap-4 bg-black border border-emerald-500/20 rounded-xl px-4 py-3">
+                  <span className="text-sm text-emerald-400 shrink-0">Sale Percentage (%)</span>
+                  <input 
+                    className="bg-transparent border-none outline-none text-sm text-velvet-white w-full" 
+                    placeholder="e.g., 20" 
+                    type="number" 
+                    min="0" 
+                    max="100"
+                    value={form.salePercentage} 
+                    onChange={(e) => setForm((prev) => ({ ...prev, salePercentage: e.target.value }))} 
+                  />
+                </div>
+                <div className="flex items-center gap-4 bg-black border border-emerald-500/20 rounded-xl px-4 py-3">
+                  <span className="text-sm text-emerald-400 shrink-0">Sale Price (Optional)</span>
+                  <input 
+                    className="bg-transparent border-none outline-none text-sm text-velvet-white w-full" 
+                    placeholder="e.g., 5999" 
+                    type="number" 
+                    min="0" 
+                    value={form.salePrice} 
+                    onChange={(e) => setForm((prev) => ({ ...prev, salePrice: e.target.value }))} 
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -409,6 +440,7 @@ export default function AdminProductsPage() {
                 <div className="text-velvet-white flex items-center gap-2">
                   {product.name}
                   {product.isOnSale && <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1.5 py-0.5 rounded border border-emerald-500/20">-{product.salePercentage}%</span>}
+                  {product.summerSale && <span className="bg-amber-500/10 text-amber-300 text-[8px] px-1.5 py-0.5 rounded border border-amber-400/30">Summer Sale</span>}
                 </div>
                 <div className="text-xs text-velvet-muted mt-1 line-clamp-1">{product.brand}</div>
               </div>
@@ -461,6 +493,7 @@ export default function AdminProductsPage() {
                 <div className="text-velvet-white font-medium truncate flex items-center gap-2">
                   {product.name}
                   {product.isOnSale && <span className="text-emerald-400 text-[10px]">-{product.salePercentage}%</span>}
+                  {product.summerSale && <span className="text-amber-300 text-[10px]">Summer</span>}
                 </div>
                 <div className="text-xs text-velvet-muted mt-1">{product.brand}</div>
               </div>

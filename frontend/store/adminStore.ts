@@ -60,6 +60,8 @@ export interface AdminProduct {
   isOutOfStock?: boolean
   isOnSale?: boolean
   salePercentage?: number
+  salePrice?: number | null
+  summerSale?: boolean
 }
 
 export interface AdminUser {

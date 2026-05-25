@@ -69,11 +69,14 @@ export const createOrderSchema = z.object({
 export const productFiltersSchema = z.object({
   category: z.enum(['footwear', 'accessories', 'apparel']).optional(),
   gender: z.enum(['men', 'women']).optional(),
-  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers']).optional(),
+  subcategory: z.enum(['casual', 'walking', 'jogging', 'running', 'sports', 'sneakers', 'streetwear']).optional(),
   brand: z.string().trim().max(50).optional(),
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
   featured: z.enum(['true', 'false']).optional().transform((v) =>
+    v === 'true' ? true : v === 'false' ? false : undefined
+  ),
+  summerSale: z.enum(['true', 'false']).optional().transform((v) =>
     v === 'true' ? true : v === 'false' ? false : undefined
   ),
   sort: z.enum(['createdAt', 'price-asc', 'price-desc', 'name']).default('createdAt'),

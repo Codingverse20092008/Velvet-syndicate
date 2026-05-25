@@ -5,7 +5,7 @@ import { logger } from '../lib/logger';
 import { isFeatureEnabled } from '../lib/feature-flags';
 
 export type Gender = 'men' | 'women';
-export type Subcategory = 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers';
+export type Subcategory = 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | 'streetwear';
 
 export interface ProductFilters {
   category?: string;
@@ -15,6 +15,7 @@ export interface ProductFilters {
   minPrice?: number;
   maxPrice?: number;
   featured?: boolean;
+  summerSale?: boolean;
   sort?: 'createdAt' | 'price-asc' | 'price-desc' | 'name';
   limit?: number;
   offset?: number;

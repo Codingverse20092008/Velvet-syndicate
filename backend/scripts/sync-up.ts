@@ -36,12 +36,12 @@ async function syncUp() {
       sql: `INSERT INTO products (
         id, name, slug, description, price, image_url, brand, category, 
         gender, product_type, featured, is_visible, is_out_of_stock, 
-        is_on_sale, sale_percentage, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        is_on_sale, is_summer_sale, sale_percentage, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         p.id, p.name, p.slug, p.description, p.price, p.image_url, p.brand, p.category,
         p.gender, p.product_type, p.featured, p.is_visible, p.is_out_of_stock,
-        p.is_on_sale, p.sale_percentage, p.created_at, p.updated_at
+        p.is_on_sale, p.is_summer_sale ?? 0, p.sale_percentage, p.created_at, p.updated_at
       ]
     });
   }
