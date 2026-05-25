@@ -18,7 +18,7 @@ export function SummerCrazyDealsBanner() {
             transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 p-6 sm:p-8 md:p-10 lg:p-12"
           >
-            <div className="lg:col-span-7 flex flex-col justify-between min-h-[280px] sm:min-h-[320px] md:min-h-[340px]">
+            <div className="lg:col-span-7 flex flex-col justify-between min-h-[300px] sm:min-h-[340px] md:min-h-[380px]">
               <div className="inline-flex w-fit items-center rounded-full border border-amber-300/30 bg-amber-200/5 px-3 py-1 text-[10px] tracking-[0.25em] uppercase text-amber-100/85">
                 Limited Time
               </div>
@@ -50,21 +50,21 @@ export function SummerCrazyDealsBanner() {
             </div>
 
             <div className="lg:col-span-5">
-              <div className="relative h-[220px] sm:h-[260px] md:h-[300px] lg:h-full min-h-[220px] overflow-hidden rounded-xl border border-white/10 bg-black/40">
-                <div className="absolute inset-0 bg-gradient-to-tr from-black/45 via-black/5 to-transparent z-10" />
+              <div className="relative h-[300px] sm:h-[360px] md:h-[420px] lg:h-full min-h-[300px] overflow-hidden rounded-xl bg-transparent">
+                <div className="absolute inset-0 bg-gradient-to-tr from-black/30 via-transparent to-transparent z-10 pointer-events-none" />
                 <Image
                   src="/images/summer-crazy-deals-placeholder mobile.png"
                   alt="Premium streetwear sneaker campaign visual"
                   fill
                   sizes="100vw"
-                  className="object-contain object-center transition-all duration-700 luxury-ease group-hover:brightness-110 sm:hidden"
+                  className="object-cover object-center transition-all duration-700 luxury-ease group-hover:brightness-110 sm:hidden"
                 />
                 <Image
                   src="/images/summer-crazy-deals-placeholder desktop.png"
                   alt="Premium streetwear sneaker campaign visual"
                   fill
                   sizes="(max-width: 1024px) 100vw, 40vw"
-                  className="hidden object-contain object-center transition-all duration-700 luxury-ease group-hover:brightness-110 sm:block"
+                  className="hidden object-cover object-center transition-all duration-700 luxury-ease group-hover:brightness-110 sm:block"
                 />
                 <div className="absolute right-4 top-4 z-20 rounded border border-white/20 bg-black/55 px-2.5 py-1 text-[9px] tracking-[0.18em] uppercase text-white/90">
                   SS26 Edit
