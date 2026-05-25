@@ -166,14 +166,21 @@ async function buildOrderSnapshot(
   }
 
   const lines: SnapshotOrderLine[] = userCart.items.map((item) => {
-    const lineTotal = item.product.price * item.quantity;
+    const originalPrice = Number(item.product.price ?? 0);
+    const salePercentage = Number(item.product.salePercentage || 0);
+    const isOnSale = Boolean(item.product.isOnSale);
+    const unitPrice = isOnSale && salePercentage > 0
+      ? Math.max(0, Math.round(originalPrice * (1 - salePercentage / 100)))
+      : originalPrice;
+
+    const lineTotal = unitPrice * item.quantity;
     return {
       cartItemId: item.id,
       productId: item.productId,
       variantId: item.variantId,
       size: item.size,
       quantity: item.quantity,
-      unitPrice: item.product.price,
+      unitPrice,
       lineTotal,
       productName: item.product.name,
       imageUrl: item.product.imageUrl ?? null,

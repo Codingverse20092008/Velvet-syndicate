@@ -25,6 +25,10 @@ interface Product {
   category: string
   image?: string // Standardized key
   imageUrl?: string // Alternative key
+  isOnSale?: boolean
+  salePercentage?: number
+  salePrice?: number | null
+  summerSale?: boolean
   variants: {
     id: string
     color: string
@@ -162,7 +166,22 @@ export default function HomePage() {
                     <div className="p-6">
                       <h3 className="text-xl font-heading mb-2">{product.name}</h3>
                       <p className="text-velvet-muted mb-2 text-sm">{product.category}</p>
-                      <p className="text-velvet-white mb-4 font-medium">{formatPrice(product.price)}</p>
+                      <div className="flex items-baseline gap-2 mb-4">
+                        {product.isOnSale && product.salePrice && product.salePrice < product.price ? (
+                          <>
+                            <span className="text-velvet-white font-medium">
+                              {formatPrice(product.salePrice)}
+                            </span>
+                            <span className="text-velvet-muted/75 text-xs line-through">
+                              {formatPrice(product.price)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-velvet-white font-medium">
+                            {formatPrice(product.price)}
+                          </span>
+                        )}
+                      </div>
                       <Link
                         href={`/product/${product.slug}`}
                         className="inline-block px-4 py-2 border border-white/20 text-xs uppercase tracking-wider hover:bg-white/5 transition-colors"

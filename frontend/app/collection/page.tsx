@@ -16,6 +16,10 @@ interface Product {
   productType: string
   image?: string // Standardized key
   imageUrl?: string // Alternative key
+  isOnSale?: boolean
+  salePercentage?: number
+  salePrice?: number | null
+  summerSale?: boolean
   variants: {
     id: string
     color: string
@@ -266,7 +270,22 @@ export default function CollectionPage() {
                       <h3 className="text-sm md:text-xl font-heading text-white line-clamp-1">{product.name}</h3>
                     </div>
                     <div className="mt-auto pt-4 border-t border-white/5 flex items-center justify-between">
-                      <p className="text-white text-xs md:text-lg font-medium">{formatPrice(product.price)}</p>
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        {product.isOnSale && product.salePrice && product.salePrice < product.price ? (
+                          <>
+                            <span className="text-white text-xs md:text-lg font-medium">
+                              {formatPrice(product.salePrice)}
+                            </span>
+                            <span className="text-velvet-muted/75 text-[10px] md:text-xs line-through">
+                              {formatPrice(product.price)}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-white text-xs md:text-lg font-medium">
+                            {formatPrice(product.price)}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-velvet-muted group-hover:text-velvet-accent transition-colors">→</span>
                     </div>
                   </div>

@@ -34,6 +34,10 @@ interface Product {
   imageUrl?: string // Alternative key
   featured: boolean
   variants: Variant[]
+  isOnSale?: boolean
+  salePercentage?: number
+  salePrice?: number | null
+  summerSale?: boolean
 }
 
 const RECENTLY_VIEWED_KEY = 'velvet_recently_viewed'
@@ -90,7 +94,7 @@ export default function ProductPage() {
       id: product.id,
       name: product.name,
       slug: product.slug,
-      price: product.price,
+      price: product.isOnSale && product.salePrice ? product.salePrice : product.price,
       imageUrl: primaryImage,
       viewedAt: Date.now(),
     }
@@ -120,7 +124,7 @@ export default function ProductPage() {
         name: product.name,
         variantName: selectedVariant.name !== 'Standard' ? selectedVariant.name : undefined,
         slug: product.slug,
-        price: product.price,
+        price: product.isOnSale && product.salePrice ? product.salePrice : product.price,
         image: selectedVariant.images[0] || '',
         size: selectedSize,
       })
@@ -195,11 +199,25 @@ export default function ProductPage() {
               <h1 className="font-heading text-3xl md:text-5xl text-velvet-white mb-2 leading-tight">
                 {product.name}
               </h1>
-              <div className="flex items-baseline gap-3">
-                <span className="text-2xl md:text-3xl text-velvet-accent font-medium">
-                  {formatPrice(product.price)}
-                </span>
-                <span className="text-xs text-emerald-500 font-medium uppercase tracking-widest">
+              <div className="flex items-baseline gap-3 flex-wrap">
+                {product.isOnSale && product.salePrice && product.salePrice < product.price ? (
+                  <>
+                    <span className="text-2xl md:text-3xl text-velvet-accent font-medium">
+                      {formatPrice(product.salePrice)}
+                    </span>
+                    <span className="text-lg md:text-xl text-velvet-muted line-through">
+                      {formatPrice(product.price)}
+                    </span>
+                    <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
+                      -{product.salePercentage}%
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-2xl md:text-3xl text-velvet-accent font-medium">
+                    {formatPrice(product.price)}
+                  </span>
+                )}
+                <span className="text-xs text-emerald-500 font-medium uppercase tracking-widest self-center">
                   In Stock & Ready
                 </span>
               </div>

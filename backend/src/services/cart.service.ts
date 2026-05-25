@@ -30,26 +30,35 @@ export async function getCartWithItems(userId: string) {
   }
 
   // Map and calculate totals with joined data
-  const items = cartRecord.items.map((item) => ({
-    id: item.id,
-    productId: item.productId,
-    variantId: item.variantId,
-    size: item.size,
-    quantity: item.quantity,
-    product: {
-      id: item.product.id,
-      name: item.product.name,
-      slug: item.product.slug,
-      price: item.product.price,
-      imageUrl: item.product.imageUrl,
-    },
-    variant: {
-      id: item.variant.id,
-      name: item.variant.name,
-      color: item.variant.color,
-      images: item.variant.images,
-    }
-  }));
+  const items = cartRecord.items.map((item) => {
+    const originalPrice = Number(item.product.price ?? 0);
+    const salePercentage = Number(item.product.salePercentage || 0);
+    const isOnSale = Boolean(item.product.isOnSale);
+    const price = isOnSale && salePercentage > 0
+      ? Math.max(0, Math.round(originalPrice * (1 - salePercentage / 100)))
+      : originalPrice;
+
+    return {
+      id: item.id,
+      productId: item.productId,
+      variantId: item.variantId,
+      size: item.size,
+      quantity: item.quantity,
+      product: {
+        id: item.product.id,
+        name: item.product.name,
+        slug: item.product.slug,
+        price,
+        imageUrl: item.product.imageUrl,
+      },
+      variant: {
+        id: item.variant.id,
+        name: item.variant.name,
+        color: item.variant.color,
+        images: item.variant.images,
+      }
+    };
+  });
 
   const total = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
