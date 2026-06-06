@@ -219,7 +219,7 @@ export default function AboutPage() {
               <div className="flex flex-col space-y-1">
                 <h3 className="text-xl font-medium text-white tracking-wide">Mehefuz Alam Khan</h3>
                 <p className="text-sm text-[#9ca3af] font-medium tracking-wider uppercase pb-2">
-                  Technical Lead & Developer
+                  Co-founder
                 </p>
                 <p className="text-[#9ca3af] font-light leading-relaxed">
                   Built the entire platform. Handles development, system, and UI execution.
