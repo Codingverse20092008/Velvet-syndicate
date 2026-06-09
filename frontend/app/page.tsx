@@ -101,6 +101,33 @@ export default function HomePage() {
         <Hero3D />
       </section>
 
+      <section className="bg-velvet-card/40 py-16 px-6 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-7xl rounded-[2rem] border border-white/10 bg-black/30 p-10 shadow-2xl shadow-black/20">
+          <div className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">
+            <div className="space-y-5">
+              <p className="text-[10px] uppercase tracking-[0.28em] text-velvet-muted">New experience</p>
+              <h2 className="text-4xl font-heading uppercase tracking-[0.06em] text-velvet-white sm:text-5xl">
+                Velvet Vault — play for points, redeem for offers.
+              </h2>
+              <p className="max-w-2xl text-sm leading-7 text-velvet-muted sm:text-base">
+                Replace the summer sale with a streetwear challenge that rewards you for style picks, streaks, and daily missions.
+              </p>
+            </div>
+            <div className="flex flex-col gap-4 sm:items-end">
+              <Link
+                href="/game"
+                className="inline-flex items-center justify-center rounded-full border border-velvet-white bg-velvet-white px-10 py-4 text-[10px] uppercase tracking-[0.28em] text-velvet-black transition hover:bg-transparent hover:text-velvet-white"
+              >
+                Play the game
+              </Link>
+              <p className="text-sm text-velvet-muted">
+                Points can be used later at checkout for discounts, free shipping, and limited access drops.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Featured Products */}
       <section className="relative py-20 px-6 bg-velvet-black">
         <div className="max-w-7xl mx-auto">
