@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function LegacySummerSaleCollectionRoute() {
-  redirect('/summer-sale')
+  redirect('/')
 }

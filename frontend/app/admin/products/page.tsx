@@ -326,15 +326,6 @@ export default function AdminProductsPage() {
               <span className="text-sm text-velvet-white">On Sale</span>
             </label>
 
-            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 rounded border-white/15 bg-black text-amber-400 focus:ring-amber-400"
-                checked={form.summerSale}
-                onChange={(e) => setForm((prev) => ({ ...prev, summerSale: e.target.checked }))}
-              />
-              <span className="text-sm text-velvet-white">Add to Summer Sale</span>
-            </label>
           </div>
 
           {form.isOnSale && (
@@ -440,7 +431,6 @@ export default function AdminProductsPage() {
                 <div className="text-velvet-white flex items-center gap-2">
                   {product.name}
                   {product.isOnSale && <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1.5 py-0.5 rounded border border-emerald-500/20">-{product.salePercentage}%</span>}
-                  {product.summerSale && <span className="bg-amber-500/10 text-amber-300 text-[8px] px-1.5 py-0.5 rounded border border-amber-400/30">Summer Sale</span>}
                 </div>
                 <div className="text-xs text-velvet-muted mt-1 line-clamp-1">{product.brand}</div>
               </div>
@@ -493,7 +483,6 @@ export default function AdminProductsPage() {
                 <div className="text-velvet-white font-medium truncate flex items-center gap-2">
                   {product.name}
                   {product.isOnSale && <span className="text-emerald-400 text-[10px]">-{product.salePercentage}%</span>}
-                  {product.summerSale && <span className="text-amber-300 text-[10px]">Summer</span>}
                 </div>
                 <div className="text-xs text-velvet-muted mt-1">{product.brand}</div>
               </div>
