@@ -69,6 +69,7 @@ type OrderPayload = {
   lines: SnapshotOrderLine[];
   metadata: {
     expectedVersion?: number;
+    redeemedReward?: string | null;
   };
 };
 
