@@ -336,6 +336,21 @@ export const collectionProducts = sqliteTable('collection_products', {
   uniqueItemIdx: uniqueIndex('collection_products_unique_idx').on(table.collectionId, table.productId),
 }));
 
+// 🎮 Daily Quiz Questions Table
+export const quizzes = sqliteTable('quizzes', {
+  id: text('id').primaryKey(),
+  title: text('title').notNull(),
+  prompt: text('prompt').notNull(),
+  options: text('options').notNull(), // JSON string: ["Option A", "Option B", "Option C"]
+  answerIndex: integer('answer_index').notNull(), // 0-based index of the correct option
+  points: integer('points').notNull().default(20),
+  generatedDate: text('generated_date').notNull(), // e.g. "2026-06-11" — tracks which day's batch
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+});
+
+export type Quiz = typeof quizzes.$inferSelect;
+export type NewQuiz = typeof quizzes.$inferInsert;
+
 // ⭐ Product Reviews Table
 export const reviews = sqliteTable('reviews', {
   id: text('id').primaryKey(),
@@ -372,3 +387,25 @@ export type OtpVerification = typeof otpVerifications.$inferSelect;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type NewReview = typeof reviews.$inferInsert;
+
+// ─── Vault Waitlist (Pre-Launch Signup) ──────────────────────────────
+export const vaultWaitlist = sqliteTable('vault_waitlist', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  emailIdx: uniqueIndex('vault_waitlist_email_idx').on(table.email),
+  createdAtIdx: index('vault_waitlist_created_at_idx').on(table.createdAt),
+}));
+
+export type VaultWaitlist = typeof vaultWaitlist.$inferSelect;
+export type NewVaultWaitlist = typeof vaultWaitlist.$inferInsert;
+
+// ─── Quiz Pack System (imported from quiz-pack/schema.ts) ────────────
+export {
+  quizPacks,
+  quizQuestions,
+  quizAttempts,
+  quizPoolHistory,
+  quizPackImportLogs,
+} from '../services/quiz-pack/schema'

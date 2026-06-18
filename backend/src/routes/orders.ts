@@ -23,6 +23,7 @@ const createOrderSchema = z.object({
   paymentMethod: z.literal('COD').optional().default('COD'),
   idempotencyKey: z.string().min(8, 'Idempotency key is required'),
   expectedVersion: z.number().optional(),
+  rewardId: z.string().optional(),
 });
 
 const cancelOrderSchema = z.object({
@@ -181,7 +182,8 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
     data.addressId,
     data.paymentMethod,
     data.idempotencyKey,
-    data.expectedVersion
+    data.expectedVersion,
+    data.rewardId
   );
 
   const statusCode = ('alreadyExists' in order && order.alreadyExists) ? 200 : 201;

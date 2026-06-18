@@ -10,7 +10,9 @@
     "db:studio": "drizzle-kit studio",
     "smoke:admin": "tsx scripts/admin-smoke-test.ts",
     "sync:down": "tsx scripts/sync-down.ts",
-    "sync:up": "tsx scripts/sync-up.ts"
+    "sync:up": "tsx scripts/sync-up.ts",
+    "migrate:quizzes": "tsx scripts/migrate-quizzes.ts",
+    "seed:quizzes": "tsx scripts/seed-quizzes-now.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",

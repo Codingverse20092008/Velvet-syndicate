@@ -3,14 +3,14 @@
     {
       "id": "3502a26e-3328-4b48-bacc-9ecbc05ca914",
       "name": "PUMA Suede XL Black White",
-      "slug": "puma-suede-xl-black-white",
+      "slug": "puma-suede-xl-black-white-1",
       "description": "PUMA Suede XL sneakers in a sleek black and white colorway combine classic street style with modern comfort. Featuring a premium suede upper, bold oversized laces, and a durable rubber sole, these sneakers deliver both style and everyday performance. Perfect for casual wear, these shoes elevate any outfit with a clean and timeless look.\n\nPremium suede upper\nIconic PUMA formstrip\nCushioned sole for comfort\nDurable rubber outsole\nStylish oversized lace design",
       "price": 2800,
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778266324/velvet-syndicate/products/ph28dieavu9bhkbgw8ur.jpg",
       "category": "footwear",
       "featured": 0,
       "created_at": "2026-05-08 18:55:35",
-      "updated_at": "2026-05-08T19:14:47.280Z",
+      "updated_at": "2026-05-12T15:30:58.329Z",
       "is_visible": 1,
       "features": null,
       "care_instructions": null,
@@ -19,7 +19,8 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "69987bd7-bc2c-43d1-9cdc-23d799716dad",
@@ -40,7 +41,8 @@
       "product_type": "sports",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "75cc051c-3650-4519-967f-bac08c1bcc36",
@@ -61,7 +63,8 @@
       "product_type": "sneakers",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "e46c824d-5432-49b8-b848-002d4923c364",
@@ -82,7 +85,8 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "c4f138e6-f20e-4443-a594-f8706152c33c",
@@ -103,19 +107,20 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "1a86b7a2-85da-4fd5-8e8b-ee5da076ee41",
       "name": "Adidas Climawarm Black White",
-      "slug": "adidas-climawarm-black-white-1",
+      "slug": "adidas-climawarm-black-white",
       "description": "Adidas Climawarm-style sneakers are designed for performance and comfort. Featuring a breathable upper and a thick cushioned sole, these shoes provide excellent support for running, training, or everyday wear. The sleek black and white design gives a sporty and modern look while ensuring durability and grip.\n\nBreathable mesh upper\nThick cushioned sole\nLightweight and flexible design\nStrong grip outsole\nSporty everyday style",
       "price": 2400,
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267943/velvet-syndicate/products/mazeovctwqqhiifhaggw.jpg",
       "category": "footwear",
-      "featured": 1,
+      "featured": 0,
       "created_at": "2026-05-08 19:20:21",
-      "updated_at": "2026-05-08T19:20:37.635Z",
+      "updated_at": "2026-05-12T15:31:14.990Z",
       "is_visible": 1,
       "features": null,
       "care_instructions": null,
@@ -124,7 +129,8 @@
       "product_type": "running",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "590af401-c6d3-4b76-86fa-50d3e87b9457",
@@ -145,7 +151,8 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "ffa557cb-31fe-433a-80cc-4c822c0913b4",
@@ -166,7 +173,8 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "f8c9d26b-3fd4-4e16-8753-ab91ad4a3d78",
@@ -187,7 +195,8 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "9b158a99-f6a2-4e54-a4e8-a144f8a709d0",
@@ -208,7 +217,8 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "0489ec9a-a64f-4ae2-95cd-82fd0ba309ef",
@@ -229,7 +239,8 @@
       "product_type": "sneakers",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "e7b00e9a-0f3a-4631-b76b-0de2c365ef8e",
@@ -250,19 +261,20 @@
       "product_type": "sneakers",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "3b071acb-1518-4b08-ab05-2a1afe5fdf3c",
       "name": "Addidas samba white",
-      "slug": "addidas-samba-white-1",
+      "slug": "addidas-samba-white",
       "description": "Features...........\nPremium leather-style upper\nSoft suede toe overlay\nClassic black stripe detailing\nDurable gum rubber outsole\nComfortable cushioned inner lining\nLightweight low-top construction\nEveryday streetwear essential",
       "price": 1499,
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778314991/velvet-syndicate/products/jd1yq6p37cmqixmwfzil.webp",
       "category": "footwear",
       "featured": 0,
       "created_at": "2026-05-09 08:27:49",
-      "updated_at": "2026-05-09T08:51:32.726Z",
+      "updated_at": "2026-05-12T15:30:36.568Z",
       "is_visible": 1,
       "features": null,
       "care_instructions": null,
@@ -271,19 +283,20 @@
       "product_type": "casual",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "ccfee33f-dfdb-4e1d-93f1-6da64a89f9bc",
       "name": "Air force White",
-      "slug": "air-force-white",
+      "slug": "air-force-white-1",
       "description": "the shoe that's famous for its effortlessly cool and minimalist look. This sneaker has taken the world by storm with its casual beauty that's hard to resist. What sets the Air Force White apart is its plain white design that exudes simplicity and style. It's the go-to shoe for those who appreciate a clean and understated aesthetic. Whether you're dressing up or down, this shoe effortlessly complements any outfit, making it a versatile choice for any occasion\n\nCare Instructions\n\nClean with less wet cloth, Don't wash in washing",
       "price": 1499,
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316061/velvet-syndicate/products/vzu8vqdi8kdjzzupkhtu.jpg",
       "category": "footwear",
       "featured": 0,
       "created_at": "2026-05-09 08:43:28",
-      "updated_at": "2026-05-09 08:43:28",
+      "updated_at": "2026-05-12T15:30:19.600Z",
       "is_visible": 1,
       "features": null,
       "care_instructions": null,
@@ -292,19 +305,20 @@
       "product_type": "sneakers",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
     },
     {
       "id": "38105342-6310-430a-b93a-1b57e2b9af0f",
       "name": "NIKE SB DUNK THERE SKATEBOARD",
-      "slug": "nike-sb-dunk-there-skateboard-1",
+      "slug": "nike-sb-dunk-there-skateboard",
       "description": "Nike SB Dunk Low “There Skateboard” inspired sneakers feature a bold black, grey, and green color combination with detailed artistic graphics for a premium streetwear aesthetic. Built with a cushioned sole and durable upper, these sneakers offer comfort, grip, and standout style for daily wear or skate-inspired outfits.\nPremium SB Dunk-inspired design\nArtistic graphic detailing\nCushioned sole for comfort\nDurable rubber outsole\nTrendy streetwear look",
       "price": 3150,
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778563394/velvet-syndicate/products/eszz7gj5psnucxgpit3z.jpg",
       "category": "footwear",
-      "featured": 0,
+      "featured": 1,
       "created_at": "2026-05-12 05:26:25",
-      "updated_at": "2026-05-12T05:26:40.826Z",
+      "updated_at": "2026-05-12T15:31:23.864Z",
       "is_visible": 1,
       "features": null,
       "care_instructions": null,
@@ -313,7 +327,184 @@
       "product_type": "sports",
       "is_out_of_stock": 0,
       "is_on_sale": 0,
-      "sale_percentage": 0
+      "sale_percentage": 0,
+      "is_summer_sale": 0
+    },
+    {
+      "id": "4a49ed01-7d1b-45e7-89fd-2303c2aa13c4",
+      "name": "Leather Chelsea Boots Black",
+      "slug": "leather-chelsea-boots-black-1",
+      "description": "Premium Genuine Leather Chelsea Boots crafted for a sleek and sophisticated look. Designed with a smooth leather finish, elastic side panels, and a durable anti-slip sole, these boots deliver both comfort and timeless style. Perfect for formal wear, smart casual outfits, and evening occasions.\n\nGenuine leather construction\nElegant Chelsea boot silhouette\nComfortable slip-on design\nDurable anti-slip outsole\nPremium formal & casual styling",
+      "price": 1600,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778909368/velvet-syndicate/products/jo2t18qiu0pl6iftzuxx.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-16 05:29:50",
+      "updated_at": "2026-05-16T05:30:05.492Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "PAT KEVIN",
+      "gender": "men",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0,
+      "is_summer_sale": 0
+    },
+    {
+      "id": "9312ac17-6a2a-4441-b438-ccefb0405e25",
+      "name": "Nike SB Dunk Low Travis Scott Bandana",
+      "slug": "nike-sb-dunk-low-travis-scott-bandana-1",
+      "description": "Nike SB Dunk Low Travis Scott Bandana sneakers combine iconic streetwear style with premium artistic detailing. Featuring a unique mix of bandana and plaid patterns with a clean cream and black base, these sneakers deliver a bold yet versatile look. Designed for comfort and everyday wear, the cushioned sole and durable construction make them perfect for sneaker lovers and streetwear enthusiasts.\nPremium SB Dunk-inspired design\nUnique bandana & plaid detailing\nCushioned sole for all-day comfort\nDurable gum rubber outsole\nTrendy streetwear aesthetic\nEasy to style with casual outfits",
+      "price": 1600,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555445/velvet-syndicate/products/nobpeaoonajkuvponmxw.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-23 16:58:26",
+      "updated_at": "2026-05-23T16:58:58.117Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0,
+      "is_summer_sale": 0
+    },
+    {
+      "id": "aa10e8eb-fb58-4e05-a6bf-bb3e3f1e5ad4",
+      "name": "Nike Air Force 1 Low “Coffee Milk Shadow”",
+      "slug": "nike-air-force-1-low-coffee-milk-shadow-1",
+      "description": "Nike Air Force 1 Low “Coffee Milk Shadow” sneakers feature a premium cream base with coffee brown swoosh detailing and a modern translucent grey midsole for a unique streetwear look. Designed with comfort, durability, and everyday versatility in mind, these sneakers perfectly balance minimal aesthetics with standout styling.\nPremium AF1-inspired silhouette\nCream and coffee-toned detailing\nStylish translucent grey midsole\nCushioned sole for all-day comfort\nDurable rubber outsole\nClean everyday streetwear look",
+      "price": 3200,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555782/velvet-syndicate/products/knksm6wzz9khax6jbrwy.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-23 17:03:07",
+      "updated_at": "2026-05-23T17:03:26.554Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nile",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0,
+      "is_summer_sale": 0
+    },
+    {
+      "id": "869be287-5b73-4bb1-ad4a-4e4b18a879d6",
+      "name": "Nike SB Dunk Low “Chunky Dunky”",
+      "slug": "nike-sb-dunk-low-chunky-dunky-1",
+      "description": "Nike SB Dunk Low “Chunky Dunky” inspired sneakers feature a bold and playful design inspired by the iconic Ben & Jerry’s collaboration. With vibrant blue and green tones, yellow swoosh detailing, and unique cow-print overlays, these sneakers deliver standout streetwear energy with premium comfort. Built with a cushioned sole and durable construction, they are perfect for sneaker enthusiasts who want a loud and trendy statement pair.\nPremium Chunky Dunky-inspired design\nUnique cow-print textured overlays\nBright multi-color streetwear aesthetic\nCushioned sole for all-day comfort\nDurable rubber outsole\nPerfect for sneaker and hype-fashion lovers",
+      "price": 1800,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555988/velvet-syndicate/products/yj79orykq8q9idrha3vk.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-23 17:06:50",
+      "updated_at": "2026-05-25T14:59:36.548Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 0,
+      "sale_percentage": 0,
+      "is_summer_sale": 0
+    },
+    {
+      "id": "ffa2035f-2e3a-4bdc-b1aa-c29c8cde95cf",
+      "name": "Nike Dunk Low UNC Grey",
+      "slug": "nike-dunk-low-unc-grey",
+      "description": "fresh sky-blue swoosh detailing for a classy everyday sneaker look. The premium leather-style upper, padded collar, and lightweight cushioned sole make it perfect for daily wear, college fits, and streetwear styling. Minimal yet eye-catching, this pair delivers comfort and hype together.\n\n✨ Premium leather-style finish\n✨ Soft cushioned insole for comfort\n✨ Durable anti-slip outsole\n✨ Trendy UNC-inspired colorway\n✨ Perfect for casual & streetwear outfits\n✨ Lightweight and easy for all-day wear",
+      "price": 1999,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779724945/velvet-syndicate/products/f2kvhespv1szt9s2gjau.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-25 16:06:53",
+      "updated_at": "2026-05-25 16:06:53",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "streetwear",
+      "is_out_of_stock": 0,
+      "is_on_sale": 1,
+      "sale_percentage": 30,
+      "is_summer_sale": 1
+    },
+    {
+      "id": "23b5e14c-7093-4825-beba-2fb4216aec65",
+      "name": "Nike SB Dunk Low Panda",
+      "slug": "nike-sb-dunk-low-panda",
+      "description": "Nike SB Dunk Low Panda delivers the perfect black-and-white classic sneaker vibe with a clean streetwear aesthetic. Designed with a premium leather-style upper, cushioned sole, and extra lace pair included for styling flexibility. Lightweight, comfortable, and easy to match with every outfit — from casual fits to daily college wear.\n\n✨ Premium leather-style finish\n✨ Extra white laces included 🎁\n✨ Soft cushioned insole for all-day comfort\n✨ Durable anti-slip outsole\n✨ Clean monochrome Panda colorway\n✨ Perfect for daily wear & street fashion",
+      "price": 2200,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779725534/velvet-syndicate/products/q3hpixxv6hp7ce2ysrxu.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-25 16:12:47",
+      "updated_at": "2026-05-25 16:12:47",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "unisex",
+      "product_type": "sneakers",
+      "is_out_of_stock": 0,
+      "is_on_sale": 1,
+      "sale_percentage": 32,
+      "is_summer_sale": 1
+    },
+    {
+      "id": "047c275f-ac03-41ef-9dd4-d6fc4fa0a0fc",
+      "name": "Nike Guidelo Running Shoes",
+      "slug": "nike-guidelo-running-shoes-1",
+      "description": "Nike Guidelo Running Shoes are built for lightweight comfort and daily performance. Featuring a breathable mesh upper, cushioned sole, and flexible running outsole, these shoes are perfect for gym sessions, walking, running, and all-day casual wear. The clean white design with black swoosh gives a sporty premium look that matches every outfit.\n\n✨ Lightweight breathable mesh upper\n✨ Soft cushioned comfort sole\n✨ Flexible anti-slip outsole\n✨ Perfect for running, gym & daily wear\n✨ Stylish sporty design\n✨ Comfortable all-day fit",
+      "price": 2000,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779725748/velvet-syndicate/products/iownvypufkxlwbovebst.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-25 16:16:15",
+      "updated_at": "2026-05-25T16:16:23.710Z",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "Nike",
+      "gender": "men",
+      "product_type": "running",
+      "is_out_of_stock": 0,
+      "is_on_sale": 1,
+      "sale_percentage": 25,
+      "is_summer_sale": 1
+    },
+    {
+      "id": "f3413df8-2c83-4451-a226-4bfa48e043a1",
+      "name": "New Balance 550 Green White",
+      "slug": "new-balance-550-green-white",
+      "description": "Clean vintage-inspired sneaker with premium white leather upper, green detailing and classic NB 550 silhouette. Perfect for daily wear, college outfits, streetwear styling and casual fits. Comfortable cushioning with durable rubber outsole for all-day comfort and grip.",
+      "price": 2200,
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779729722/velvet-syndicate/products/rwedcmm3szagai4sjwmn.jpg",
+      "category": "footwear",
+      "featured": 0,
+      "created_at": "2026-05-25 17:22:18",
+      "updated_at": "2026-05-25 17:22:18",
+      "is_visible": 1,
+      "features": null,
+      "care_instructions": null,
+      "brand": "New Balance",
+      "gender": "unisex",
+      "product_type": "casual",
+      "is_out_of_stock": 0,
+      "is_on_sale": 1,
+      "sale_percentage": 32,
+      "is_summer_sale": 1
     }
   ],
   "variants": [
@@ -436,6 +627,70 @@
       "color": "Black, Grey, Green",
       "slug": "nike-sb-dunk-there-skateboard",
       "created_at": "2026-05-12 05:26:26"
+    },
+    {
+      "id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "product_id": "4a49ed01-7d1b-45e7-89fd-2303c2aa13c4",
+      "name": "Jet Black",
+      "color": "Jet Black",
+      "slug": "leather-chelsea-boots-black",
+      "created_at": "2026-05-16 05:29:50"
+    },
+    {
+      "id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "product_id": "9312ac17-6a2a-4441-b438-ccefb0405e25",
+      "name": "Nike SB Dunk Low Travis Scott Bandana Black, Nike SB Dunk Low Travis Scott Bandana Pink",
+      "color": "Nike SB Dunk Low Travis Scott Bandana Black, Nike SB Dunk Low Travis Scott Bandana Pink",
+      "slug": "nike-sb-dunk-low-travis-scott-bandana",
+      "created_at": "2026-05-23 16:58:26"
+    },
+    {
+      "id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "product_id": "aa10e8eb-fb58-4e05-a6bf-bb3e3f1e5ad4",
+      "name": "Cream, Coffee Brown, Grey, White",
+      "color": "Cream, Coffee Brown, Grey, White",
+      "slug": "nike-air-force-1-low-coffee-milk-shadow",
+      "created_at": "2026-05-23 17:03:07"
+    },
+    {
+      "id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "product_id": "869be287-5b73-4bb1-ad4a-4e4b18a879d6",
+      "name": "Sky Blue, Green, Yellow, Black, White",
+      "color": "Sky Blue, Green, Yellow, Black, White",
+      "slug": "nike-sb-dunk-low-chunky-dunky",
+      "created_at": "2026-05-23 17:06:50"
+    },
+    {
+      "id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "product_id": "ffa2035f-2e3a-4bdc-b1aa-c29c8cde95cf",
+      "name": "Sky Blue / Grey / White",
+      "color": "Sky Blue / Grey / White",
+      "slug": "nike-dunk-low-unc-grey",
+      "created_at": "2026-05-25 16:06:53"
+    },
+    {
+      "id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "product_id": "23b5e14c-7093-4825-beba-2fb4216aec65",
+      "name": "Black / White",
+      "color": "Black / White",
+      "slug": "nike-sb-dunk-low-panda",
+      "created_at": "2026-05-25 16:12:47"
+    },
+    {
+      "id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "product_id": "047c275f-ac03-41ef-9dd4-d6fc4fa0a0fc",
+      "name": "White / Black",
+      "color": "White / Black",
+      "slug": "nike-guidelo-running-shoes",
+      "created_at": "2026-05-25 16:16:15"
+    },
+    {
+      "id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "product_id": "f3413df8-2c83-4451-a226-4bfa48e043a1",
+      "name": "White, Green & Grey",
+      "color": "White, Green & Grey",
+      "slug": "new-balance-550-green-white",
+      "created_at": "2026-05-25 17:22:18"
     }
   ],
   "variantImages": [
@@ -450,19 +705,9 @@
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267612/velvet-syndicate/products/bfmr8lhyp0yqqglp6mf0.jpg"
     },
     {
-      "id": "4036de78-e058-4740-850e-ecbe5e8079e0",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778266324/velvet-syndicate/products/ph28dieavu9bhkbgw8ur.jpg"
-    },
-    {
       "id": "3a34e35e-ebc2-4593-8343-11746c3f1ea1",
       "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267767/velvet-syndicate/products/jhti6ccal5i7puvmzgth.jpg"
-    },
-    {
-      "id": "72a183ec-e436-4bfb-a1f8-01d9af4740a1",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267943/velvet-syndicate/products/mazeovctwqqhiifhaggw.jpg"
     },
     {
       "id": "0fad6b09-e6d9-4600-89d5-ea25a261e94e",
@@ -500,29 +745,119 @@
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778268738/velvet-syndicate/products/qzztjz8aypug3rmg9gzg.jpg"
     },
     {
-      "id": "5d003872-99a6-4d98-8975-369a41452005",
+      "id": "27c09b57-31b1-4938-a196-bf0683dcc022",
       "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316061/velvet-syndicate/products/vzu8vqdi8kdjzzupkhtu.jpg"
     },
     {
-      "id": "58630e85-55da-44d7-8fa4-b0b9a84b27c5",
-      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
-      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316067/velvet-syndicate/products/lymoqvzkze0grvj9tmvc.jpg"
-    },
-    {
-      "id": "9fd56424-cdb5-49a7-9efa-765cb48cbec6",
+      "id": "bb8295a7-ad3a-4a4a-95c2-31ab20624039",
       "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778314991/velvet-syndicate/products/jd1yq6p37cmqixmwfzil.webp"
     },
     {
-      "id": "133b9967-1227-4dd0-ade3-98adfa20a115",
-      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
-      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778316682/velvet-syndicate/products/juybib2l2ittqrkkcd9c.webp"
+      "id": "7c6b7f2d-acc2-4db2-830a-90032d1877ee",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778266324/velvet-syndicate/products/ph28dieavu9bhkbgw8ur.jpg"
     },
     {
-      "id": "c65d0ddb-caa9-444f-b759-c3265996113a",
+      "id": "78939049-9fe7-4e85-85d8-a0d863f9ffac",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778267943/velvet-syndicate/products/mazeovctwqqhiifhaggw.jpg"
+    },
+    {
+      "id": "a48972fd-9c59-4c9e-9d85-9a5dbda7f02e",
       "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
       "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778563394/velvet-syndicate/products/eszz7gj5psnucxgpit3z.jpg"
+    },
+    {
+      "id": "0a7af78f-555f-414f-8e92-ed5528651788",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1778909368/velvet-syndicate/products/jo2t18qiu0pl6iftzuxx.jpg"
+    },
+    {
+      "id": "fb4372f8-bd5c-473c-b68c-32c8e9d6b175",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555445/velvet-syndicate/products/nobpeaoonajkuvponmxw.jpg"
+    },
+    {
+      "id": "ec3d6c92-4569-4288-a93b-9c0ec7b2e108",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555533/velvet-syndicate/products/jn2fcewdv0dqnrqgsjkz.jpg"
+    },
+    {
+      "id": "a694b5d5-b4ef-4597-b52e-45c7fa2449ed",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555533/velvet-syndicate/products/moqpir4g6iphh0xt3j8m.jpg"
+    },
+    {
+      "id": "526d094a-e28b-4ebc-873a-6eb0cb1fe0cd",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555533/velvet-syndicate/products/acr2sdesvnjihl1fzxv2.jpg"
+    },
+    {
+      "id": "c400d024-14bb-495b-8cfa-224c6be0d183",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555533/velvet-syndicate/products/nssuzg4kw8hcgrc6ahbt.jpg"
+    },
+    {
+      "id": "58441f19-d6e8-48d1-9fe7-ff7f160e95f5",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555782/velvet-syndicate/products/knksm6wzz9khax6jbrwy.jpg"
+    },
+    {
+      "id": "1c34e38e-4752-4ac5-ab6b-f25a8902fcc1",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555794/velvet-syndicate/products/s5bdpsxttegjdlgdtngk.jpg"
+    },
+    {
+      "id": "454ebbb2-3b53-4045-8907-167c0d12a903",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779555988/velvet-syndicate/products/yj79orykq8q9idrha3vk.jpg"
+    },
+    {
+      "id": "cf2dafcd-cbb8-4b3f-96fb-e2a3950e93df",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779724945/velvet-syndicate/products/f2kvhespv1szt9s2gjau.jpg"
+    },
+    {
+      "id": "0ecf9c54-44c2-41cb-b58e-6be30ff185ee",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779724953/velvet-syndicate/products/xmzzhwfzbb1snnibontb.jpg"
+    },
+    {
+      "id": "5b15d887-678b-4659-a153-d2f432d311b8",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779724953/velvet-syndicate/products/sakj5hfcsvxca67ukryy.jpg"
+    },
+    {
+      "id": "637ffdbb-8643-48e7-88b9-aeb46da5e15e",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779724954/velvet-syndicate/products/vib4q5scomfoawvimwjp.jpg"
+    },
+    {
+      "id": "d32f2f2a-2523-4535-b473-9f370e3d1868",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779725534/velvet-syndicate/products/q3hpixxv6hp7ce2ysrxu.jpg"
+    },
+    {
+      "id": "194e1de7-00fd-4d7f-a9bb-8613d842c0ce",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779725541/velvet-syndicate/products/u7fbjoemkhdmlxt7pml3.jpg"
+    },
+    {
+      "id": "ae2269fc-8ab0-4950-a5bb-b341082a2f62",
+      "variant_id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779725748/velvet-syndicate/products/iownvypufkxlwbovebst.jpg"
+    },
+    {
+      "id": "65e265ff-166b-41d1-a8db-5ecdbf9620e0",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779729722/velvet-syndicate/products/rwedcmm3szagai4sjwmn.jpg"
+    },
+    {
+      "id": "c1c80c6c-ac18-40c8-a7b5-e72bba23d900",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "image_url": "https://res.cloudinary.com/dpw9up5tj/image/upload/v1779729729/velvet-syndicate/products/jwol1jo0dizhtfxirruv.jpg"
     }
   ],
   "sizes": [
@@ -599,42 +934,6 @@
       "stock": 8
     },
     {
-      "id": "db7febfc-a7f7-44db-a07c-304e3219457c",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "size": "10",
-      "stock": 2
-    },
-    {
-      "id": "6700df9f-8106-4746-8a2b-57072c8610a7",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "size": "11",
-      "stock": 2
-    },
-    {
-      "id": "9df5b99f-d690-4c92-95e2-81471edaa0b9",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "size": "6",
-      "stock": 2
-    },
-    {
-      "id": "cd6b378a-4709-44ec-a958-2d3f240eb370",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "size": "7",
-      "stock": 2
-    },
-    {
-      "id": "d52a85b9-e374-4f96-aa8e-cc3e97cfe757",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "size": "8",
-      "stock": 1
-    },
-    {
-      "id": "fd2a8fa9-a65a-4fe6-bf43-a3b3dd4424d3",
-      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
-      "size": "9",
-      "stock": 1
-    },
-    {
       "id": "1992bf1e-2642-4cad-8684-95e59cd8c21f",
       "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
       "size": "6",
@@ -669,42 +968,6 @@
       "variant_id": "70a05714-a43f-4e72-831b-29fce93a63b0",
       "size": "12",
       "stock": 8
-    },
-    {
-      "id": "980f7e8c-4fa9-4728-9cba-3af9a75cc89f",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "size": "12",
-      "stock": 14
-    },
-    {
-      "id": "73fa8522-67b3-43d4-8d93-d6ecc9435869",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "size": "7",
-      "stock": 14
-    },
-    {
-      "id": "042210bf-adca-412b-9382-5d1016c65509",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "size": "6",
-      "stock": 13
-    },
-    {
-      "id": "2e09ccd2-6ef0-4a51-86ce-272a3ad5cd8e",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "size": "9",
-      "stock": 13
-    },
-    {
-      "id": "78b5824f-fb50-477c-89f3-035c116ffa88",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "size": "10",
-      "stock": 13
-    },
-    {
-      "id": "95e9ec72-a2c9-4727-a051-8aa6cbe58f29",
-      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
-      "size": "11",
-      "stock": 13
     },
     {
       "id": "41567078-d3d1-4cfc-bcde-5f8d3089a066",
@@ -959,51 +1222,513 @@
       "stock": 3
     },
     {
-      "id": "409a06d9-12d9-4ec5-b271-bd6c15b40d1a",
+      "id": "81e5c0be-2db5-4778-a589-cf8acea47b31",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "12",
+      "stock": 7
+    },
+    {
+      "id": "a263f2d0-414c-42f0-a46d-92a83b38b63a",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "11",
+      "stock": 7
+    },
+    {
+      "id": "79c1c834-267a-41d2-b7fe-0091d6eff279",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "10",
+      "stock": 7
+    },
+    {
+      "id": "e609c298-f00b-4646-80c6-486beb0e3d3c",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "9",
+      "stock": 6
+    },
+    {
+      "id": "c1d96f20-77dd-4d9f-b424-c475edaab7fd",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "8",
+      "stock": 6
+    },
+    {
+      "id": "90c7558a-30c0-4b6c-bb80-1cd300263a22",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "6",
+      "stock": 6
+    },
+    {
+      "id": "d8e1f539-9892-4c40-8eb7-5e00f4aa9d92",
+      "variant_id": "9eeff9b6-d621-4b21-9cdb-4fd336f659bd",
+      "size": "7",
+      "stock": 6
+    },
+    {
+      "id": "8341d054-a35e-4e9f-98b7-68c4c954146f",
       "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
       "size": "Standard",
-      "stock": 0
+      "stock": 2
     },
     {
-      "id": "6ca6d215-51b8-48ec-bc12-1c982591d6e7",
+      "id": "af638d11-4ff5-4315-aa11-74b71e0eba12",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "d2ec187a-5ceb-4d45-a3d1-75a87c4f76cc",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "3f7dc559-cb16-419b-8948-98ea1de53544",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "8",
+      "stock": 2
+    },
+    {
+      "id": "5c42ed24-698b-4dc3-aa08-7d8abf55005a",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "9",
+      "stock": 2
+    },
+    {
+      "id": "bda22cd7-4895-4b13-9f5e-e1c0b94f1bb0",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "10",
+      "stock": 2
+    },
+    {
+      "id": "f1bd6961-0ad3-4c9f-9ddb-277b1dc94f77",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "11",
+      "stock": 2
+    },
+    {
+      "id": "39d9ae07-5f0a-4bb5-b553-daf2d29dd670",
+      "variant_id": "2364f95d-fa89-4bcf-8d3d-568bdc094482",
+      "size": "12",
+      "stock": 1
+    },
+    {
+      "id": "d496b93e-b317-4fc9-b54b-fcfd9e1f94a3",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "10",
+      "stock": 2
+    },
+    {
+      "id": "818f1cef-fc83-40c5-9866-3bcabe357e68",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "11",
+      "stock": 2
+    },
+    {
+      "id": "208200b2-09cb-496c-b06f-5cce1834858d",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "ccd0c9ee-5ba3-458d-8ef8-dd566a42697f",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "40b16546-783d-4697-a6c2-843e9ea9830e",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "8",
+      "stock": 1
+    },
+    {
+      "id": "c5cd0e12-c12a-49c7-bcee-19f125689e43",
+      "variant_id": "d3e863f9-06de-4fb8-a73b-f72f6f47c5d6",
+      "size": "9",
+      "stock": 1
+    },
+    {
+      "id": "6e1166cb-234a-4250-ae77-8ae26b071f10",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "10",
+      "stock": 14
+    },
+    {
+      "id": "048f4c62-8de3-4db4-9082-7e93e1f74137",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "11",
+      "stock": 14
+    },
+    {
+      "id": "f453f246-b148-4d0d-b711-e210c2847a47",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "12",
+      "stock": 13
+    },
+    {
+      "id": "f4a05ff5-f404-4ad8-a628-fcc6819e14b2",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "6",
+      "stock": 13
+    },
+    {
+      "id": "9acbb0f5-2207-41d1-84f8-7c778d504e8a",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "7",
+      "stock": 13
+    },
+    {
+      "id": "34d7c05e-8eb9-4a86-812b-fefbebaf3d45",
+      "variant_id": "e9197f25-cf6f-4dfc-8d33-f6282b548c04",
+      "size": "9",
+      "stock": 13
+    },
+    {
+      "id": "7beeba51-d732-4bd4-bdf5-96adf7953ed1",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "10",
+      "stock": 4
+    },
+    {
+      "id": "0156ecbe-ba4a-4538-87db-cad1879c31b0",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "11",
+      "stock": 4
+    },
+    {
+      "id": "64121806-eb54-4bb8-94c9-7bd1784c34c8",
+      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "size": "12",
+      "stock": 4
+    },
+    {
+      "id": "9695cdc0-d307-4ea5-ad29-765afd2b67ff",
       "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
       "size": "6",
-      "stock": 4
+      "stock": 3
     },
     {
-      "id": "f7c5b85d-9714-4700-8650-7c5e2c343027",
+      "id": "ac484558-1998-4a31-84f8-ab5e41beeb6e",
       "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
       "size": "7",
-      "stock": 4
+      "stock": 3
     },
     {
-      "id": "2b870d02-e413-497d-a4aa-067463886014",
+      "id": "5d144e4d-5934-4a67-8a47-c110c2746f09",
       "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
       "size": "8",
-      "stock": 4
+      "stock": 3
     },
     {
-      "id": "b094daf4-600b-4c78-aacc-3bac1dd0c069",
+      "id": "004d93ad-4d1b-4ebe-bf23-93fa1d4efd49",
       "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
       "size": "9",
       "stock": 3
     },
     {
-      "id": "53f9fdaa-eece-4d88-a602-539f89c2d540",
-      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "id": "ead24998-c576-44d1-bc2b-9d22eb78a144",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "size": "6",
+      "stock": 6
+    },
+    {
+      "id": "2ab5286f-a672-4c4a-910d-76c7c5789318",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "size": "7",
+      "stock": 6
+    },
+    {
+      "id": "a2d82bc5-5c42-475e-9937-0cf56b0e1689",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "size": "8",
+      "stock": 6
+    },
+    {
+      "id": "7b47c1cb-bc55-485d-ae69-8fe24587528e",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "size": "9",
+      "stock": 6
+    },
+    {
+      "id": "0fc4ea5c-5d23-4cd8-8df7-3bfb238a1121",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
       "size": "10",
-      "stock": 3
+      "stock": 6
     },
     {
-      "id": "cc59ce9d-2e51-40fd-b3bf-f951dc6a7bad",
-      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "id": "486e7b37-24d4-4761-b265-61eb53fe2299",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
       "size": "11",
+      "stock": 6
+    },
+    {
+      "id": "f90e64b9-5a56-4b53-8a8f-4369178df84a",
+      "variant_id": "e6a70b28-48d2-4e1b-a593-1eacdd12c67d",
+      "size": "12",
+      "stock": 6
+    },
+    {
+      "id": "a6278cd0-622e-4105-89fc-87c411374797",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "6",
+      "stock": 7
+    },
+    {
+      "id": "517e6b5b-01f7-451f-97b2-5fdd990a069f",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "7",
+      "stock": 7
+    },
+    {
+      "id": "c94012fe-7090-4fad-b62b-628586d8c7a9",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "8",
+      "stock": 7
+    },
+    {
+      "id": "bf15079e-d40b-4461-8b7d-a8e20e982f5f",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "9",
+      "stock": 6
+    },
+    {
+      "id": "1832c1dc-8f3c-4bb3-8b70-25f3f9ba6e32",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "10",
+      "stock": 6
+    },
+    {
+      "id": "1073c14a-5532-43c6-bc27-52e3ab776058",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "11",
+      "stock": 6
+    },
+    {
+      "id": "f007b78f-32eb-4c8d-b6a8-bc7d0588c030",
+      "variant_id": "44f9eab8-a2cf-49f5-bb60-6a818b50565a",
+      "size": "12",
+      "stock": 6
+    },
+    {
+      "id": "6a6a580a-b1e8-476d-bfcb-12ed31bc3183",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "6",
+      "stock": 8
+    },
+    {
+      "id": "fbe60c3f-f08c-46c7-bb0a-f1341d06e27c",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "7",
+      "stock": 7
+    },
+    {
+      "id": "e4d5a63b-63e9-4f81-8bb3-d29a5233d91e",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "8",
+      "stock": 7
+    },
+    {
+      "id": "e02bc2ad-b7eb-4db0-928b-4ee46d2df5c1",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "9",
+      "stock": 7
+    },
+    {
+      "id": "85fe37bf-6044-414c-bb35-9b8e8a61755c",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "10",
+      "stock": 7
+    },
+    {
+      "id": "0869fb7f-99ee-424b-bf4c-e5a23afab4ce",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "12",
+      "stock": 7
+    },
+    {
+      "id": "0d174fbe-75d1-4da2-9f39-3731e47a4139",
+      "variant_id": "fede8a11-f1e8-4cbf-b9b7-a7678f0a7bab",
+      "size": "11",
+      "stock": 7
+    },
+    {
+      "id": "2025c167-603c-4340-b9e1-8cf8363c0679",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "10",
+      "stock": 5
+    },
+    {
+      "id": "a1908573-9fef-4705-93eb-550d45a773e8",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "11",
+      "stock": 5
+    },
+    {
+      "id": "58e535bb-d760-447d-88fe-31be5f198e50",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "12",
+      "stock": 5
+    },
+    {
+      "id": "5e93b843-927f-4ddb-ad2c-c329c0664d59",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "6",
+      "stock": 5
+    },
+    {
+      "id": "b2ebdc9b-5c3b-43de-81c0-46858d4d58ec",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "7",
+      "stock": 5
+    },
+    {
+      "id": "73edaa7b-f326-4c8d-9351-a8811d809fdd",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "8",
+      "stock": 5
+    },
+    {
+      "id": "e702feab-4b86-426f-8cf2-f75d5f577d1b",
+      "variant_id": "1906b60b-0196-44d6-b106-6a540b2fab77",
+      "size": "9",
+      "stock": 5
+    },
+    {
+      "id": "63236cd3-b377-42db-9993-e16bc91f11e5",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "07d639d8-ae5b-485e-9684-f8474c9df423",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "188f528e-8e93-4d98-9cef-d9f8c16c71b9",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "8",
+      "stock": 2
+    },
+    {
+      "id": "ef75d1fc-4d3b-4f2c-8a95-987679a474b5",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "9",
+      "stock": 2
+    },
+    {
+      "id": "9fe7c52d-acd3-4a83-88b1-bf3889c3f961",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "10",
+      "stock": 2
+    },
+    {
+      "id": "bc63246b-d0dd-43b5-bb3a-82f5dd7ee186",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "11",
+      "stock": 1
+    },
+    {
+      "id": "a5e366c1-346d-430e-9b2e-f0d1a0da1735",
+      "variant_id": "61056500-abcb-4e38-85cb-dc8c41b80405",
+      "size": "12",
+      "stock": 1
+    },
+    {
+      "id": "f7f10602-9066-403a-84fa-b119729b9766",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "size": "7",
       "stock": 3
     },
     {
-      "id": "b4d5fd85-db65-40e3-951d-fe42df78266c",
-      "variant_id": "e379d369-5252-43fa-8f35-51ef073f646f",
+      "id": "0211f97d-04f9-47bb-a5a3-1cab758590dc",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "size": "8",
+      "stock": 3
+    },
+    {
+      "id": "bd10a59d-3232-4df6-9ef1-a1c899d95837",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "size": "9",
+      "stock": 2
+    },
+    {
+      "id": "bf703f01-dadd-46c7-a39c-57d2d2badf70",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "size": "10",
+      "stock": 2
+    },
+    {
+      "id": "e8102438-24c8-4ff4-beb2-58cd4bad9cb6",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
+      "size": "11",
+      "stock": 2
+    },
+    {
+      "id": "448d5cfe-3de9-430e-ae0a-f019b27a1b1d",
+      "variant_id": "2ed110c3-4c52-4215-b864-f3785c88f84d",
       "size": "12",
+      "stock": 2
+    },
+    {
+      "id": "3059936a-3093-455c-8f8b-75dbe53f77d4",
+      "variant_id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "size": "10",
+      "stock": 1
+    },
+    {
+      "id": "62c6cf28-7e7d-437e-943c-f00d1c44d807",
+      "variant_id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "size": "6",
+      "stock": 2
+    },
+    {
+      "id": "0c16665a-b7f9-4cc0-ab1d-f74f4d24557b",
+      "variant_id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "size": "7",
+      "stock": 2
+    },
+    {
+      "id": "07660b1d-e7b7-4acf-85ca-5194cdc88c0a",
+      "variant_id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "size": "8",
+      "stock": 2
+    },
+    {
+      "id": "e36a820b-cce7-4f69-a26e-afa343d9b3b1",
+      "variant_id": "3b1ca3a0-ef54-4f37-81fb-f1b677f22706",
+      "size": "9",
+      "stock": 2
+    },
+    {
+      "id": "edeab8b1-a327-435b-9ad7-c463ecb47590",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "size": "6",
+      "stock": 4
+    },
+    {
+      "id": "7e8dcd4a-1e64-4a4f-adf9-3e62f04a616c",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "size": "7",
+      "stock": 3
+    },
+    {
+      "id": "38f6c574-96b4-4925-bd59-ce956f6e1165",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "size": "8",
+      "stock": 3
+    },
+    {
+      "id": "035263a9-12cc-4382-a76f-46c3fa1da4bf",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "size": "9",
+      "stock": 3
+    },
+    {
+      "id": "4cba1f22-ae67-4f3c-b65a-9e091e04b88a",
+      "variant_id": "704661c9-8c30-4544-9787-d76b6125d067",
+      "size": "10",
       "stock": 3
     }
   ]

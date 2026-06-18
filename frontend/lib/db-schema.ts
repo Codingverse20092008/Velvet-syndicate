@@ -22,3 +22,12 @@ export const passwordResetTokens = sqliteTable('password_reset_tokens', {
   userIdIdx: index('password_reset_tokens_user_id_idx').on(table.userId),
   tokenHashIdx: uniqueIndex('password_reset_tokens_token_hash_idx').on(table.tokenHash),
 }));
+
+export const vaultWaitlist = sqliteTable('vault_waitlist', {
+  id: text('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  emailIdx: uniqueIndex('vault_waitlist_email_idx').on(table.email),
+  createdAtIdx: index('vault_waitlist_created_at_idx').on(table.createdAt),
+}));

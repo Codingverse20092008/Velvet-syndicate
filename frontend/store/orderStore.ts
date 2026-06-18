@@ -42,7 +42,7 @@ interface OrderState {
   createOrder: (
     addressId: string,
     paymentMethod?: string,
-    options?: { idempotencyKey?: string; expectedVersion?: number }
+    options?: { idempotencyKey?: string; expectedVersion?: number; rewardId?: string }
   ) => Promise<{ id: string; total: number; status: Order['status']; paymentMethod: string; paymentStatus: Order['paymentStatus'] }>
 }
 
@@ -133,6 +133,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const response = await createOrderWithRetry(addressId, paymentMethod, {
         idempotencyKey: options.idempotencyKey,
         expectedVersion: options.expectedVersion,
+        rewardId: (options as any)?.rewardId,
       })
       
       const data = await response.json()

@@ -31,8 +31,6 @@ export default function CanvasScene({ onReady }: CanvasSceneProps) {
       onCreated={() => onReady()}
       style={{ width: '100%', height: '100%' }}
     >
-      <color attach="background" args={['#060606']} />
-
       <Suspense fallback={null}>
         <Stage 
           environment="city" 

@@ -12,6 +12,7 @@ out/
 
 # production
 build/
+dist/
 
 # misc
 .DS_Store
@@ -34,4 +35,21 @@ yarn-error.log*
 next-env.d.ts
 .codebuddy
 
-.vercel
+# logs
+logs/
+backend/logs/
+frontend/logs/
+*.log
+
+# scratch / temp
+scratch/
+temp/
+
+# IDE
+.continue/
+.codebuddy
+
+# generated / transient
+gemini-code-*.json
+image-*.png
+*.txt

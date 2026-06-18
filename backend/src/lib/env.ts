@@ -29,6 +29,8 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
   CLOUDINARY_URL: z.string().optional(),
+  // Velvet Vault Launch
+  VELVET_VAULT_LAUNCH_DATE: z.string().default('2026-06-20T12:00:00+05:30'),
 });
 
 export const env = envSchema.parse(process.env);

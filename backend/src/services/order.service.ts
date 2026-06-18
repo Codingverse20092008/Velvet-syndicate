@@ -8,6 +8,12 @@ import { orderQueue } from '../lib/queue';
 import { getRequestId } from '../lib/context';
 import crypto from 'node:crypto';
 
+const rewardCatalog: Record<string, { type: 'percent' | 'flat' | 'shipping' | 'none'; amount?: number; code?: string }> = {
+  'discount-10': { type: 'percent', amount: 10, code: 'VELVET10' },
+  'discount-20': { type: 'percent', amount: 20, code: 'VELVET20' },
+  'free-shipping': { type: 'shipping', amount: 0, code: 'FREESHIP' },
+};
+
 type OrderIntentStatus =
   | 'RECEIVED'
   | 'READY_FOR_QUEUE'
@@ -146,7 +152,8 @@ async function buildOrderSnapshot(
   intentId: string,
   idempotencyKey: string,
   requestId: string,
-  expectedVersion?: number
+  expectedVersion?: number,
+  rewardId?: string
 ): Promise<OrderPayload> {
   const [userCart, address] = await Promise.all([
     db.query.cart.findFirst({
@@ -189,6 +196,22 @@ async function buildOrderSnapshot(
 
   const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
 
+  // Apply reward discount if provided and recognized
+  let discount = 0;
+  if (rewardId) {
+    const reward = rewardCatalog[rewardId];
+    if (reward) {
+      if (reward.type === 'percent' && reward.amount) {
+        discount = Math.round((subtotal * reward.amount) / 100);
+      } else if (reward.type === 'flat' && reward.amount) {
+        discount = Math.max(0, Math.round(reward.amount));
+      } else if (reward.type === 'shipping') {
+        // shipping is already 0 in this system; keep for future
+        discount = 0;
+      }
+    }
+  }
+
   return {
     schemaVersion: 1,
     intentId,
@@ -212,12 +235,13 @@ async function buildOrderSnapshot(
       subtotal,
       shipping: 0,
       tax: 0,
-      discount: 0,
-      grandTotal: subtotal,
+      discount,
+      grandTotal: Math.max(0, subtotal - discount),
     },
     lines,
     metadata: {
       expectedVersion,
+      redeemedReward: rewardId ?? null,
     },
   };
 }
@@ -281,7 +305,8 @@ export async function createOrder(
   addressId: string,
   paymentMethod: string = 'COD',
   idempotencyKey?: string,
-  expectedVersion?: number
+  expectedVersion?: number,
+  rewardId?: string
 ) {
   await ensureOrderPersistenceCompatibility();
 
@@ -307,7 +332,7 @@ export async function createOrder(
     where: eq(orderIntents.id, idempotencyKey),
   });
 
-  if (!intent) {
+    if (!intent) {
     const snapshot = await buildOrderSnapshot(
       userId,
       addressId,
@@ -315,7 +340,8 @@ export async function createOrder(
       idempotencyKey,
       idempotencyKey,
       requestId,
-      expectedVersion
+      expectedVersion,
+      rewardId
     );
 
     await db

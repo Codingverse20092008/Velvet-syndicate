@@ -1,5 +1,5 @@
 import { syncProductsFromFolders } from '../lib/product-sync';
-import { db } from '../lib/db';
+import { db } from '../backend/src/lib/db';
 
 async function main() {
   console.log('Running manual product sync...');

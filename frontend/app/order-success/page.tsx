@@ -28,6 +28,23 @@ function OrderSuccessPage() {
   const orderId = searchParams.get('orderId')
   const { currentOrder, isLoading, error, fetchOrderById } = useOrderStore()
   const [suggestions, setSuggestions] = useState<SuggestionProduct[]>([])
+  
+  const [weatherData, setWeatherData] = useState<{ temp: number } | null>(null)
+  const [rewardNotice, setRewardNotice] = useState<any | null>(null)
+  const [orderProcessed, setOrderProcessed] = useState(false)
+
+  useEffect(() => {
+    const loadWeather = async () => {
+      try {
+        const { fetchWeather } = await import('@/lib/weatherUtils')
+        const data = await fetchWeather()
+        setWeatherData(data)
+      } catch {
+        setWeatherData({ temp: 35 }) // fallback
+      }
+    }
+    loadWeather()
+  }, [])
 
   useEffect(() => {
     if (!orderId) {
@@ -36,6 +53,18 @@ function OrderSuccessPage() {
     }
     fetchOrderById(orderId)
   }, [orderId, fetchOrderById, router])
+
+  useEffect(() => {
+    if (currentOrder && currentOrder.id === orderId && weatherData && !orderProcessed) {
+      const orderTotal = Number(currentOrder.total ?? currentOrder.totalAmount ?? 0)
+      const { useGameStore } = require('@/store/gameStore')
+      const result = useGameStore.getState().recordOrder(currentOrder.id, orderTotal, weatherData.temp)
+      
+      console.log('Processed order rewards:', result)
+      setRewardNotice(result)
+      setOrderProcessed(true)
+    }
+  }, [currentOrder, orderId, weatherData, orderProcessed])
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -123,6 +152,41 @@ function OrderSuccessPage() {
           <div className="text-sm text-amber-100">You earned {pointsEarned} loyalty points from this order.</div>
           <Star size={16} className="text-amber-300" />
         </div>
+
+        {rewardNotice && (rewardNotice.xpAwarded > 0 || rewardNotice.coinsAwarded > 0 || rewardNotice.crateAwarded || rewardNotice.badgeAwarded) && (
+          <div className="mt-4 rounded-xl border border-orange-500/30 bg-gradient-to-r from-orange-950/20 to-amber-950/20 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-semibold text-orange-200">🔥 Joto Gorom Event Rewards Unlocked!</div>
+              <span className="text-xs uppercase tracking-widest text-orange-400 font-bold px-2 py-0.5 border border-orange-500/30 rounded-full">Active Campaign</span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
+              {rewardNotice.xpAwarded > 0 && (
+                <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-velvet-muted uppercase tracking-wider">XP Earned</p>
+                  <p className="text-sm font-bold text-orange-400 mt-1">+{rewardNotice.xpAwarded}</p>
+                </div>
+              )}
+              {rewardNotice.coinsAwarded > 0 && (
+                <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-velvet-muted uppercase tracking-wider">Vault Coins</p>
+                  <p className="text-sm font-bold text-amber-400 mt-1">+{rewardNotice.coinsAwarded}</p>
+                </div>
+              )}
+              {rewardNotice.crateAwarded && (
+                <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-velvet-muted uppercase tracking-wider">Unlocked Crate</p>
+                  <p className="text-sm font-bold text-cyan-400 mt-1 capitalize">{rewardNotice.crateAwarded}</p>
+                </div>
+              )}
+              {rewardNotice.badgeAwarded && (
+                <div className="bg-black/40 border border-white/5 rounded-xl p-3 text-center">
+                  <p className="text-[10px] text-velvet-muted uppercase tracking-wider">New Badge</p>
+                  <p className="text-sm font-bold text-emerald-400 mt-1">Shopper Legend</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <p className="text-velvet-muted mt-8 leading-relaxed">
           Your order will be shipped soon. Please keep the exact amount ready at delivery time for Cash on Delivery.

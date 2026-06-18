@@ -9,6 +9,7 @@ import { SizeSelector } from '@/components/product/SizeSelector'
 import { ProductReviews } from '@/components/product/ProductReviews'
 import { Button } from '@/components/ui/Button'
 import { useCartStore } from '@/store/cartStore'
+import { useGameStore } from '@/store/gameStore'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { events } from '@/lib/analytics'
@@ -53,6 +54,11 @@ export default function ProductPage() {
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [isAdding, setIsAdding] = useState(false)
   const { addItem, toggleCart } = useCartStore()
+  
+  const wishlistedProducts = useGameStore((s) => s.challengeProgress.wishlistedProducts)
+  const isWishlisted = product ? wishlistedProducts.includes(product.id) : false
+  const trackWishlistAdd = useGameStore((s) => s.trackWishlistAdd)
+  const trackProductView = useGameStore((s) => s.trackProductView)
 
   useEffect(() => {
     if (slug) {
@@ -89,6 +95,7 @@ export default function ProductPage() {
   useEffect(() => {
     if (!product) return
     events.viewProduct(product.id)
+    trackProductView(product.id)
     const primaryImage = product.variants?.[0]?.images?.[0] || product.image || product.imageUrl || ''
     const entry = {
       id: product.id,
@@ -279,6 +286,20 @@ export default function ProductPage() {
               >
                 Buy Now
               </Button>
+              <Button
+                variant="outline"
+                className={`w-full border-white/10 text-velvet-white ${
+                  isWishlisted 
+                    ? 'border-red-500/30 bg-red-500/10 text-red-400' 
+                    : 'hover:border-red-500/50 hover:text-red-400'
+                }`}
+                size="lg"
+                onClick={() => {
+                  if (!isWishlisted) trackWishlistAdd(product.id)
+                }}
+              >
+                {isWishlisted ? 'Added to Wishlist ❤️' : 'Add to Wishlist ♡'}
+              </Button>
             </motion.div>
 
             {/* Additional Info */}
@@ -344,6 +365,18 @@ export default function ProductPage() {
       </motion.section>
       {/* Sticky Bottom Bar - Mobile Only (Elevated to clear bottom nav) */}
       <div className="fixed bottom-[72px] left-0 right-0 z-40 md:hidden bg-black/90 backdrop-blur-2xl border-t border-white/10 p-3 flex gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
+        <button
+          onClick={() => {
+            if (!isWishlisted) trackWishlistAdd(product.id)
+          }}
+          className={`px-4 rounded-xl border flex items-center justify-center transition-colors ${
+            isWishlisted 
+              ? 'border-red-500/30 bg-red-500/10 text-red-400' 
+              : 'border-white/20 text-velvet-white hover:bg-white/10'
+          }`}
+        >
+          {isWishlisted ? '❤️' : '♡'}
+        </button>
         <Button
           variant="outline"
           className="flex-1 py-3.5 text-[10px] tracking-[0.2em] border-white/20"

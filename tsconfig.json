@@ -3,7 +3,7 @@
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": true ,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
@@ -18,9 +18,17 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": ["./frontend/*"]
+    },
+    "types": ["node"]
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "include": [
+    "frontend/next-env.d.ts",
+    "frontend/**/*.ts",
+    "frontend/**/*.tsx",
+    "frontend/**/*.d.ts",
+    ".next/types/**/*.ts",
+    "scratch/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

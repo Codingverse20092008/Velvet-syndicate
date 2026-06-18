@@ -89,6 +89,68 @@ export default function GameHomePage() {
             </div>
           ))}
         </section>
+
+        {/* ── Seasonal Events ─────────────────────────────────────────────── */}
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">Limited Time</p>
+              <h2 className="mt-2 font-heading text-3xl sm:text-4xl uppercase tracking-[0.04em] text-velvet-white">
+                Seasonal Events
+              </h2>
+            </div>
+            <Link
+              href="/game/events"
+              className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-transparent px-5 py-2.5 text-[10px] uppercase tracking-[0.24em] text-velvet-white transition hover:border-white/30 hover:bg-white/10"
+            >
+              View All
+            </Link>
+          </div>
+
+          {/* Active event card */}
+          <Link
+            href="/game/events/joto-gorom"
+            className="group block rounded-[2rem] border border-orange-500/30 bg-gradient-to-br from-orange-950/25 via-black/50 to-black/70 p-8 transition-all duration-500 hover:scale-[1.01] hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 relative overflow-hidden"
+          >
+            {/* Background deco text */}
+            <div
+              className="pointer-events-none absolute -right-4 -top-4 font-heading font-bold leading-none opacity-[0.04] select-none text-[8rem]"
+              style={{ color: '#FF6600' }}
+              aria-hidden
+            >
+              🔥
+            </div>
+
+            <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-3xl">🔥</span>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/40 bg-orange-500/10 px-3 py-1 text-[10px] uppercase tracking-[0.26em] text-orange-300 font-semibold">
+                    Active Now
+                  </div>
+                </div>
+                <h3 className="font-heading text-3xl uppercase tracking-[0.04em] text-orange-400">
+                  Joto Gorom Toto Char
+                </h3>
+                <p className="text-sm italic text-velvet-muted/80">
+                  "The Heat Is Real. The Rewards Are Too."
+                </p>
+                <p className="max-w-lg text-sm leading-7 text-velvet-muted">
+                  Earn bonus XP, Vault Coins, Mystery Crates, and exclusive badges based on the real-world temperature in your city.
+                  The hotter it gets, the more you unlock — check in daily to build your Heat Streak.
+                </p>
+              </div>
+              <div
+                className="inline-flex items-center gap-2 self-start sm:self-center rounded-full px-6 py-3 text-[10px] uppercase tracking-[0.28em] font-semibold transition-all duration-300 group-hover:gap-3 shrink-0"
+                style={{ background: '#FF6600', color: '#000' }}
+              >
+                Enter Event
+                <span className="transition-transform group-hover:translate-x-1">→</span>
+              </div>
+            </div>
+          </Link>
+        </section>
+
       </div>
     </main>
   )

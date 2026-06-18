@@ -14,6 +14,11 @@ const CanvasScene = dynamic(() => import('./CanvasScene'), {
   loading: () => null,
 })
 
+const BackgroundAnimation = dynamic(() => import('./BackgroundAnimation'), {
+  ssr: false,
+  loading: () => null,
+})
+
 export function Hero3D() {
   const [hasError, setHasError] = useState(false)
   const [canvasReady, setCanvasReady] = useState(false)
@@ -22,6 +27,8 @@ export function Hero3D() {
 
   return (
     <div className="relative w-full min-h-[85vh] bg-[#060606] overflow-hidden">
+      {/* Animated Background */}
+      <BackgroundAnimation />
 
       {/* 3D Canvas */}
       <AnimatePresence>

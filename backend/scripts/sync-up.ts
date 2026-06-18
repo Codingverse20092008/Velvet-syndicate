@@ -12,7 +12,7 @@ const client = createClient({
 
 async function syncUp() {
   console.log('Uploading inventory to Turso from local backup...');
-  
+
   const filePath = join(__dirname, '../inventory-backup.json');
   if (!fs.existsSync(filePath)) {
     console.log('No inventory-backup.json found. Please run sync-down.ts first.');
@@ -23,13 +23,15 @@ async function syncUp() {
 
   // Clear existing data to avoid conflicts
   console.log('Clearing existing inventory...');
+  await client.execute('PRAGMA foreign_keys = OFF');
   await client.execute('DELETE FROM product_sizes');
   await client.execute('DELETE FROM product_variant_images');
   await client.execute('DELETE FROM product_variants');
   await client.execute('DELETE FROM products');
+  await client.execute('PRAGMA foreign_keys = ON');
 
   console.log(`Restoring ${data.products.length} products...`);
-  
+
   // Insert products
   for (const p of data.products) {
     await client.execute({

@@ -110,15 +110,37 @@ export default function HomePage() {
                 Velvet Vault — play for points, redeem for offers.
               </h2>
               <p className="max-w-2xl text-sm leading-7 text-velvet-muted sm:text-base">
-                Replace the summer sale with a streetwear challenge that rewards you for style picks, streaks, and daily missions.
+                Play the Velvet Vault challenge to earn points from style picks, streaks, and daily missions.
               </p>
             </div>
             <div className="flex flex-col gap-4 sm:items-end">
-              <Link
-                href="/game"
-                className="inline-flex items-center justify-center rounded-full border border-velvet-white bg-velvet-white px-10 py-4 text-[10px] uppercase tracking-[0.28em] text-velvet-black transition hover:bg-transparent hover:text-velvet-white"
-              >
-                Play the game
+              <Link href="/game" aria-label="Open Velvet Vault game" className="group block w-full overflow-hidden rounded-[1.75rem] border border-white/10 bg-black/10 transition hover:border-velvet-accent">
+                <div className="relative w-full aspect-[9/16] sm:aspect-[16/9] overflow-hidden">
+                  {/* Desktop Banner Image */}
+                  <Image
+                    src="/images/Velvet Vault For PC.png"
+                    alt="New Velvet Vault game launch banner"
+                    fill
+                    className="hidden sm:block object-cover transition duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  {/* Mobile Banner Image - Container only visible on mobile */}
+                  <div className="block sm:hidden absolute inset-0">
+                    <Image
+                      src="/images/Velvet Vault For Mobile.png"
+                      alt="New Velvet Vault game launch banner mobile"
+                      fill
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                      sizes="100vw"
+                    />
+                  </div>
+                  <div className="absolute inset-0 bg-black/30 transition group-hover:bg-black/20" />
+                  <div className="absolute inset-x-6 bottom-6 rounded-3xl bg-black/50 px-5 py-4 backdrop-blur-sm">
+                    <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">New launch</p>
+                    <h3 className="mt-2 text-2xl font-heading uppercase tracking-[0.08em] text-white">Play Velvet Vault</h3>
+                    <p className="mt-2 text-sm text-velvet-muted">Tap the banner to launch the game and earn points for checkout rewards.</p>
+                  </div>
+                </div>
               </Link>
               <p className="text-sm text-velvet-muted">
                 Points can be used later at checkout for discounts, free shipping, and limited access drops.

@@ -1,0 +1,809 @@
+{
+  "packName": "The Ultimate Sneaker Culture Quiz",
+  "description": "A comprehensive 50-question quiz covering sneaker culture: brands, models, history, and terminology. Categories: Brands, Models, History, Terms. Difficulties: easy=24, medium=18, hard=8.",
+  "category": "Brands",
+  "difficulty": "mixed",
+  "reward": {},
+  "questions": [
+    {
+      "type": "mcq",
+      "question": "Which brand uses the world-famous 'Swoosh' logo?",
+      "options": [
+        "Adidas",
+        "Puma",
+        "Nike",
+        "Reebok"
+      ],
+      "correctAnswer": "Nike",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "The famous 'Swoosh' was designed in 1971 by Carolyn Davidson, a graphic design student at Portland State University. She was paid just $35 for the design at the time (though Nike later gave her stock in the company).",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "What is the origin of the brand name 'Adidas'?",
+      "options": [
+        "It stands for 'All Day I Dream About Sports'",
+        "It is named after the founder, Adolf 'Adi' Dassler",
+        "It's a Latin word for speed",
+        "It was chosen randomly out of a dictionary"
+      ],
+      "correctAnswer": "It is named after the founder, Adolf 'Adi' Dassler",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "The name is a combination of the founder’s nickname ('Adi') and the first three letters of his last name ('Das'). The backronym 'All Day I Dream About Sports' was created much later by fans.",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which brand was founded by Phil Knight and Bill Bowerman in 1964?",
+      "options": [
+        "Blue Ribbon Sports (later Nike)",
+        "New Balance",
+        "Converse",
+        "Vans"
+      ],
+      "correctAnswer": "Blue Ribbon Sports (later Nike)",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Before they became Nike, Phil Knight and his former track coach Bill Bowerman operated under the name Blue Ribbon Sports, originally acting as a distributor for the Japanese brand Onitsuka Tiger (now ASICS).",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which company produces the legendary 'Chuck Taylor All Star'?",
+      "options": [
+        "Adidas",
+        "Converse",
+        "Vans",
+        "Fila"
+      ],
+      "correctAnswer": "Converse",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Released in 1917 as a basketball shoe, it was renamed after basketball player Chuck Taylor joined the company's sales force and helped promote it worldwide.",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which brand features a leaping wild cat as its primary logo?",
+      "options": [
+        "Puma",
+        "Jaguar",
+        "Panther",
+        "Slazenger"
+      ],
+      "correctAnswer": "Puma",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Puma features a leaping cougar/panther (often called a puma) to symbolize speed, strength, and agility.",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which Japanese brand is famous for its 'Gel-Lyte' running shoe series?",
+      "options": [
+        "Mizuno",
+        "Asics",
+        "Onitsuka Tiger",
+        "Y-3"
+      ],
+      "correctAnswer": "Asics",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "ASICS introduced its signature 'GEL' cushioning technology in 1986 to absorb impact for runners. The Gel-Lyte series quickly became a favorite for both performance and streetwear.",
+      "difficulty": "medium",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "What brand is instantly recognized by the giant block letter 'N' on the side panel?",
+      "options": [
+        "Nike",
+        "Under Armour",
+        "New Balance",
+        "Nautica"
+      ],
+      "correctAnswer": "New Balance",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "New Balance relies heavily on its iconic 'N' branding and a unique numbering system (e.g., 574, 990) rather than standard shoe names.",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which high-end luxury fashion house created the chunky 'Triple S' sneaker that sparked the 'dad shoe' trend?",
+      "options": [
+        "Gucci",
+        "Balenciaga",
+        "Prada",
+        "Louis Vuitton"
+      ],
+      "correctAnswer": "Balenciaga",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Designed by Demna Gvasalia and released in 2017, the Triple S (named for its three stacked soles) completely polarized the fashion world and kicked off the luxury 'chunky dad shoe' phenomenon.",
+      "difficulty": "medium",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "The skateboarding brand Vans was originally founded in which US state?",
+      "options": [
+        "New York",
+        "Florida",
+        "California",
+        "Texas"
+      ],
+      "correctAnswer": "California",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "The Van Doren Rubber Company opened for business in Anaheim, California, in 1966. Its sticky rubber waffle soles quickly made it a massive hit with the local skateboarding subculture.",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which British-founded brand created the 'Classic Leather' runner in 1983?",
+      "options": [
+        "Reebok",
+        "Umbro",
+        "Fred Perry",
+        "Lonsdale"
+      ],
+      "correctAnswer": "Reebok",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Originally a British company founded in Bolton, England (before being bought by Adidas and later Authentic Brands Group), Reebok launched the garment-leather 'Classic Leather' runner in 1983 as a lifestyle shoe.",
+      "difficulty": "medium",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which sportswear brand did Kanye West partner with to release his very first 'Yeezy' sneaker line before moving to Adidas?",
+      "options": [
+        "Puma",
+        "Reebok",
+        "Nike",
+        "Under Armour"
+      ],
+      "correctAnswer": "Nike",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Before his long partnership with Adidas, Kanye West teamed up with Nike to release the highly coveted Air Yeezy 1 (2009) and Air Yeezy 2 (2012).",
+      "difficulty": "medium",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Which brand uses a star inside a chevron as one of its secondary classic logos?",
+      "options": [
+        "Converse",
+        "Pony",
+        "Supra",
+        "Brooks"
+      ],
+      "correctAnswer": "Converse",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "While the Chuck Taylor has the circular ankle patch, Converse's archival skate and basketball heritage products often feature the classic 'Star Chevron' logo.",
+      "difficulty": "hard",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "Under Armour's most successful signature basketball sneaker line belongs to which NBA superstar?",
+      "options": [
+        "LeBron James",
+        "Stephen Curry",
+        "Kevin Durant",
+        "Joel Embiid"
+      ],
+      "correctAnswer": "Stephen Curry",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Stephen Curry left Nike to sign with Under Armour in 2013, completely shifting the brand's basketball division and eventually launching his own standalone 'Curry Brand' under their umbrella.",
+      "difficulty": "easy",
+      "category": "Brands"
+    },
+    {
+      "type": "mcq",
+      "question": "What was the first signature sneaker Nike created for Michael Jordan in 1985?",
+      "options": [
+        "Air Jordan 3",
+        "Air Jordan 11",
+        "Air Jordan 1",
+        "Air Force 1"
+      ],
+      "correctAnswer": "Air Jordan 1",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Designed by Peter Moore and released in 1985, this shoe changed sports marketing forever. It was the catalyst for the entire modern sneaker culture.",
+      "difficulty": "easy",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "Which classic Adidas model features a distinct rubber 'shell-toe' design?",
+      "options": [
+        "Stan Smith",
+        "Superstar",
+        "Gazelle",
+        "Samba"
+      ],
+      "correctAnswer": "Superstar",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Originally released in 1969 as a low-top basketball shoe, its unique rubber toe cap was designed to protect players' toes. It transitioned into pop culture via hip-hop in the 1980s.",
+      "difficulty": "easy",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "What is the name of Nike's first shoe to showcase a visible Air unit in the sole?",
+      "options": [
+        "Air Max 1",
+        "Air Max 90",
+        "Air Force 1",
+        "Air Max 97"
+      ],
+      "correctAnswer": "Air Max 1",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Released in 1987 and designed by Tinker Hatfield, the Air Max 1 was revolutionary because it literally cut a 'window' into the midsole to reveal Nike’s air cushioning technology.",
+      "difficulty": "easy",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "Which New Balance model is widely crowned as the ultimate, classic 'dad shoe'?",
+      "options": [
+        "574",
+        "990",
+        "327",
+        "550"
+      ],
+      "correctAnswer": "990",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "First introduced in 1982, the New Balance 990 series (v1 through v6) became the definitive premium grey 'dad shoe,' famous for its exceptional comfort, high-quality materials, and everyday aesthetic.",
+      "difficulty": "medium",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "What is the name of Travis Scott's highly sought-after Nike collaboration model featuring a reversed Swoosh?",
+      "options": [
+        "Air Force 1",
+        "Air Jordan 1 Low/High",
+        "Dunk Low",
+        "Air Max 270"
+      ],
+      "correctAnswer": "Air Jordan 1 Low/High",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Travis Scott’s signature design motif with Nike is flipping the iconic Swoosh backward. His Air Jordan 1 collaborations are among the most expensive and sought-after shoes on the resale market.",
+      "difficulty": "medium",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "Which Reebok basketball model features an inflatable mechanism on the tongue for a custom fit?",
+      "options": [
+        "Question",
+        "Answer",
+        "Club C",
+        "Pump"
+      ],
+      "correctAnswer": "Pump",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Released in 1989, the Reebok Pump featured an internal airbag system. By pumping the basketball-shaped valve on the tongue, players could custom-inflate the shoe tightly around their ankles.",
+      "difficulty": "medium",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "What is the name of the classic Puma low-top suede shoe originally released in 1968?",
+      "options": [
+        "Puma Clyde",
+        "Puma Suede",
+        "Puma Cali",
+        "Puma Roma"
+      ],
+      "correctAnswer": "Puma Suede",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Originally hitting the scene in 1968, the Suede is a historic silhouette that became deeply tied to early B-Boy, hip-hop, and breakdancing culture due to its flexibility and smooth aesthetic.",
+      "difficulty": "easy",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "What is Nike's futuristic, self-lacing sneaker model inspired by Back to the Future Part II?",
+      "options": [
+        "Nike Mag",
+        "Nike Adapt BB",
+        "Nike HyperAdapt",
+        "Nike VaporMax"
+      ],
+      "correctAnswer": "Nike Mag",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "First seen as a movie prop in the 1989 film Back to the Future Part II, Nike finally created real, working, auto-lacing replicas of the Mag in 2011 and 2016 to benefit the Michael J. Fox Foundation for Parkinson's Research.",
+      "difficulty": "hard",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "Which Adidas Yeezy model featured a distinct Primeknit upper and a ribbed Boost sole?",
+      "options": [
+        "Yeezy 500",
+        "Yeezy 700",
+        "Yeezy Boost 350",
+        "Yeezy Foam Runner"
+      ],
+      "correctAnswer": "Yeezy Boost 350",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "The Yeezy Boost 350 (and its 350 V2 successor) combined Adidas' elite Boost comfort technology with a flexible Primeknit knit upper, becoming the defining streetwear shoe of the mid-2010s.",
+      "difficulty": "medium",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "What is the name of Nike's all-white classic basketball shoe released in 1982, often called 'Uptowns'?",
+      "options": [
+        "Blazer",
+        "Air Force 1",
+        "Dunk High",
+        "Air Max 95"
+      ],
+      "correctAnswer": "Air Force 1",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Named after the plane that carries the US President, the Air Force 1 became massive in New York City's inner-city culture, earning it the nickname 'Uptowns' (referring to Upper Manhattan/Harlem).",
+      "difficulty": "easy",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "Which Asics sneaker model is world-famous for its unique, split-tongue design?",
+      "options": [
+        "Gel-Kayano",
+        "Gel-Lyte III",
+        "Gel-Quantum",
+        "GT-2000"
+      ],
+      "correctAnswer": "Gel-Lyte III",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "Designed by Shigeyuki Mitsui in 1990, the split-tongue was invented so the tongue wouldn't slide to the side of the foot while running, offering an ultra-comfortable fit.",
+      "difficulty": "hard",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "What is the name of the legendary skate shoe by Vans that features the iconic side stripe ('Jazz Stripe')?",
+      "options": [
+        "Authentic",
+        "Era",
+        "Old Skool",
+        "Sk8-Hi"
+      ],
+      "correctAnswer": "Old Skool",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Debuting in 1977 as 'Style 36,' it was the first Vans shoe to incorporate leather panels for durability and featured a random doodle by founder Paul Van Doren that became known as the iconic 'Jazz Stripe.'",
+      "difficulty": "easy",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "Which Nike model originally debuted as a college basketball shoe in 1985 before becoming a skateboarding and streetwear icon?",
+      "options": [
+        "Cortez",
+        "Dunk",
+        "Air Max 90",
+        "Huarache"
+      ],
+      "correctAnswer": "Dunk",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Released in 1985 as a basketball sneaker for college teams (marketed under the 'Be True To Your School' campaign), its flat sole and durable leather made it an accidental favorite for skateboarders, eventually leading to the creation of Nike SB in 2002.",
+      "difficulty": "medium",
+      "category": "Models"
+    },
+    {
+      "type": "mcq",
+      "question": "In what year was the original Air Jordan 1 released to the public?",
+      "options": [
+        "1982",
+        "1985",
+        "1988",
+        "1990"
+      ],
+      "correctAnswer": "1985",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Michael Jordan was drafted in 1984, but his iconic first signature shoe didn't hit retail shelves until early 1985.",
+      "difficulty": "easy",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Which Olympic athlete famously stood on the podium in 1968 with a black glove raised and a Puma Suede shoe next to him?",
+      "options": [
+        "Tommie Smith",
+        "Jesse Owens",
+        "Carl Lewis",
+        "Usain Bolt"
+      ],
+      "correctAnswer": "Tommie Smith",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "At the 1968 Mexico City Olympics, Tommie Smith and John Carlos stood on the podium barefoot with black socks, carrying their Puma Suedes, and raised their fists in a historic Black Power salute protesting racial inequality.",
+      "difficulty": "hard",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "What household kitchen appliance did Bill Bowerman use to pour liquid rubber, creating the sole of the Nike Waffle Trainer?",
+      "options": [
+        "Toaster",
+        "Blender",
+        "Waffle Iron",
+        "Microwave"
+      ],
+      "correctAnswer": "Waffle Iron",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Looking for a way to give track runners grip without heavy metal spikes, Bill Bowerman experimented by ruining his wife's waffle iron with liquid urethane. The experiment succeeded, birthing Nike’s famous 'Waffle Sole.'",
+      "difficulty": "medium",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Before changing its name to Nike in 1971, what was the company originally called?",
+      "options": [
+        "Sports First",
+        "Blue Ribbon Sports",
+        "Track Masters",
+        "Athletic Sole Co."
+      ],
+      "correctAnswer": "Blue Ribbon Sports",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Phil Knight and Bill Bowerman officially changed the company name to Nike, Inc. in May 1971, named after the Greek goddess of victory.",
+      "difficulty": "easy",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Which iconic hip-hop group released the song 'My Adidas' in 1986, leading to the first non-athlete endorsement deal in sneaker history?",
+      "options": [
+        "Beastie Boys",
+        "Public Enemy",
+        "Run-D.M.C.",
+        "N.W.A"
+      ],
+      "correctAnswer": "Run-D.M.C.",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "The trio from Hollis, Queens, wore Adidas Superstars without shoelaces (mimicking prison style). After they made the song 'My Adidas,' an Adidas executive attended their concert, saw thousands of fans hold their shoes in the air, and immediately signed them to a $1 million contract.",
+      "difficulty": "medium",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Why was the original Black and Red ('Bred') Air Jordan 1 allegedly 'banned' by the NBA?",
+      "options": [
+        "It didn't have enough white on it to match team uniforms",
+        "The soles caused too much grip on the court",
+        "The materials were deemed unsafe",
+        "It didn't feature a visible Nike logo"
+      ],
+      "correctAnswer": "It didn't have enough white on it to match team uniforms",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "The NBA had a strict '51% rule,' stating basketball shoes had to be mostly white. Nike leaned heavily into the 'banned' angle for marketing, allegedly paying Jordan's $5,000-per-game fines themselves while running TV ads saying, 'The NBA threw them out of the game. Fortunately, the NBA can't stop you from wearing them.'",
+      "difficulty": "medium",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Which brand did the Dassler brothers run together before a bitter feud caused them to split and create Adidas and Puma?",
+      "options": [
+        "Dassler Brothers Shoes Factory",
+        "German Athletic Co.",
+        "Bavaria Boots",
+        "Euro-Sport Shoes"
+      ],
+      "correctAnswer": "Dassler Brothers Shoes Factory",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "Adolf and Rudolf Dassler successfully made shoes together in Germany during the 1920s and 30s. However, due to political and personal tensions during WWII, they fell out. Rudolf left across the river to start Puma, while Adolf stayed and built Adidas.",
+      "difficulty": "hard",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "In what decade did the Converse Chuck Taylor All Star make its original debut as a basketball shoe?",
+      "options": [
+        "1910s",
+        "1930s",
+        "1950s",
+        "1970s"
+      ],
+      "correctAnswer": "1910s",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "The Converse Non-Skid (the earliest version of the All Star) was released all the way back in 1917, making it one of the oldest athletic silhouettes still in mass production today.",
+      "difficulty": "medium",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "What major sporting event in 1996 featured Michael Johnson winning gold while wearing famous, custom metallic-gold Nike track spikes?",
+      "options": [
+        "Barcelona Olympics",
+        "Atlanta Olympics",
+        "Sydney Olympics",
+        "World Athletic Championship"
+      ],
+      "correctAnswer": "Atlanta Olympics",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "In 1996, American sprinter Michael Johnson swept the 200m and 400m races in Atlanta wearing ultra-lightweight, custom-designed Nike track shoes wrapped in shimmering gold fabric, earning him the nickname 'The Man with the Golden Shoes.'",
+      "difficulty": "hard",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Which legendary designer is credited with creating the Nike Air Max 1, Air Jordan 3 through Air Jordan 15, and the Nike Huarache?",
+      "options": [
+        "Virgil Abloh",
+        "Tinker Hatfield",
+        "Bruce Kilgore",
+        "Peter Moore"
+      ],
+      "correctAnswer": "Tinker Hatfield",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "A former architecture student, Tinker Hatfield is arguably the most influential sneaker designer of all time. He saved Nike’s partnership with Michael Jordan by designing the Air Jordan 3, which introduced the Jumpman logo and visible air cushion.",
+      "difficulty": "medium",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Which city is widely considered the birthplace of the 'Uptown' nickname for the Air Force 1?",
+      "options": [
+        "Los Angeles",
+        "Chicago",
+        "New York City (specifically Harlem)",
+        "Philadelphia"
+      ],
+      "correctAnswer": "New York City (specifically Harlem)",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "As the Air Force 1 faded from basketball courts, it became a massive status symbol in Harlem. Because people had to travel 'uptown' to Harlem stores like Seventh Avenue's Rockaway Sports to buy them, the name 'Uptowns' stuck.",
+      "difficulty": "medium",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "Which late luxury streetwear designer founded Off-White and revolutionized Nike collaborations with 'The Ten' collection?",
+      "options": [
+        "Alexander McQueen",
+        "Virgil Abloh",
+        "Nigo",
+        "Kim Jones"
+      ],
+      "correctAnswer": "Virgil Abloh",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "In 2017, Off-White founder Virgil Abloh created 'The Ten'—a collection where he deconstructed, text-labeled, and reimagined 10 classic Nike silhouettes. It is widely considered one of the most influential collaborative projects in fashion history.",
+      "difficulty": "hard",
+      "category": "History"
+    },
+    {
+      "type": "mcq",
+      "question": "What does the acronym 'DS' stand for in the sneaker community?",
+      "options": [
+        "Double Stitched",
+        "Deadstock (brand new, never worn)",
+        "Discount Sale",
+        "Daily Sneakers"
+      ],
+      "correctAnswer": "Deadstock (brand new, never worn)",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Originally, 'Deadstock' meant older stock that a store couldn't sell and was sitting in the backroom. In modern sneaker terminology, it strictly means a shoe is 100% factory fresh, completely unworn, and includes the original box.",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What does 'VNDS' mean when a seller lists a shoe online?",
+      "options": [
+        "Very Nice Design Sneaker",
+        "Very Near Deadstock (worn once or twice, looks brand new)",
+        "Vintage Nike Dead Stock",
+        "Verified No Defects Shown"
+      ],
+      "correctAnswer": "Very Near Deadstock (worn once or twice, looks brand new)",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "Used mostly on marketplace apps like GOAT or eBay, VNDS means the shoe has been tried on or worn very briefly, but shows zero major signs of creasing, dirt, or wear.",
+      "difficulty": "medium",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "If a sneakerhead talks about their 'Grail,' what do they mean?",
+      "options": [
+        "Their most worn daily shoe",
+        "The most expensive shoe on the market today",
+        "Their ultimate, most wanted, and hardest-to-get sneaker",
+        "A shoe made out of waterproof materials"
+      ],
+      "correctAnswer": "Their ultimate, most wanted, and hardest-to-get sneaker",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Borrowed from the concept of the 'Holy Grail,' a sneaker grail is highly personal. It represents a shoe someone desires above all else, often requiring years of searching or saving up to acquire.",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What does 'GR' stand for when talking about a sneaker release?",
+      "options": [
+        "General Release (mass produced, easy to find)",
+        "Global Resell",
+        "Gym Ready",
+        "Golden Run (limited edition)"
+      ],
+      "correctAnswer": "General Release (mass produced, easy to find)",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Unlike limited-edition collaborations, GR shoes are mass-produced by brands and distributed to almost all retail stores (like Foot Locker). They are easy for the general public to purchase at retail price.",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What is a 'Hypebeast'?",
+      "options": [
+        "A type of vintage cleaning brush for suede",
+        "A person who only buys sneakers that are currently trending or 'hyped'",
+        "A high-tech machine used to test shoe durability",
+        "A nickname for early morning sneaker lines"
+      ],
+      "correctAnswer": "A person who only buys sneakers that are currently trending or 'hyped'",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "A Hypebeast cares less about personal style, comfort, or history, and more about social status and validation. They strictly collect items that have immense internet 'hype.'",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What does the term 'Colorway' mean?",
+      "options": [
+        "The path a delivery truck takes to a sneaker store",
+        "The specific combination of colors and materials applied to a sneaker model",
+        "A type of custom dye kit",
+        "A limited-edition box art"
+      ],
+      "correctAnswer": "The specific combination of colors and materials applied to a sneaker model",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "For example, the Air Jordan 1 is a model, but 'Bred' (Black/Red), 'Chicago' (White/Black/Red), and 'Royal' (Black/Blue) are all different colorways of that same model.",
+      "difficulty": "medium",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What does it mean to 'COP' a sneaker?",
+      "options": [
+        "To trade it away",
+        "To clean it",
+        "To buy or acquire it",
+        "To custom paint it"
+      ],
+      "correctAnswer": "To buy or acquire it",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "'Cop' is hip-hop/street slang derived from the phrase 'to cop a plea' or simply meaning to grab/take. In sneakers, you either 'Cop' (buy) or 'Drop' (pass on) a release.",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What does 'L' stand for when you miss out on a sneaker raffle or drop?",
+      "options": [
+        "Late Entry",
+        "Loss (failing to buy the shoe)",
+        "Limited Access",
+        "Low Stock"
+      ],
+      "correctAnswer": "Loss (failing to buy the shoe)",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "When you enter a sneaker raffle (like on the Nike SNKRS app) and get a rejection notification, the community calls it 'Taking an L.' Conversely, succeeding is 'Taking a W' (Win).",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What part of the sneaker is referred to as the 'Upper'?",
+      "options": [
+        "The bottom rubber tread",
+        "The inside cushion sole",
+        "Everything above the sole/midsole that covers the foot",
+        "The tip of the shoelaces"
+      ],
+      "correctAnswer": "Everything above the sole/midsole that covers the foot",
+      "xp": 20,
+      "coins": 5,
+      "explanation": "A sneaker is structurally divided into parts: the Outsole (bottom rubber), the Midsole (where the cushioning lives), and the Upper (the leather, suede, or mesh fabric holding your foot).",
+      "difficulty": "medium",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What is a 'Reseller'?",
+      "options": [
+        "Someone who fixes broken shoes",
+        "Someone who buys limited sneakers to sell them for a profit",
+        "A retail store manager",
+        "A brand's official outlet store"
+      ],
+      "correctAnswer": "Someone who buys limited sneakers to sell them for a profit",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Resellers use automated software ('bots'), back-door store connections, or raffle wins to buy highly limited pairs, then list them on secondary markets (StockX, eBay) at a heavily marked-up price.",
+      "difficulty": "easy",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What does 'WTT' stand for on sneaker marketplace forums?",
+      "options": [
+        "Wanting To Trade",
+        "Worn To Trash",
+        "Winners Take Twenty",
+        "Waiting To Try"
+      ],
+      "correctAnswer": "Wanting To Trade",
+      "xp": 30,
+      "coins": 10,
+      "explanation": "Commonly used on sneaker forums like Reddit's r/sneakermarket or Discord channels, WTT indicates that the user wants to swap their pair of shoes for another pair rather than cash. (Similar terms include WTS: Wanting to Sell, and WTB: Wanting to Buy).",
+      "difficulty": "hard",
+      "category": "Terms"
+    },
+    {
+      "type": "mcq",
+      "question": "What are 'Beaters'?",
+      "options": [
+        "Shoes used exclusively for playing drums",
+        "High-end leather shoes",
+        "Everyday sneakers you don't mind getting dirty or ruined",
+        "Factory flawed sneakers"
+      ],
+      "correctAnswer": "Everyday sneakers you don't mind getting dirty or ruined",
+      "xp": 10,
+      "coins": 2,
+      "explanation": "Beaters are the reliable, comfortable pairs in your closet. While sneakerheads try to keep their rare pairs pristine, beaters are worn to concerts, in rainy weather, or while running errands.",
+      "difficulty": "easy",
+      "category": "Terms"
+    }
+  ]
+}

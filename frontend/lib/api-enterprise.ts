@@ -92,7 +92,7 @@ export async function enterpriseFetch(
 export async function createOrderWithRetry(
   addressId: string,
   paymentMethod: string = 'COD',
-  options: { idempotencyKey: string; expectedVersion?: number }
+  options: { idempotencyKey: string; expectedVersion?: number; rewardId?: string }
 ) {
   return enterpriseFetch('/orders', {
     method: 'POST',
@@ -102,6 +102,7 @@ export async function createOrderWithRetry(
       paymentMethod,
       idempotencyKey: options.idempotencyKey,
       expectedVersion: options.expectedVersion,
+      rewardId: options.rewardId,
     }),
     credentials: 'include', // 🛡️ ALWAYS include credentials
     retry: {

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { apiFetch, getFullImageUrl } from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
+import { useGameStore } from '@/store/gameStore'
 
 interface Product {
   id: string
@@ -53,6 +54,32 @@ export default function CollectionPage() {
     }
 
     fetchProducts()
+  }, [])
+
+  // Visibility-aware browse timers for seasonal challenges
+  useEffect(() => {
+    const isNewArrivals = window.location.search.includes('new=true')
+    const store = useGameStore.getState()
+    
+    if (isNewArrivals) {
+      store.startNewArrivalsTimer()
+    } else {
+      store.startCollectionBrowseTimer()
+    }
+
+    const intervalId = setInterval(() => {
+      if (document.hidden) return
+
+      if (isNewArrivals) {
+        useGameStore.getState().tickNewArrivalsTimer(1)
+      } else {
+        useGameStore.getState().tickCollectionBrowseTimer(1)
+      }
+    }, 1000)
+
+    return () => {
+      clearInterval(intervalId)
+    }
   }, [])
 
   // Filter Logic

@@ -30,6 +30,12 @@ import { dbClient } from './src/lib/db';
 import { redis } from './src/lib/redis';
 import { logger } from './src/lib/logger';
 import { fakeReviewScheduler } from './src/scripts/fake-review-scheduler';
+import { quizScheduler } from './src/scripts/quiz-scheduler';
+import quizRoutes from './src/routes/quiz';
+import vaultRoutes from './src/routes/vault';
+import vaultWaitlistRoutes from './src/routes/vault-waitlist';
+import { vaultLaunchGuard } from './src/lib/vault-launch';
+import quizPackRoutes from './src/routes/quiz-packs';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -281,6 +287,10 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/metrics', metricsRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/setup-reviews', setupReviewsRoutes);
+app.use('/api/quiz', quizRoutes);
+app.use('/api/vault', vaultLaunchGuard, vaultRoutes);
+app.use('/api/vault/waitlist', vaultWaitlistRoutes);
+app.use('/api/quiz-packs', quizPackRoutes);
 
 // Error handling
 app.use(errorHandler);
@@ -320,6 +330,14 @@ if (require.main === module) {
     logger.info('Fake review scheduler started');
   } catch (err) {
     logger.error({ err }, 'Failed to start fake review scheduler');
+  }
+
+  // 4. Quiz Scheduler — generates 500 quizzes daily at 5:00 AM
+  try {
+    quizScheduler.start();
+    logger.info('Daily quiz scheduler started — 500 quizzes generated at 5:00 AM');
+  } catch (err) {
+    logger.error({ err }, 'Failed to start daily quiz scheduler');
   }
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────────

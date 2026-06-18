@@ -7,6 +7,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { useAddressStore } from '@/store/addressStore'
 import { useOrderStore } from '@/store/orderStore'
+import { useGameStore } from '@/store/gameStore'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
 import { apiFetch } from '@/lib/api'
@@ -27,6 +28,7 @@ function CheckoutPage() {
   const addressStore = useAddressStore()
   const { addresses = [], fetchAddresses, isLoading: addressesLoading } = addressStore
   const { createOrder, isLoading: isSubmitting } = useOrderStore()
+  const redeemedRewards = useGameStore((s) => s.redeemedRewards)
   
   const totalPrice = (items || []).reduce((sum, item) => sum + (item?.price || 0) * (item?.quantity || 0), 0)
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
@@ -109,9 +111,11 @@ function CheckoutPage() {
 
     try {
       // 5. ATOMIC API CALL WITH RETRY & IDEMPOTENCY
+      const rewardId = (redeemedRewards && redeemedRewards.length > 0) ? redeemedRewards[redeemedRewards.length - 1] : undefined
       const order = await createOrder(selectedAddressId, 'COD', {
         idempotencyKey: idempotencyKeyRef.current,
         expectedVersion: currentVersion,
+        rewardId,
       })
       
       console.log('✅ ORDER SUCCESS', { orderId: order.id })

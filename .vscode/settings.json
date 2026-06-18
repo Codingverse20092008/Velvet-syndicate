@@ -1,4 +1,11 @@
 {
   "css.lint.unknownAtRules": "ignore",
-  "scss.lint.unknownAtRules": "ignore"
+  "scss.lint.unknownAtRules": "ignore",
+  "chat.tools.terminal.autoApprove": {
+    "/^powershell -NoProfile -Command \"Set-Location 'd:\\\\Velvet\\\\backend'; npx tsx -e 'import \\{ db \\} from \"\\./src/lib/db\"; import \\{ quizzes \\} from \"\\./src/lib/schema\"; import \\{ sql \\} from \"drizzle-orm\"; const today = new Date\\(\\)\\.toISOString\\(\\)\\.split\\(\"T\"\\)\\[0\\]; const todayResult = await db\\.select\\(\\{ count: sql`count\\(\\*\\)` \\}\\)\\.from\\(quizzes\\)\\.where\\(sql`generated_date = \\$\\{today\\}`\\); const totalResult = await db\\.select\\(\\{ count: sql`count\\(\\*\\)` \\}\\)\\.from\\(quizzes\\); console\\.log\\(`TODAY \\$\\{today\\} COUNT \\$\\{todayResult\\[0\\]\\?\\.count \\?\\? 0\\}`\\); console\\.log\\(`TOTAL COUNT \\$\\{totalResult\\[0\\]\\?\\.count \\?\\? 0\\}`\\);'\"$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "npx tsx": true
+  }
 }
