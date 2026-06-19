@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
-import { ShoppingBag, User, Search, X, Home } from 'lucide-react'
+import { useWishlistStore } from '@/store/wishlistStore'
+import { ShoppingBag, User, Search, X, Home, Heart } from 'lucide-react'
 import Image from 'next/image'
 import { SearchBar } from './SearchBar'
 
@@ -16,6 +17,7 @@ export function Navigation() {
   const { items, toggleCart, hasHydrated } = useCartStore()
   const totalItems = hasHydrated ? items.reduce((sum, item) => sum + item.quantity, 0) : 0
   const { isAuthenticated, user } = useAuthStore()
+  const wishlistCount = useWishlistStore((s) => s.count)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50)
@@ -149,6 +151,21 @@ export function Navigation() {
                   <User size={17} />
                 </Link>
               )}
+            </div>
+
+            {/* Wishlist - Desktop Only */}
+            <div className="hidden md:block">
+              <Link
+                href="/profile/wishlist"
+                className="relative text-velvet-muted hover:text-velvet-white transition-colors interactive"
+              >
+                <Heart size={17} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center text-velvet-white font-bold">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
             </div>
 
             {/* Cart - Desktop Only */}

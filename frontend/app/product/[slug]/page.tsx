@@ -10,7 +10,8 @@ import { ProductReviews } from '@/components/product/ProductReviews'
 import { Button } from '@/components/ui/Button'
 import { useCartStore } from '@/store/cartStore'
 import { useGameStore } from '@/store/gameStore'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { useWishlistStore } from '@/store/wishlistStore'
+import { Heart, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { events } from '@/lib/analytics'
 import { apiFetch } from '@/lib/api'
@@ -55,9 +56,10 @@ export default function ProductPage() {
   const [isAdding, setIsAdding] = useState(false)
   const { addItem, toggleCart } = useCartStore()
   
-  const wishlistedProducts = useGameStore((s) => s.challengeProgress.wishlistedProducts)
-  const isWishlisted = product ? wishlistedProducts.includes(product.id) : false
-  const trackWishlistAdd = useGameStore((s) => s.trackWishlistAdd)
+  const wishlistIds = useWishlistStore((s) => s.ids)
+  const addToWishlist = useWishlistStore((s) => s.addToWishlist)
+  const removeFromWishlist = useWishlistStore((s) => s.removeFromWishlist)
+  const isWishlisted = product ? wishlistIds.includes(product.id) : false
   const trackProductView = useGameStore((s) => s.trackProductView)
 
   useEffect(() => {
@@ -295,7 +297,11 @@ export default function ProductPage() {
                 }`}
                 size="lg"
                 onClick={() => {
-                  if (!isWishlisted) trackWishlistAdd(product.id)
+                  if (isWishlisted) {
+                    removeFromWishlist(product.id)
+                  } else {
+                    addToWishlist(product.id)
+                  }
                 }}
               >
                 {isWishlisted ? 'Added to Wishlist ❤️' : 'Add to Wishlist ♡'}
@@ -367,7 +373,11 @@ export default function ProductPage() {
       <div className="fixed bottom-[72px] left-0 right-0 z-40 md:hidden bg-black/90 backdrop-blur-2xl border-t border-white/10 p-3 flex gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
         <button
           onClick={() => {
-            if (!isWishlisted) trackWishlistAdd(product.id)
+            if (isWishlisted) {
+              removeFromWishlist(product.id)
+            } else {
+              addToWishlist(product.id)
+            }
           }}
           className={`px-4 rounded-xl border flex items-center justify-center transition-colors ${
             isWishlisted 

@@ -129,6 +129,17 @@ export const cartItems = sqliteTable('cart_items', {
   uniqueCartItemIdx: uniqueIndex('cart_items_unique_idx').on(table.cartId, table.productId, table.variantId, table.size),
 }));
 
+// Wishlist Items
+export const wishlistItems = sqliteTable('wishlist_items', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  productId: text('product_id').notNull().references(() => products.id, { onDelete: 'cascade' }),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  userProductIdx: uniqueIndex('wishlist_user_product_idx').on(table.userId, table.productId),
+  userIdIdx: index('wishlist_user_id_idx').on(table.userId),
+}));
+
 // Address Table
 export const addresses = sqliteTable('addresses', {
   id: text('id').primaryKey(),
@@ -400,6 +411,9 @@ export const vaultWaitlist = sqliteTable('vault_waitlist', {
 
 export type VaultWaitlist = typeof vaultWaitlist.$inferSelect;
 export type NewVaultWaitlist = typeof vaultWaitlist.$inferInsert;
+
+export type WishlistItem = typeof wishlistItems.$inferSelect;
+export type NewWishlistItem = typeof wishlistItems.$inferInsert;
 
 // ─── Quiz Pack System (imported from quiz-pack/schema.ts) ────────────
 export {
