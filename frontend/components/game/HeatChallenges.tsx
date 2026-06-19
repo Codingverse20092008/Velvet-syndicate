@@ -71,10 +71,9 @@ export function HeatChallenges({ temp }: HeatChallengesProps) {
     }
   }
 
-  const handleClaim = (id: string) => {
-    const res = claimChallenge(id, temp)
+  const handleClaim = async (id: string) => {
+    const res = await claimChallenge(id, temp)
     if (res.success) {
-      // Show local confirmation/celebration (toast handles this globally in parent, but this is a nice safe feedback)
       console.log('Claimed successfully:', res)
     }
   }

@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { EVENTS_CONFIG, getLevelForXp, getXpForLevel } from '@/lib/eventConfig'
+import { api } from '@/lib/api'
 
 const today = () => new Date().toISOString().slice(0, 10)
 const yesterday = () => new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
@@ -110,7 +111,7 @@ interface GameState {
   tickNewArrivalsTimer: (seconds: number) => void
   startCollectionBrowseTimer: () => void
   tickCollectionBrowseTimer: (seconds: number) => void
-  claimChallenge: (challengeId: string, currentTemp: number) => { success: boolean; xp: number; hp: number }
+  claimChallenge: (challengeId: string, currentTemp: number) => Promise<{ success: boolean; xp: number; hp: number; error?: string }>
   submitForecast: (prediction: string) => boolean
   evaluateForecasts: (actualTemp: number) => { evaluatedCount: number; totalXpEarned: number }
   claimLevelReward: (level: number) => { success: boolean; rewardLabel: string }
@@ -483,9 +484,11 @@ export const useGameStore = create<GameState>()(
         const resetState = checkDailyReset(state)
         const currentProgress = resetState ? resetState.challengeProgress : state.challengeProgress
 
-        if (currentProgress.viewedProducts.includes(productId)) return
+        const normalizedId = String(productId).trim()
+        if (!normalizedId) return
+        if (currentProgress.viewedProducts.includes(normalizedId)) return
 
-        const nextViewed = [...currentProgress.viewedProducts, productId]
+        const nextViewed = [...currentProgress.viewedProducts, normalizedId].slice(-50)
         set((s) => ({
           ...resetState,
           challengeProgress: {
@@ -500,9 +503,11 @@ export const useGameStore = create<GameState>()(
         const resetState = checkDailyReset(state)
         const currentProgress = resetState ? resetState.challengeProgress : state.challengeProgress
 
-        if (currentProgress.wishlistedProducts.includes(productId)) return
+        const normalizedId = String(productId).trim()
+        if (!normalizedId) return
+        if (currentProgress.wishlistedProducts.includes(normalizedId)) return
 
-        const nextWishlisted = [...currentProgress.wishlistedProducts, productId]
+        const nextWishlisted = [...currentProgress.wishlistedProducts, normalizedId].slice(-50)
         set((s) => ({
           ...resetState,
           challengeProgress: {
@@ -566,7 +571,7 @@ export const useGameStore = create<GameState>()(
         })
       },
 
-      claimChallenge: (challengeId, currentTemp) => {
+      claimChallenge: async (challengeId, currentTemp) => {
         const state = get()
         const resetState = checkDailyReset(state)
         const completed = resetState ? resetState.completedChallengesToday : state.completedChallengesToday
@@ -591,14 +596,31 @@ export const useGameStore = create<GameState>()(
         } else if (challenge.type === 'shopper') {
           validated = currentProgress.heatwaveOrderPlaced
         } else {
-          // Standard manual mark-complete challenges (like quiz or poll, or streak)
           validated = true
         }
 
         if (!validated) return { success: false, xp: 0, hp: 0 }
 
-        // Multiplier calculation: Temperature affects all challenge rewards.
-        // 35°C+: 1.0x, 38°C+: 1.25x, 41°C+: 1.5x, 44°C+: 2.0x
+        // Server-side verification for product-based challenges
+        if (challenge.type === 'explorer' || challenge.type === 'wishlist') {
+          try {
+            const productIds = challenge.type === 'explorer'
+              ? currentProgress.viewedProducts
+              : currentProgress.wishlistedProducts
+            const res = await api.post('/challenges/verify-discovery', {
+              productIds,
+              challengeType: challenge.type,
+            })
+            const data = await res.json()
+            if (!data.success || !data.data?.valid) {
+              return { success: false, xp: 0, hp: 0, error: 'Server verification failed' }
+            }
+          } catch {
+            return { success: false, xp: 0, hp: 0, error: 'Verification unavailable' }
+          }
+        }
+
+        // Multiplier calculation
         let multiplier = 1.0
         if (currentTemp >= 44) multiplier = 2.0
         else if (currentTemp >= 41) multiplier = 1.5

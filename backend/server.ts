@@ -34,6 +34,7 @@ import { quizScheduler } from './src/scripts/quiz-scheduler';
 import quizRoutes from './src/routes/quiz';
 import vaultRoutes from './src/routes/vault';
 import vaultWaitlistRoutes from './src/routes/vault-waitlist';
+import challengesRoutes from './src/routes/challenges';
 import { vaultLaunchGuard } from './src/lib/vault-launch';
 import quizPackRoutes from './src/routes/quiz-packs';
 
@@ -307,6 +308,7 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/vault', vaultLaunchGuard, vaultRoutes);
 app.use('/api/vault/waitlist', vaultWaitlistRoutes);
 app.use('/api/quiz-packs', quizPackRoutes);
+app.use('/api/challenges', challengesRoutes);
 
 // Error handling
 app.use(errorHandler);

@@ -93,7 +93,7 @@ export default function ProductPage() {
   const selectedVariant = product?.variants.find(v => v.id === selectedVariantId) || product?.variants[0]
 
   useEffect(() => {
-    if (!product) return
+    if (!product?.id) return
     events.viewProduct(product.id)
     trackProductView(product.id)
     const primaryImage = product.variants?.[0]?.images?.[0] || product.image || product.imageUrl || ''
