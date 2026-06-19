@@ -34,14 +34,20 @@ export default function VelvetVaultDashboardPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     fetch('/api/admin/velvet-vault/overview')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) setData(d.data)
-        else setError(d.error || 'Failed to load overview')
+      .then(r => {
+        if (r.status === 401) return null
+        return r.json()
       })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
+      .then(d => {
+        if (cancelled) return
+        if (d && d.success) setData(d.data)
+        else if (d) setError(d.error || 'Failed to load overview')
+      })
+      .catch(e => { if (!cancelled) setError(e.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [])
 
   if (loading) {

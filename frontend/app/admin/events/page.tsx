@@ -78,12 +78,12 @@ export default function EventsDashboardPage() {
     setLoading(true)
     setError(null)
     Promise.all([
-      fetch('/api/admin/events/overview').then(r => r.json()),
-      fetch('/api/admin/events/config').then(r => r.json()),
+      fetch('/api/admin/events/overview').then(r => r.status === 401 ? null : r.json()),
+      fetch('/api/admin/events/config').then(r => r.status === 401 ? null : r.json()),
     ])
       .then(([overviewRes]) => {
-        if (overviewRes.success) setOverview(overviewRes.data)
-        else setError('Failed to load overview')
+        if (overviewRes && overviewRes.success) setOverview(overviewRes.data)
+        else if (overviewRes) setError('Failed to load overview')
       })
       .catch(() => setError('Failed to load event data'))
       .finally(() => setLoading(false))

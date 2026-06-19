@@ -11,7 +11,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isLoading) return
-    if (!isAuthenticated || !user || user.role !== 'admin') {
+    if (!isAuthenticated || !user || (user.role !== 'admin' && user.role !== 'super_admin')) {
       router.replace('/')
     }
   }, [isAuthenticated, isLoading, router, user])
@@ -24,7 +24,7 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!isAuthenticated || !user || user.role !== 'admin') {
+  if (!isAuthenticated || !user || (user.role !== 'admin' && user.role !== 'super_admin')) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center gap-3 text-red-400 text-sm uppercase tracking-widest">

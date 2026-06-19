@@ -84,19 +84,20 @@ export default function JotoGoromPage() {
 
   const fetchAll = useCallback(() => {
     setLoading(true)
+    const safeJson = (r: Response) => r.status === 401 ? null : r.json()
     Promise.all([
-      fetch('/api/admin/events/joto-gorom/tiers').then(r => r.json()),
-      fetch('/api/admin/events/joto-gorom/challenges').then(r => r.json()),
-      fetch('/api/admin/events/joto-gorom/badges').then(r => r.json()),
-      fetch('/api/admin/events/joto-gorom/leaderboard').then(r => r.json()),
-      fetch('/api/admin/events/joto-gorom/analytics').then(r => r.json()),
+      fetch('/api/admin/events/joto-gorom/tiers').then(safeJson),
+      fetch('/api/admin/events/joto-gorom/challenges').then(safeJson),
+      fetch('/api/admin/events/joto-gorom/badges').then(safeJson),
+      fetch('/api/admin/events/joto-gorom/leaderboard').then(safeJson),
+      fetch('/api/admin/events/joto-gorom/analytics').then(safeJson),
     ])
       .then(([tiersRes, challengesRes, badgesRes, lbRes, analyticsRes]) => {
-        if (tiersRes.success) setTiers(tiersRes.data)
-        if (challengesRes.success) setChallenges(challengesRes.data)
-        if (badgesRes.success) setBadges(badgesRes.data)
-        if (lbRes.success) setLeaderboard(lbRes.data)
-        if (analyticsRes.success) setAnalytics(analyticsRes.data)
+        if (tiersRes?.success) setTiers(tiersRes.data)
+        if (challengesRes?.success) setChallenges(challengesRes.data)
+        if (badgesRes?.success) setBadges(badgesRes.data)
+        if (lbRes?.success) setLeaderboard(lbRes.data)
+        if (analyticsRes?.success) setAnalytics(analyticsRes.data)
       })
       .catch(() => {})
       .finally(() => setLoading(false))

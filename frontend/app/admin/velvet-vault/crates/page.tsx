@@ -49,14 +49,20 @@ export default function CratesPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
     fetch('/api/admin/velvet-vault/crate-config')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) setConfig(d.data)
-        else setError(d.error || 'Failed to load config')
+      .then(r => {
+        if (r.status === 401) return null
+        return r.json()
       })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
+      .then(d => {
+        if (cancelled) return
+        if (d && d.success) setConfig(d.data)
+        else if (d) setError(d.error || 'Failed to load config')
+      })
+      .catch(e => { if (!cancelled) setError(e.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [])
 
   const getRarityTotal = (crate: typeof CRATE_KEYS[number]) => {
