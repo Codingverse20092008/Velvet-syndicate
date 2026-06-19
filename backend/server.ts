@@ -95,8 +95,24 @@ app.use((req, res, next) => {
 app.use(globalLimiter);
 
 // Security middleware
+const BACKEND_URL = process.env.BACKEND_URL || 'https://velvet-syndicate.onrender.com'
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      connectSrc: ["'self'", BACKEND_URL, 'https://velvet-syndicate.onrender.com', 'http://localhost:3001'],
+      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com', 'https://velvet-syndicate.onrender.com'],
+      fontSrc: ["'self'", 'https:', 'data:'],
+      styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'self'"],
+      objectSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    },
+  },
 }));
 
 // 🛡️ BULLETPROOF CORS FOR CROSS-DOMAIN AUTH (Vercel → Render)
