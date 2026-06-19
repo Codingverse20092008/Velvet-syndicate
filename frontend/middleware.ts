@@ -41,28 +41,23 @@ export async function middleware(request: NextRequest) {
   const launchDate = new Date(launchDateStr)
   const now = new Date()
 
-  const token = getTokenFromRequest(request)
-  const payload = token ? await verifyToken(token) : null
-
-  if (now >= launchDate) {
-    // After launch: require authentication
-    if (payload) {
-      return NextResponse.next()
-    }
-    // Guest — redirect to login
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(url)
-  }
-
-  // Before launch: only admins
-  if (payload?.role === 'admin') {
+  if (now < launchDate) {
+    // Before launch: client-side VaultLaunchGuard handles access control
     return NextResponse.next()
   }
 
+  // After launch: require authentication
+  const token = getTokenFromRequest(request)
+  const payload = token ? await verifyToken(token) : null
+
+  if (payload) {
+    return NextResponse.next()
+  }
+
+  // Guest — redirect to login
   const url = request.nextUrl.clone()
-  url.pathname = '/vault-coming-soon'
+  url.pathname = '/login'
+  url.searchParams.set('redirect', pathname)
   return NextResponse.redirect(url)
 }
 
