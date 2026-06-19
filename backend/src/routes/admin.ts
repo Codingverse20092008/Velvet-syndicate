@@ -24,6 +24,8 @@ import dashboardMetricsRoutes from './admin/metrics';
 import uploadRoutes from './admin/upload';
 import settingsRoutes from './admin/settings';
 import collectionsRoutes from './admin/collections';
+import velvetVaultRoutes from './admin/velvet-vault';
+import eventsRoutes from './admin/events';
 
 const router = Router();
 
@@ -33,6 +35,8 @@ router.use('/metrics', dashboardMetricsRoutes);
 router.use('/upload', uploadRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/collections', collectionsRoutes);
+router.use('/velvet-vault', velvetVaultRoutes);
+router.use('/events', eventsRoutes);
 
 const orderStatusSchema = z.object({
   status: z.enum(['CONFIRMED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED', 'PENDING', 'FAILED']),
