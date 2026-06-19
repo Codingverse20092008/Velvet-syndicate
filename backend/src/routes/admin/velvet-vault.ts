@@ -181,25 +181,54 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
   try {
     const today = getToday();
 
-    const [totalResult, activeResult, xpCoinsResult, cratesResult, badgesResult, quizResult, streakResult] = await Promise.all([
-      dbClient.execute('SELECT COUNT(*) AS count FROM vault_users'),
-      dbClient.execute(`SELECT COUNT(*) AS count FROM vault_users WHERE last_activity_date = ${esc(today)}`),
-      dbClient.execute('SELECT COALESCE(SUM(total_xp_earned), 0) AS xp, COALESCE(SUM(total_coins_earned), 0) AS coins FROM vault_users'),
-      dbClient.execute('SELECT COALESCE(SUM(crates_opened), 0) AS count FROM vault_users'),
-      dbClient.execute('SELECT COUNT(*) AS count FROM vault_user_badges'),
-      dbClient.execute(`SELECT COUNT(*) AS count FROM vault_quiz_attempts WHERE date(answered_at) = ${esc(today)}`),
-      dbClient.execute('SELECT COALESCE(AVG(streak_days), 0) AS avg_streak FROM vault_users'),
-    ]);
+    let totalUsers = 0, activeToday = 0, totalXpEarned = 0, totalCoinsEarned = 0;
+    let cratesOpened = 0, badgesUnlocked = 0, quizAttemptsToday = 0, avgDailyStreak = 0;
+
+    try {
+      const totalResult = await dbClient.execute('SELECT COUNT(*) AS count FROM vault_users');
+      totalUsers = Number((totalResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const activeResult = await dbClient.execute(`SELECT COUNT(*) AS count FROM vault_users WHERE last_activity_date = ${esc(today)}`);
+      activeToday = Number((activeResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const xpCoinsResult = await dbClient.execute('SELECT COALESCE(SUM(total_xp_earned), 0) AS xp, COALESCE(SUM(total_coins_earned), 0) AS coins FROM vault_users');
+      totalXpEarned = Number((xpCoinsResult.rows[0] as any).xp) || 0;
+      totalCoinsEarned = Number((xpCoinsResult.rows[0] as any).coins) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const cratesResult = await dbClient.execute('SELECT COALESCE(SUM(crates_opened), 0) AS count FROM vault_users');
+      cratesOpened = Number((cratesResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const badgesResult = await dbClient.execute('SELECT COUNT(*) AS count FROM vault_user_badges');
+      badgesUnlocked = Number((badgesResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const quizResult = await dbClient.execute(`SELECT COUNT(*) AS count FROM vault_quiz_attempts WHERE date(answered_at) = ${esc(today)}`);
+      quizAttemptsToday = Number((quizResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const streakResult = await dbClient.execute('SELECT COALESCE(AVG(streak_days), 0) AS avg_streak FROM vault_users');
+      avgDailyStreak = Math.round(Number((streakResult.rows[0] as any).avg_streak) * 100) / 100;
+    } catch { /* ignore */ }
 
     return successResponse(res, {
-      totalUsers: Number((totalResult.rows[0] as any).count),
-      activeToday: Number((activeResult.rows[0] as any).count),
-      totalXpEarned: Number((xpCoinsResult.rows[0] as any).xp),
-      totalCoinsEarned: Number((xpCoinsResult.rows[0] as any).coins),
-      cratesOpened: Number((cratesResult.rows[0] as any).count),
-      badgesUnlocked: Number((badgesResult.rows[0] as any).count),
-      quizAttemptsToday: Number((quizResult.rows[0] as any).count),
-      avgDailyStreak: Math.round(Number((streakResult.rows[0] as any).avg_streak) * 100) / 100,
+      totalUsers,
+      activeToday,
+      totalXpEarned,
+      totalCoinsEarned,
+      cratesOpened,
+      badgesUnlocked,
+      quizAttemptsToday,
+      avgDailyStreak,
     });
   } catch (error) {
     console.error('Failed to fetch vault overview:', error);
