@@ -57,7 +57,7 @@ export default function CratesPage() {
       })
       .then(d => {
         if (cancelled) return
-        if (d && d.success) setConfig(d.data)
+        if (d && d.success) setConfig(d.data?.config ?? d.data)
         else if (d) setError(d.error || 'Failed to load config')
       })
       .catch(e => { if (!cancelled) setError(e.message) })

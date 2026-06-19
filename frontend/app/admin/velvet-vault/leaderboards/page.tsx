@@ -42,7 +42,7 @@ export default function LeaderboardsPage() {
     try {
       const res = await fetch(`/api/admin/velvet-vault/leaderboards?period=${p}&limit=50`)
       const d = await res.json()
-      if (d.success) setRankings(d.data || d.rankings || [])
+      if (d.success) setRankings(d.data?.leaderboard ?? d.data ?? [])
       else setError(d.error || 'Failed to load rankings')
     } catch (e: any) {
       setError(e.message)
@@ -53,7 +53,7 @@ export default function LeaderboardsPage() {
     try {
       const res = await fetch('/api/admin/velvet-vault/leaderboards/reset-history')
       const d = await res.json()
-      if (d.success) setResetHistory(d.data || d.history || [])
+      if (d.success) setResetHistory(d.data?.resets ?? d.data ?? [])
     } catch {
       // non-critical
     }

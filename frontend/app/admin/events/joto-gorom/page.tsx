@@ -93,11 +93,11 @@ export default function JotoGoromPage() {
       fetch('/api/admin/events/joto-gorom/analytics').then(safeJson),
     ])
       .then(([tiersRes, challengesRes, badgesRes, lbRes, analyticsRes]) => {
-        if (tiersRes?.success) setTiers(tiersRes.data)
-        if (challengesRes?.success) setChallenges(challengesRes.data)
-        if (badgesRes?.success) setBadges(badgesRes.data)
-        if (lbRes?.success) setLeaderboard(lbRes.data)
-        if (analyticsRes?.success) setAnalytics(analyticsRes.data)
+        if (tiersRes?.success) setTiers(tiersRes.data?.tiers ?? tiersRes.data)
+        if (challengesRes?.success) setChallenges(challengesRes.data?.challenges ?? challengesRes.data)
+        if (badgesRes?.success) setBadges(badgesRes.data?.badges ?? badgesRes.data)
+        if (lbRes?.success) setLeaderboard(lbRes.data?.leaderboard ?? lbRes.data)
+        if (analyticsRes?.success) setAnalytics(analyticsRes.data?.analytics ?? analyticsRes.data)
       })
       .catch(() => {})
       .finally(() => setLoading(false))

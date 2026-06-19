@@ -48,7 +48,7 @@ export default function BadgesPage() {
     try {
       const res = await fetch('/api/admin/velvet-vault/badges')
       const d = await res.json()
-      if (d.success) setBadges(d.data || d.badges || [])
+      if (d.success) setBadges(d.data?.badges ?? d.data ?? [])
     } catch (e: any) {
       setError(e.message)
     }
@@ -58,7 +58,7 @@ export default function BadgesPage() {
     try {
       const res = await fetch('/api/admin/velvet-vault/badge-stats')
       const d = await res.json()
-      if (d.success) setStats(d.data || d.stats || [])
+      if (d.success) setStats(d.data?.badges ?? d.data ?? [])
     } catch (e: any) {
       setError(e.message)
     }

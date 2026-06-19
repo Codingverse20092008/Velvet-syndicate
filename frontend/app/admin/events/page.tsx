@@ -1,8 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { CalendarDays, Thermometer, Users, Zap, Award, Gift, DollarSign, TrendingUp, BarChart3, Layers, ArrowRight, Clock } from 'lucide-react'
+import { CalendarDays, Thermometer, Users, Zap, Award, Gift, DollarSign, TrendingUp, BarChart3, Layers, Clock } from 'lucide-react'
 
 const EASE = [0.22, 1, 0.36, 1]
 
@@ -20,11 +19,6 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
   ended: [],
 }
 
-const FUTURE_EVENTS = [
-  { id: 'monsoon', name: 'Monsoon Madness', tagline: 'When It Rains, We Pour Rewards.', emoji: '🌧️', color: 'from-blue-500/10 to-blue-600/5', iconColor: 'text-blue-400' },
-  { id: 'pujo', name: 'Pujo Rush', tagline: 'Festive Fits, Epic Rewards.', emoji: '🎭', color: 'from-pink-500/10 to-pink-600/5', iconColor: 'text-pink-400' },
-  { id: 'winter', name: 'Winter Vault', tagline: 'Chill Out with Exclusive Drops.', emoji: '❄️', color: 'from-cyan-500/10 to-cyan-600/5', iconColor: 'text-cyan-400' },
-]
 
 interface EventOverview {
   id: string
@@ -200,29 +194,7 @@ export default function EventsDashboardPage() {
         </>
       )}
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: EASE }}>
-        <h2 className="font-heading text-xl text-velvet-white tracking-tight mb-4">Future Events</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {FUTURE_EVENTS.map((event, i) => (
-            <Link key={event.id} href={`/admin/events/${event.id}`}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.05, ease: EASE }}
-                className="rounded-2xl bg-velvet-card border border-white/10 p-6 hover:border-white/20 transition-colors group"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${event.color} flex items-center justify-center`}>
-                    <span className="text-2xl">{event.emoji}</span>
-                  </div>
-                  <ArrowRight size={18} className="text-velvet-muted group-hover:text-velvet-white transition-colors" />
-                </div>
-                <h3 className="font-heading text-lg text-velvet-white mb-1">{event.name}</h3>
-                <p className="text-xs text-velvet-muted mb-4">{event.tagline}</p>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-velvet-accent font-bold">Configure</div>
-              </motion.div>
-            </Link>
-          ))}
-        </div>
-      </motion.div>
+
 
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
