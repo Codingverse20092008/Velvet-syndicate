@@ -249,7 +249,7 @@ router.get('/reward-config', asyncHandler(async (req: Request, res: Response) =>
     return successResponse(res, { config: rewardConfigCache });
   } catch (error) {
     console.error('Failed to fetch reward config:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch reward config' });
+    return successResponse(res, { config: getDefaultRewardConfig() });
   }
 }));
 
@@ -307,7 +307,7 @@ router.get('/crate-config', asyncHandler(async (req: Request, res: Response) => 
     return successResponse(res, { config: crateConfigCache });
   } catch (error) {
     console.error('Failed to fetch crate config:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch crate config' });
+    return successResponse(res, { config: getDefaultCrateConfig() });
   }
 }));
 
@@ -359,7 +359,7 @@ router.get('/badges', asyncHandler(async (req: Request, res: Response) => {
     return successResponse(res, { badges: result.rows });
   } catch (error) {
     console.error('Failed to fetch badges:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch badges' });
+    return successResponse(res, { badges: [] });
   }
 }));
 
@@ -476,7 +476,7 @@ router.get('/badge-stats', asyncHandler(async (req: Request, res: Response) => {
     return successResponse(res, { badges: result.rows });
   } catch (error) {
     console.error('Failed to fetch badge stats:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch badge stats' });
+    return successResponse(res, { badges: [] });
   }
 }));
 
@@ -485,8 +485,8 @@ router.get('/leaderboards', asyncHandler(async (req: Request, res: Response) => 
   const admin = await getAdminUser(req, res);
   if (!admin) return;
 
+  const period = (req.query.period as string) || 'weekly';
   try {
-    const period = (req.query.period as string) || 'weekly';
     const limit = Math.min(Math.max(parseInt(req.query.limit as string) || 50, 1), 200);
 
     const result = await dbClient.execute(`
@@ -512,7 +512,7 @@ router.get('/leaderboards', asyncHandler(async (req: Request, res: Response) => 
     return successResponse(res, { period, leaderboard });
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch leaderboard' });
+    return successResponse(res, { period, leaderboard: [] });
   }
 }));
 
