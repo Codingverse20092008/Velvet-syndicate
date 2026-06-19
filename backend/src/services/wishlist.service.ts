@@ -59,7 +59,7 @@ interface WishlistEntry {
 export async function getWishlist(userId: string): Promise<WishlistItem[]> {
   await ensureTable();
   const result = await dbClient.execute(`
-    SELECT wi.*, p.name, p.slug, p.price, p.image_url, p.is_on_sale, p.sale_price, p.sale_percentage, p.is_out_of_stock
+    SELECT wi.*, p.name, p.slug, p.price, p.image_url, p.is_on_sale, p.sale_percentage, p.is_out_of_stock
     FROM wishlist_items wi
     JOIN products p ON wi.product_id = p.id
     WHERE wi.user_id = ${esc(userId)}
@@ -75,7 +75,7 @@ export async function getWishlist(userId: string): Promise<WishlistItem[]> {
     price: row.price,
     image_url: row.image_url,
     is_on_sale: row.is_on_sale,
-    sale_price: row.sale_price,
+    sale_price: row.sale_price ?? null,
     sale_percentage: row.sale_percentage,
     is_out_of_stock: row.is_out_of_stock,
   }));
