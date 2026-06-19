@@ -73,7 +73,7 @@ export async function authenticateUser(email: string, password: string): Promise
   }
 
   // Block unverified users from logging in (except admins)
-  if (!user.emailVerified && user.role !== 'admin') {
+  if (!user.emailVerified && user.role !== 'admin' && user.role !== 'super_admin') {
     throw new UnauthorizedError('Please verify your email first. Check your inbox for the OTP.');
   }
 

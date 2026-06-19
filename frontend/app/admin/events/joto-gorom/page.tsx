@@ -33,6 +33,8 @@ interface Challenge {
   type: string
   requirementValue?: number
   enabled: boolean
+  repeatable?: boolean
+  duration?: number
 }
 
 interface Badge {
@@ -61,7 +63,7 @@ interface Analytics {
 }
 
 const emptyChallenge = (): Challenge => ({
-  id: '', emoji: '🔥', title: '', description: '', xp: 0, heatPoints: 0, type: 'quiz', requirementValue: undefined, enabled: true,
+  id: '', emoji: '🔥', title: '', description: '', xp: 0, heatPoints: 0, type: 'quiz', requirementValue: undefined, enabled: true, repeatable: false, duration: 0,
 })
 
 export default function JotoGoromPage() {
@@ -341,6 +343,20 @@ export default function JotoGoromPage() {
                     <label className="text-[10px] uppercase tracking-[0.2em] text-velvet-muted block mb-1">Requirement Value (optional)</label>
                     <input type="number" value={newChallenge.requirementValue ?? ''} onChange={e => setNewChallenge(p => ({ ...p, requirementValue: e.target.value ? Number(e.target.value) : undefined }))}
                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white focus:outline-none focus:border-white/20" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-velvet-muted block mb-1">Duration (hours, 0 = unlimited)</label>
+                      <input type="number" value={newChallenge.duration ?? 0} onChange={e => setNewChallenge(p => ({ ...p, duration: Number(e.target.value) }))}
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white focus:outline-none focus:border-white/20" />
+                    </div>
+                    <div className="flex items-end pb-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={!!newChallenge.repeatable} onChange={e => setNewChallenge(p => ({ ...p, repeatable: e.target.checked }))}
+                          className="w-4 h-4 rounded border-white/20 bg-white/5 accent-velvet-white" />
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-velvet-muted">Repeatable</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 mt-6">

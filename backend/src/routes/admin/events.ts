@@ -14,19 +14,31 @@ function esc(val: any): string {
   return `'${String(val).replace(/'/g, "''")}'`;
 }
 
-const requireAdmin = async (req: Request, res: Response): Promise<boolean> => {
+const requireAdmin = async (req: Request, res: Response): Promise<any> => {
   try {
     const user = await getUserFromRequest(req);
-    if (!user || (user as any).role !== 'admin') {
+    const role = (user as any)?.role;
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       res.status(403).json({ success: false, error: 'Admin access required' });
-      return false;
+      return null;
     }
-    return true;
+    return user;
   } catch {
     res.status(401).json({ success: false, error: 'Authentication required' });
-    return false;
+    return null;
   }
 };
+
+async function logAudit(admin: any, action: string, details: string, oldValue?: any, newValue?: any): Promise<void> {
+  try {
+    await dbClient.execute(`
+      INSERT INTO admin_audit_log (id, admin_id, admin_name, admin_email, action, details, old_value, new_value, created_at)
+      VALUES (${esc(crypto.randomUUID())}, ${esc(admin?.id || 'unknown')}, ${esc(admin?.name || 'unknown')}, ${esc(admin?.email || 'unknown')}, ${esc(action)}, ${esc(details)}, ${esc(oldValue !== undefined ? JSON.stringify(oldValue) : null)}, ${esc(newValue !== undefined ? JSON.stringify(newValue) : null)}, ${esc(new Date().toISOString())})
+    `);
+  } catch (e) {
+    console.error('Audit log failed:', e);
+  }
+}
 
 const getToday = (): string => new Date().toISOString().slice(0, 10);
 
@@ -139,51 +151,59 @@ async function saveTiersToDb(tiers: any): Promise<void> {
 
 // GET /overview
 router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const config = eventConfigCache || (await loadEventConfigFromDb()) || getDefaultEventConfig();
-    const activeEvent = config.status === 'active' ? (config.eventType || 'joto-gorom') : null;
 
-    let totalParticipants = 0;
-    let totalEventXp = 0;
-    let totalHeatPoints = 0;
-    let totalCratesDistributed = 0;
-    let eventRevenue = 0;
+    let participants = 0;
+    let totalXp = 0;
+    let totalHeat = 0;
+    let cratesDistributed = 0;
+    let revenue = 0;
     let conversionRate = 0;
+    let activeChallenges = 0;
+    let totalBadges = 0;
 
-    if (activeEvent) {
-      try {
-        const participantsResult = await dbClient.execute('SELECT COUNT(DISTINCT user_id) AS count FROM vault_quiz_attempts');
-        totalParticipants = Number((participantsResult.rows[0] as any).count) || 0;
-      } catch {
-        totalParticipants = 0;
-      }
+    try {
+      const participantsResult = await dbClient.execute('SELECT COUNT(DISTINCT user_id) AS count FROM vault_quiz_attempts');
+      participants = Number((participantsResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
 
-      try {
-        const xpResult = await dbClient.execute('SELECT COALESCE(SUM(xp_awarded), 0) AS total FROM vault_quiz_attempts');
-        totalEventXp = Number((xpResult.rows[0] as any).total) || 0;
-      } catch {
-        totalEventXp = 0;
-      }
+    try {
+      const xpResult = await dbClient.execute('SELECT COALESCE(SUM(xp_awarded), 0) AS total FROM vault_quiz_attempts');
+      totalXp = Number((xpResult.rows[0] as any).total) || 0;
+    } catch { /* ignore */ }
 
-      try {
-        const cratesResult = await dbClient.execute('SELECT COALESCE(COUNT(*), 0) AS count FROM vault_crate_open_log');
-        totalCratesDistributed = Number((cratesResult.rows[0] as any).count) || 0;
-      } catch {
-        totalCratesDistributed = 0;
-      }
+    try {
+      const cratesResult = await dbClient.execute('SELECT COALESCE(COUNT(*), 0) AS count FROM vault_crate_open_log');
+      cratesDistributed = Number((cratesResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    try {
+      const badgesResult = await dbClient.execute('SELECT COUNT(*) AS count FROM vault_badges');
+      totalBadges = Number((badgesResult.rows[0] as any).count) || 0;
+    } catch { /* ignore */ }
+
+    if (config.eventType) {
+      activeChallenges = (eventChallengesCache[config.eventType] || []).filter((c: any) => !c.disabled).length;
     }
 
     return successResponse(res, {
-      activeEvent,
-      totalParticipants,
-      totalEventXp,
-      totalHeatPoints,
-      totalCratesDistributed,
-      eventRevenue,
+      id: config.eventType || 'joto-gorom',
+      name: config.name || 'Unnamed Event',
+      status: config.status || 'draft',
+      startDate: config.startDate || '',
+      endDate: config.endDate || '',
+      participants,
+      totalXp,
+      totalHeat,
+      cratesDistributed,
+      revenue,
       conversionRate,
+      activeChallenges,
+      totalBadges,
     });
   } catch (error) {
     console.error('Failed to fetch event overview:', error);
@@ -193,8 +213,8 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
 
 // GET /config
 router.get('/config', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     if (!eventConfigCache) {
@@ -221,8 +241,8 @@ const eventConfigSchema = z.object({
 
 // POST /config
 router.post('/config', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const data = eventConfigSchema.parse(req.body);
@@ -230,6 +250,7 @@ router.post('/config', asyncHandler(async (req: Request, res: Response) => {
     const merged = { ...existing, ...data };
     eventConfigCache = merged;
     await saveEventConfigToDb(merged);
+    await logAudit(admin, 'UPDATE_EVENT_CONFIG', `Updated event config`, existing, merged);
     return successResponse(res, { message: 'Event config updated', config: merged });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -240,14 +261,93 @@ router.post('/config', asyncHandler(async (req: Request, res: Response) => {
   }
 }));
 
+const createEventSchema = z.object({
+  name: z.string().min(1).max(200),
+  description: z.string().min(1).max(5000),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  eventType: z.string().min(1).max(50),
+});
+
+// POST /create
+router.post('/create', asyncHandler(async (req: Request, res: Response) => {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+
+  try {
+    const data = createEventSchema.parse(req.body);
+    const newConfig = {
+      ...getDefaultEventConfig(),
+      ...data,
+      status: 'draft',
+      rules: { earnHeatPoints: true, meltdownMechanic: true, heatwaveShopperChallenge: true },
+      rewards: { participation: { xp: 50, coins: 25 }, topRankBonus: { xp: 500, coins: 200, crate: 'premium' } },
+    };
+    eventConfigCache = newConfig;
+    await saveEventConfigToDb(newConfig);
+    await logAudit(admin, 'CREATE_EVENT', `Created event ${data.eventType}`, null, newConfig);
+    return successResponse(res, { message: 'Event created', config: newConfig }, 201);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: 'Invalid event data', details: error.issues });
+    }
+    console.error('Failed to create event:', error);
+    res.status(500).json({ success: false, error: 'Failed to create event' });
+  }
+}));
+
+// POST /:eventId/duplicate
+router.post('/:eventId/duplicate', asyncHandler(async (req: Request, res: Response) => {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+
+  try {
+    const { eventId } = req.params;
+    const existing = eventConfigCache || (await loadEventConfigFromDb()) || getDefaultEventConfig();
+    const duplicate = {
+      ...existing,
+      eventType: `${eventId}-copy`,
+      name: `${existing.name || 'Event'} (Copy)`,
+      status: 'draft',
+    };
+    eventConfigCache = duplicate;
+    await saveEventConfigToDb(duplicate);
+    await logAudit(admin, 'DUPLICATE_EVENT', `Duplicated event ${eventId}`, existing.eventType, duplicate.eventType);
+    return successResponse(res, { message: `Event ${eventId} duplicated`, config: duplicate }, 201);
+  } catch (error) {
+    console.error('Failed to duplicate event:', error);
+    res.status(500).json({ success: false, error: 'Failed to duplicate event' });
+  }
+}));
+
+// DELETE /:eventId
+router.delete('/:eventId', asyncHandler(async (req: Request, res: Response) => {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+
+  try {
+    const { eventId } = req.params;
+    const existing = eventConfigCache || (await loadEventConfigFromDb());
+    eventConfigCache = null;
+    try {
+      await dbClient.execute(`DELETE FROM admin_config WHERE config_key = 'event_config'`);
+    } catch { /* ignore */ }
+    await logAudit(admin, 'DELETE_EVENT', `Deleted event ${eventId}`, existing, null);
+    return successResponse(res, { message: `Event ${eventId} deleted` });
+  } catch (error) {
+    console.error('Failed to delete event:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete event' });
+  }
+}));
+
 const statusUpdateSchema = z.object({
   status: z.enum(VALID_EVENT_STATUSES),
 });
 
 // PATCH /:eventId/status
 router.patch('/:eventId/status', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -267,6 +367,7 @@ router.patch('/:eventId/status', asyncHandler(async (req: Request, res: Response
     config.status = status;
     eventConfigCache = config;
     await saveEventConfigToDb(config);
+    await logAudit(admin, 'UPDATE_EVENT_STATUS', `Event ${eventId} status changed from ${currentStatus} to ${status}`, currentStatus, status);
 
     return successResponse(res, {
       message: `Event ${eventId} status changed to ${status}`,
@@ -285,8 +386,8 @@ router.patch('/:eventId/status', asyncHandler(async (req: Request, res: Response
 
 // GET /:eventId/analytics
 router.get('/:eventId/analytics', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -338,8 +439,8 @@ router.get('/:eventId/analytics', asyncHandler(async (req: Request, res: Respons
 
 // GET /joto-gorom/tiers
 router.get('/joto-gorom/tiers', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     if (!jotoGoromTiersCache) {
@@ -368,8 +469,8 @@ const tiersArraySchema = z.array(tierSchema);
 
 // POST /joto-gorom/tiers
 router.post('/joto-gorom/tiers', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const tiers = tiersArraySchema.parse(req.body);
@@ -387,6 +488,7 @@ router.post('/joto-gorom/tiers', asyncHandler(async (req: Request, res: Response
 
     jotoGoromTiersCache = tiers;
     await saveTiersToDb(tiers);
+    await logAudit(admin, 'UPDATE_TIERS', `Temperature tiers updated`, null, tiers);
     return successResponse(res, { message: 'Tiers updated', tiers });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -399,8 +501,8 @@ router.post('/joto-gorom/tiers', asyncHandler(async (req: Request, res: Response
 
 // GET /:eventId/challenges
 router.get('/:eventId/challenges', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -421,12 +523,14 @@ const challengeSchema = z.object({
   type: z.string().min(1),
   requirementValue: z.number().int().min(0),
   disabled: z.boolean().optional().default(false),
+  repeatable: z.boolean().optional().default(false),
+  duration: z.number().int().min(0).optional().default(0),
 });
 
 // POST /:eventId/challenges
 router.post('/:eventId/challenges', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -443,6 +547,7 @@ router.post('/:eventId/challenges', asyncHandler(async (req: Request, res: Respo
       eventChallengesCache[eventId].push(data);
     }
 
+    await logAudit(admin, 'SAVE_CHALLENGE', `Challenge ${data.id} saved for event ${eventId}`, null, data);
     return successResponse(res, { message: 'Challenge saved', challenge: data }, existingIdx >= 0 ? 200 : 201);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -461,12 +566,14 @@ const updateChallengeSchema = z.object({
   type: z.string().min(1).optional(),
   requirementValue: z.number().int().min(0).optional(),
   disabled: z.boolean().optional(),
+  repeatable: z.boolean().optional(),
+  duration: z.number().int().min(0).optional(),
 });
 
 // PATCH /:eventId/challenges/:challengeId
 router.patch('/:eventId/challenges/:challengeId', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId, challengeId } = req.params;
@@ -481,6 +588,7 @@ router.patch('/:eventId/challenges/:challengeId', asyncHandler(async (req: Reque
 
     challenges[idx] = { ...challenges[idx], ...data };
     eventChallengesCache[eventId] = challenges;
+    await logAudit(admin, 'UPDATE_CHALLENGE', `Challenge ${challengeId} updated for event ${eventId}`, null, data);
 
     return successResponse(res, { message: 'Challenge updated', challenge: challenges[idx] });
   } catch (error) {
@@ -494,8 +602,8 @@ router.patch('/:eventId/challenges/:challengeId', asyncHandler(async (req: Reque
 
 // GET /:eventId/badges
 router.get('/:eventId/badges', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -522,8 +630,8 @@ const updateEventBadgeSchema = z.object({
 
 // PATCH /:eventId/badges/:badgeId
 router.patch('/:eventId/badges/:badgeId', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId, badgeId } = req.params;
@@ -540,6 +648,7 @@ router.patch('/:eventId/badges/:badgeId', asyncHandler(async (req: Request, res:
       eventBadgesCache[eventId].push({ badge_id: badgeId, ...data, requirement: data.requirement || 0 });
     }
 
+    await logAudit(admin, 'UPDATE_EVENT_BADGE', `Badge ${badgeId} updated for event ${eventId}`, null, data);
     return successResponse(res, { message: 'Badge requirement updated' });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -552,8 +661,8 @@ router.patch('/:eventId/badges/:badgeId', asyncHandler(async (req: Request, res:
 
 // GET /:eventId/leaderboard
 router.get('/:eventId/leaderboard', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -590,12 +699,13 @@ router.get('/:eventId/leaderboard', asyncHandler(async (req: Request, res: Respo
 
 // POST /:eventId/leaderboard/freeze
 router.post('/:eventId/leaderboard/freeze', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
     eventLeaderboardFrozen[eventId] = true;
+    await logAudit(admin, 'FREEZE_LEADERBOARD', `Leaderboard frozen for event ${eventId}`, null, null);
     return successResponse(res, { message: `Leaderboard frozen for event ${eventId}`, frozen: true });
   } catch (error) {
     console.error('Failed to freeze leaderboard:', error);
@@ -605,8 +715,8 @@ router.post('/:eventId/leaderboard/freeze', asyncHandler(async (req: Request, re
 
 // POST /:eventId/leaderboard/distribute
 router.post('/:eventId/leaderboard/distribute', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;
@@ -649,6 +759,8 @@ router.post('/:eventId/leaderboard/distribute', asyncHandler(async (req: Request
     eventLeaderboardArchived[eventId] = true;
     eventLeaderboardFrozen[eventId] = false;
 
+    await logAudit(admin, 'DISTRIBUTE_REWARDS', `Rewards distributed for event ${eventId}`, null, { rewardsDistributed: rewardsDistributed.length });
+
     return successResponse(res, {
       message: `Rewards distributed for event ${eventId}`,
       action: action || 'distribute',
@@ -663,8 +775,8 @@ router.post('/:eventId/leaderboard/distribute', asyncHandler(async (req: Request
 
 // GET /:eventId/leaderboard/export
 router.get('/:eventId/leaderboard/export', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
 
   try {
     const { eventId } = req.params;

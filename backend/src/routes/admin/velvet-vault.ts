@@ -14,19 +14,31 @@ function esc(val: any): string {
   return `'${String(val).replace(/'/g, "''")}'`;
 }
 
-const requireAdmin = async (req: Request, res: Response): Promise<boolean> => {
+const getAdminUser = async (req: Request, res: Response): Promise<any> => {
   try {
     const user = await getUserFromRequest(req);
-    if (!user || (user as any).role !== 'admin') {
+    const role = (user as any)?.role;
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       res.status(403).json({ success: false, error: 'Admin access required' });
-      return false;
+      return null;
     }
-    return true;
+    return user;
   } catch {
     res.status(401).json({ success: false, error: 'Authentication required' });
-    return false;
+    return null;
   }
 };
+
+async function logAudit(admin: any, action: string, details: string, oldValue?: any, newValue?: any): Promise<void> {
+  try {
+    await dbClient.execute(`
+      INSERT INTO admin_audit_log (id, admin_id, admin_name, admin_email, action, details, old_value, new_value, created_at)
+      VALUES (${esc(crypto.randomUUID())}, ${esc(admin?.id || 'unknown')}, ${esc(admin?.name || 'unknown')}, ${esc(admin?.email || 'unknown')}, ${esc(action)}, ${esc(details)}, ${esc(oldValue !== undefined ? JSON.stringify(oldValue) : null)}, ${esc(newValue !== undefined ? JSON.stringify(newValue) : null)}, ${esc(new Date().toISOString())})
+    `);
+  } catch (e) {
+    console.error('Audit log failed:', e);
+  }
+}
 
 const getToday = (): string => new Date().toISOString().slice(0, 10);
 
@@ -163,8 +175,8 @@ async function saveCrateConfigToDb(config: any): Promise<void> {
 
 // GET /overview
 router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const today = getToday();
@@ -197,8 +209,8 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
 
 // GET /reward-config
 router.get('/reward-config', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     if (!rewardConfigCache) {
@@ -234,13 +246,15 @@ const rewardConfigSchema = z.object({
 });
 
 router.post('/reward-config', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const parsed = rewardConfigSchema.parse(req.body);
+    const previous = rewardConfigCache;
     rewardConfigCache = parsed;
     await saveRewardConfigToDb(parsed);
+    await logAudit(admin, 'UPDATE_REWARD_CONFIG', 'Reward economy config updated', previous, parsed);
     return successResponse(res, { message: 'Reward config updated', config: parsed });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -253,8 +267,8 @@ router.post('/reward-config', asyncHandler(async (req: Request, res: Response) =
 
 // GET /crate-config
 router.get('/crate-config', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     if (!crateConfigCache) {
@@ -270,8 +284,8 @@ router.get('/crate-config', asyncHandler(async (req: Request, res: Response) => 
 
 // POST /crate-config
 router.post('/crate-config', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const body = req.body;
@@ -295,8 +309,10 @@ router.post('/crate-config', asyncHandler(async (req: Request, res: Response) =>
       }
     }
 
+    const previous = crateConfigCache;
     crateConfigCache = body;
     await saveCrateConfigToDb(body);
+    await logAudit(admin, 'UPDATE_CRATE_CONFIG', 'Crate config updated', previous, body);
     return successResponse(res, { message: 'Crate config updated', config: body });
   } catch (error) {
     console.error('Failed to save crate config:', error);
@@ -306,8 +322,8 @@ router.post('/crate-config', asyncHandler(async (req: Request, res: Response) =>
 
 // GET /badges
 router.get('/badges', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const result = await dbClient.execute('SELECT * FROM vault_badges ORDER BY badge_id ASC');
@@ -329,8 +345,8 @@ const createBadgeSchema = z.object({
 
 // POST /badges
 router.post('/badges', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const data = createBadgeSchema.parse(req.body);
@@ -338,6 +354,7 @@ router.post('/badges', asyncHandler(async (req: Request, res: Response) => {
       INSERT INTO vault_badges (badge_id, name, description, emoji, rarity, category)
       VALUES (${esc(data.badgeId)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.emoji)}, ${esc(data.rarity)}, ${esc(data.category)})
     `);
+    await logAudit(admin, 'CREATE_BADGE', `Badge ${data.badgeId} created`, null, data);
     return successResponse(res, { message: 'Badge created', badge: data }, 201);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -358,8 +375,8 @@ const updateBadgeSchema = z.object({
 
 // PATCH /badges/:badgeId
 router.patch('/badges/:badgeId', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const data = updateBadgeSchema.parse(req.body);
@@ -376,12 +393,16 @@ router.patch('/badges/:badgeId', asyncHandler(async (req: Request, res: Response
       return res.status(400).json({ success: false, error: 'No fields to update' });
     }
 
+    const prevResult = await dbClient.execute(`SELECT * FROM vault_badges WHERE badge_id = ${esc(badgeId)} LIMIT 1`);
+    const previous = prevResult.rows.length > 0 ? prevResult.rows[0] : null;
+
     await dbClient.execute(`UPDATE vault_badges SET ${setClauses} WHERE badge_id = ${esc(badgeId)}`);
 
     const result = await dbClient.execute(`SELECT * FROM vault_badges WHERE badge_id = ${esc(badgeId)} LIMIT 1`);
     if (result.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Badge not found' });
     }
+    await logAudit(admin, 'UPDATE_BADGE', `Badge ${badgeId} updated`, previous, result.rows[0]);
     return successResponse(res, { message: 'Badge updated', badge: result.rows[0] });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -394,12 +415,15 @@ router.patch('/badges/:badgeId', asyncHandler(async (req: Request, res: Response
 
 // DELETE /badges/:badgeId
 router.delete('/badges/:badgeId', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const { badgeId } = req.params;
+    const prevResult = await dbClient.execute(`SELECT * FROM vault_badges WHERE badge_id = ${esc(badgeId)} LIMIT 1`);
+    const previous = prevResult.rows.length > 0 ? prevResult.rows[0] : null;
     await dbClient.execute(`DELETE FROM vault_badges WHERE badge_id = ${esc(badgeId)}`);
+    await logAudit(admin, 'DELETE_BADGE', `Badge ${badgeId} deleted`, previous, null);
     return successResponse(res, { message: 'Badge deleted' });
   } catch (error) {
     console.error('Failed to delete badge:', error);
@@ -409,8 +433,8 @@ router.delete('/badges/:badgeId', asyncHandler(async (req: Request, res: Respons
 
 // GET /badge-stats
 router.get('/badge-stats', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const result = await dbClient.execute(`
@@ -429,8 +453,8 @@ router.get('/badge-stats', asyncHandler(async (req: Request, res: Response) => {
 
 // GET /leaderboards
 router.get('/leaderboards', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const period = (req.query.period as string) || 'weekly';
@@ -465,8 +489,8 @@ router.get('/leaderboards', asyncHandler(async (req: Request, res: Response) => 
 
 // POST /leaderboards/reset
 router.post('/leaderboards/reset', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const { period } = req.body;
@@ -485,6 +509,8 @@ router.post('/leaderboards/reset', asyncHandler(async (req: Request, res: Respon
       console.log(`Leaderboard reset: period=${period}, date=${getToday()}`);
     }
 
+    await logAudit(admin, 'RESET_LEADERBOARD', `Leaderboard reset for ${period}`, null, { period });
+
     // Reset scores
     await dbClient.execute('UPDATE vault_users SET leaderboard_score = 0');
 
@@ -501,8 +527,8 @@ router.post('/leaderboards/reset', asyncHandler(async (req: Request, res: Respon
 
 // GET /leaderboards/reset-history
 router.get('/leaderboards/reset-history', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     let resets: any[] = [];
@@ -531,8 +557,8 @@ const manualRewardSchema = z.object({
 });
 
 router.post('/leaderboards/manual-reward', asyncHandler(async (req: Request, res: Response) => {
-  const isAdmin = await requireAdmin(req, res);
-  if (!isAdmin) return;
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
 
   try {
     const data = manualRewardSchema.parse(req.body);
@@ -543,6 +569,7 @@ router.post('/leaderboards/manual-reward', asyncHandler(async (req: Request, res
       VALUES (${esc(id)}, ${esc(data.userId)}, 0, ${esc(data.rewardType)}, ${esc(data.rewardValue ?? null)}, ${esc(data.rewardLabel)})
     `);
 
+    await logAudit(admin, 'MANUAL_REWARD', `Manual reward awarded to ${data.userId}`, null, data);
     return successResponse(res, {
       message: 'Manual reward awarded',
       reward: { id, ...data },

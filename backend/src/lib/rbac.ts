@@ -1,7 +1,7 @@
 import { User } from './schema';
 import { ForbiddenError, UnauthorizedError } from './errors';
 
-export type Role = 'user' | 'admin';
+export type Role = 'user' | 'admin' | 'super_admin';
 
 export interface Permission {
   resource: string;
@@ -39,6 +39,32 @@ const rolePermissions: Record<Role, Permission[]> = {
     { resource: 'product', action: 'update' },
     { resource: 'product', action: 'delete' },
     { resource: 'product', action: 'manage' },
+    { resource: 'vault', action: 'manage' },
+    { resource: 'events', action: 'manage' },
+  ],
+  super_admin: [
+    { resource: 'profile', action: 'read' },
+    { resource: 'profile', action: 'update' },
+    { resource: 'user', action: 'read' },
+    { resource: 'user', action: 'update' },
+    { resource: 'user', action: 'delete' },
+    { resource: 'cart', action: 'read' },
+    { resource: 'cart', action: 'create' },
+    { resource: 'cart', action: 'update' },
+    { resource: 'cart', action: 'delete' },
+    { resource: 'order', action: 'read' },
+    { resource: 'order', action: 'create' },
+    { resource: 'order', action: 'update' },
+    { resource: 'order', action: 'delete' },
+    { resource: 'product', action: 'read' },
+    { resource: 'product', action: 'create' },
+    { resource: 'product', action: 'update' },
+    { resource: 'product', action: 'delete' },
+    { resource: 'product', action: 'manage' },
+    { resource: 'vault', action: 'manage' },
+    { resource: 'events', action: 'manage' },
+    { resource: 'admin', action: 'manage' },
+    { resource: 'system', action: 'manage' },
   ],
 };
 

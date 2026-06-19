@@ -46,6 +46,33 @@ export default function EventsDashboardPage() {
   const [overview, setOverview] = useState<EventOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createForm, setCreateForm] = useState({ name: '', description: '', eventType: '', startDate: '', endDate: '' })
+
+  const createEvent = async () => {
+    try {
+      const res = await fetch('/api/admin/events/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createForm),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShowCreateModal(false)
+        setCreateForm({ name: '', description: '', eventType: '', startDate: '', endDate: '' })
+        fetchData()
+      }
+    } catch { /* ignore */ }
+  }
+
+  const duplicateEvent = async () => {
+    if (!overview) return
+    try {
+      const res = await fetch(`/api/admin/events/${overview.id}/duplicate`, { method: 'POST' })
+      const data = await res.json()
+      if (data.success) fetchData()
+    } catch { /* ignore */ }
+  }
 
   const fetchData = () => {
     setLoading(true)
@@ -94,9 +121,16 @@ export default function EventsDashboardPage() {
 
   return (
     <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }}>
-        <h1 className="font-heading text-3xl text-velvet-white tracking-tight">Seasonal Events</h1>
-        <p className="text-sm text-velvet-muted mt-2">Manage event campaigns, challenges, and rewards.</p>
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: EASE }} className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading text-3xl text-velvet-white tracking-tight">Seasonal Events</h1>
+          <p className="text-sm text-velvet-muted mt-2">Manage event campaigns, challenges, and rewards.</p>
+        </div>
+        <button onClick={() => setShowCreateModal(true)}
+          className="bg-velvet-white text-velvet-black rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold px-5 py-3 hover:opacity-80 transition-opacity"
+        >
+          Create Event
+        </button>
       </motion.div>
 
       {overview && (
@@ -122,7 +156,7 @@ export default function EventsDashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {STATUS_TRANSITIONS[overview.status]?.map(status => (
                   <button key={status} onClick={() => updateStatus(status)}
                     className="bg-velvet-white text-velvet-black rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold px-4 py-2.5 hover:opacity-80 transition-opacity"
@@ -130,6 +164,11 @@ export default function EventsDashboardPage() {
                     Set {status}
                   </button>
                 ))}
+                <button onClick={duplicateEvent}
+                  className="border border-white/20 text-velvet-muted hover:text-velvet-white rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold px-4 py-2.5 hover:border-white/40 transition-all"
+                >
+                  Duplicate
+                </button>
               </div>
             </div>
           </motion.div>
@@ -184,6 +223,40 @@ export default function EventsDashboardPage() {
           ))}
         </div>
       </motion.div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+          <div className="bg-velvet-card border border-white/10 rounded-2xl p-8 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-heading text-xl text-velvet-white tracking-tight mb-6">Create New Event</h3>
+            <div className="space-y-4">
+              <input placeholder="Event Name" value={createForm.name} onChange={e => setCreateForm(p => ({ ...p, name: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white placeholder-velvet-muted focus:outline-none focus:border-white/30" />
+              <input placeholder="Event Type (e.g. monsoon-madness)" value={createForm.eventType} onChange={e => setCreateForm(p => ({ ...p, eventType: e.target.value }))}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white placeholder-velvet-muted focus:outline-none focus:border-white/30" />
+              <textarea placeholder="Description" value={createForm.description} onChange={e => setCreateForm(p => ({ ...p, description: e.target.value }))} rows={3}
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white placeholder-velvet-muted focus:outline-none focus:border-white/30" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] uppercase tracking-[0.15em] text-velvet-muted mb-1 block">Start Date</label>
+                  <input type="date" value={createForm.startDate} onChange={e => setCreateForm(p => ({ ...p, startDate: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white focus:outline-none focus:border-white/30" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase tracking-[0.15em] text-velvet-muted mb-1 block">End Date</label>
+                  <input type="date" value={createForm.endDate} onChange={e => setCreateForm(p => ({ ...p, endDate: e.target.value }))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-velvet-white focus:outline-none focus:border-white/30" />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-8">
+              <button onClick={() => setShowCreateModal(false)}
+                className="text-velvet-muted hover:text-velvet-white text-xs uppercase tracking-[0.15em] font-bold px-4 py-2.5 transition-colors">Cancel</button>
+              <button onClick={createEvent}
+                className="bg-velvet-white text-velvet-black rounded-xl text-[10px] uppercase tracking-[0.2em] font-bold px-6 py-3 hover:opacity-80 transition-opacity">Create Event</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
