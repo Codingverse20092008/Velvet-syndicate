@@ -1,6 +1,17 @@
 import { create } from 'zustand'
 import { api, getStoredAccessToken, setStoredAccessToken, setStoredRefreshToken, clearStoredTokens } from '@/lib/api'
 
+function setEdgeAuthCookie(token: string | null) {
+  if (typeof document === 'undefined') return
+  const isProduction = window.location.protocol === 'https:'
+  const secure = isProduction ? '; Secure' : ''
+  if (token) {
+    document.cookie = `access_token=${token}; Path=/; Max-Age=900; SameSite=Lax${secure}`
+  } else {
+    document.cookie = `access_token=; Path=/; Max-Age=0; SameSite=Lax${secure}`
+  }
+}
+
 interface User {
   id: string
   name: string
@@ -37,6 +48,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   clearUser: () => {
     clearStoredTokens()
+    setEdgeAuthCookie(null)
     set({ user: null, isAuthenticated: false, isLoading: false })
   },
 
@@ -57,6 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const data = await res.json()
       if (data.success && data.data.user) {
         set({ user: data.data.user, isAuthenticated: true })
+        setEdgeAuthCookie(token)
         // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
         const { useCartStore } = await import('@/store/cartStore')
         if (!useCartStore.getState().checkoutInProgress) {
@@ -95,6 +108,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (data.success && data.data?.accessToken) {
         // Store tokens
         setStoredAccessToken(data.data.accessToken)
+        setEdgeAuthCookie(data.data.accessToken)
         if (data.data.refreshToken) {
           setStoredRefreshToken(data.data.refreshToken)
         }
@@ -105,6 +119,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
         if (userData.success && userData.data.user) {
           set({ user: userData.data.user, isAuthenticated: true, isLoading: false })
+          setEdgeAuthCookie(data.data.accessToken)
           // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
           const { useCartStore } = await import('@/store/cartStore')
           if (!useCartStore.getState().checkoutInProgress) {
@@ -116,6 +131,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
+      setEdgeAuthCookie(null)
       set({ isLoading: false })
       return { success: false, error: data?.error || 'Login failed' }
     } catch (err) {
