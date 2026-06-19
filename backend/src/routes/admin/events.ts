@@ -215,8 +215,8 @@ const eventConfigSchema = z.object({
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   eventType: z.string().min(1).max(50).optional(),
-  rules: z.record(z.boolean()).optional(),
-  rewards: z.record(z.any()).optional(),
+  rules: z.record(z.string(), z.boolean()).optional(),
+  rewards: z.record(z.string(), z.any()).optional(),
 });
 
 // POST /config
