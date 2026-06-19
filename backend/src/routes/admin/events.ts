@@ -225,10 +225,10 @@ router.get('/config', asyncHandler(async (req: Request, res: Response) => {
       const dbConfig = await loadEventConfigFromDb();
       eventConfigCache = dbConfig || getDefaultEventConfig();
     }
-    return successResponse(res, { config: eventConfigCache });
+    return successResponse(res, eventConfigCache);
   } catch (error) {
     console.error('Failed to fetch event config:', error);
-    return successResponse(res, { config: getDefaultEventConfig() });
+    return successResponse(res, getDefaultEventConfig());
   }
 }));
 
@@ -433,13 +433,13 @@ router.get('/:eventId/analytics', asyncHandler(async (req: Request, res: Respons
       meltdownClaims,
       eventPurchases,
       heatwaveShopperCompletions,
-      revenueGenerated,
+      revenue: revenueGenerated,
     });
   } catch (error) {
     console.error('Failed to fetch event analytics:', error);
     return successResponse(res, {
       participants: 0, dailyClaims: 0, avgHeatStreak: 0, cratesOpened: 0,
-      meltdownClaims: 0, eventPurchases: 0, heatwaveShopperCompletions: 0, revenueGenerated: 0,
+      meltdownClaims: 0, eventPurchases: 0, heatwaveShopperCompletions: 0, revenue: 0,
     });
   }
 }));
@@ -454,10 +454,10 @@ router.get('/joto-gorom/tiers', asyncHandler(async (req: Request, res: Response)
       const dbTiers = await loadTiersFromDb();
       jotoGoromTiersCache = dbTiers || getDefaultJotoGoromTiers();
     }
-    return successResponse(res, { tiers: jotoGoromTiersCache });
+    return successResponse(res, jotoGoromTiersCache);
   } catch (error) {
-    console.error('Failed to fetch tiers:', error);
-    return successResponse(res, { tiers: getDefaultJotoGoromTiers() });
+    console.error('Failed to fetch joto-gorom tiers:', error);
+    return successResponse(res, getDefaultJotoGoromTiers());
   }
 }));
 
@@ -514,10 +514,10 @@ router.get('/:eventId/challenges', asyncHandler(async (req: Request, res: Respon
   try {
     const { eventId } = req.params;
     const challenges = eventChallengesCache[eventId] || [];
-    return successResponse(res, { challenges });
+    return successResponse(res, challenges);
   } catch (error) {
     console.error('Failed to fetch challenges:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch challenges' });
+    return successResponse(res, []);
   }
 }));
 
@@ -619,13 +619,13 @@ router.get('/:eventId/badges', asyncHandler(async (req: Request, res: Response) 
     // Also fetch from vault_badges table
     try {
       const result = await dbClient.execute('SELECT * FROM vault_badges ORDER BY badge_id ASC');
-      return successResponse(res, { badges: result.rows, eventBadges: badges });
+      return successResponse(res, badges);
     } catch {
-      return successResponse(res, { badges, eventBadges: badges });
+      return successResponse(res, badges);
     }
   } catch (error) {
     console.error('Failed to fetch event badges:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch event badges' });
+    return successResponse(res, []);
   }
 }));
 
@@ -692,15 +692,10 @@ router.get('/:eventId/leaderboard', asyncHandler(async (req: Request, res: Respo
       streakDays: row.streak_days,
     }));
 
-    return successResponse(res, {
-      eventId,
-      leaderboard,
-      isFrozen: !!eventLeaderboardFrozen[eventId],
-      isArchived: !!eventLeaderboardArchived[eventId],
-    });
+    return successResponse(res, leaderboard);
   } catch (error) {
     console.error('Failed to fetch event leaderboard:', error);
-    return successResponse(res, { eventId: req.params.eventId, leaderboard: [], isFrozen: false, isArchived: false });
+    return successResponse(res, []);
   }
 }));
 

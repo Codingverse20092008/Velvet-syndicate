@@ -221,7 +221,7 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
     } catch { /* ignore */ }
 
     return successResponse(res, {
-      totalUsers,
+      totalVaultUsers: totalUsers,
       activeToday,
       totalXpEarned,
       totalCoinsEarned,
@@ -232,7 +232,7 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Failed to fetch vault overview:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch vault overview' });
+    return successResponse(res, { totalVaultUsers: 0, activeToday: 0, totalXpEarned: 0, totalCoinsEarned: 0, cratesOpened: 0, badgesUnlocked: 0, quizAttemptsToday: 0, avgDailyStreak: 0 });
   }
 }));
 
@@ -246,10 +246,10 @@ router.get('/reward-config', asyncHandler(async (req: Request, res: Response) =>
       const dbConfig = await loadRewardConfigFromDb();
       rewardConfigCache = dbConfig || getDefaultRewardConfig();
     }
-    return successResponse(res, { config: rewardConfigCache });
+    return successResponse(res, rewardConfigCache);
   } catch (error) {
     console.error('Failed to fetch reward config:', error);
-    return successResponse(res, { config: getDefaultRewardConfig() });
+    return successResponse(res, getDefaultRewardConfig());
   }
 }));
 
@@ -304,10 +304,10 @@ router.get('/crate-config', asyncHandler(async (req: Request, res: Response) => 
       const dbConfig = await loadCrateConfigFromDb();
       crateConfigCache = dbConfig || getDefaultCrateConfig();
     }
-    return successResponse(res, { config: crateConfigCache });
+    return successResponse(res, crateConfigCache);
   } catch (error) {
     console.error('Failed to fetch crate config:', error);
-    return successResponse(res, { config: getDefaultCrateConfig() });
+    return successResponse(res, getDefaultCrateConfig());
   }
 }));
 
@@ -356,10 +356,10 @@ router.get('/badges', asyncHandler(async (req: Request, res: Response) => {
 
   try {
     const result = await dbClient.execute('SELECT * FROM vault_badges ORDER BY badge_id ASC');
-    return successResponse(res, { badges: result.rows });
+    return successResponse(res, result.rows);
   } catch (error) {
     console.error('Failed to fetch badges:', error);
-    return successResponse(res, { badges: [] });
+    return successResponse(res, []);
   }
 }));
 
@@ -473,10 +473,10 @@ router.get('/badge-stats', asyncHandler(async (req: Request, res: Response) => {
       GROUP BY vb.badge_id, vb.name
       ORDER BY unlock_count DESC
     `);
-    return successResponse(res, { badges: result.rows });
+    return successResponse(res, result.rows);
   } catch (error) {
     console.error('Failed to fetch badge stats:', error);
-    return successResponse(res, { badges: [] });
+    return successResponse(res, []);
   }
 }));
 
@@ -509,10 +509,10 @@ router.get('/leaderboards', asyncHandler(async (req: Request, res: Response) => 
       vaultCoins: row.vault_coins,
     }));
 
-    return successResponse(res, { period, leaderboard });
+    return successResponse(res, leaderboard);
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error);
-    return successResponse(res, { period, leaderboard: [] });
+    return successResponse(res, []);
   }
 }));
 
@@ -570,10 +570,10 @@ router.get('/leaderboards/reset-history', asyncHandler(async (req: Request, res:
       // Table may not exist
       resets = [];
     }
-    return successResponse(res, { resets });
+    return successResponse(res, resets);
   } catch (error) {
     console.error('Failed to fetch reset history:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch reset history' });
+    return successResponse(res, []);
   }
 }));
 
