@@ -39,6 +39,21 @@ export interface WishlistItem {
   userId: string;
   productId: string;
   createdAt: string;
+  name: string;
+  slug: string;
+  price: number;
+  image_url: string;
+  is_on_sale: number | boolean;
+  sale_price: number | null;
+  sale_percentage: number;
+  is_out_of_stock: number | boolean;
+}
+
+interface WishlistEntry {
+  id: string;
+  userId: string;
+  productId: string;
+  createdAt: string;
 }
 
 export async function getWishlist(userId: string): Promise<WishlistItem[]> {
@@ -50,7 +65,20 @@ export async function getWishlist(userId: string): Promise<WishlistItem[]> {
     WHERE wi.user_id = ${esc(userId)}
     ORDER BY wi.created_at DESC
   `);
-  return result.rows as any[];
+  return (result.rows as any[]).map((row) => ({
+    id: row.id,
+    userId: row.user_id,
+    productId: row.product_id,
+    createdAt: row.created_at,
+    name: row.name,
+    slug: row.slug,
+    price: row.price,
+    image_url: row.image_url,
+    is_on_sale: row.is_on_sale,
+    sale_price: row.sale_price,
+    sale_percentage: row.sale_percentage,
+    is_out_of_stock: row.is_out_of_stock,
+  }));
 }
 
 export async function getWishlistCount(userId: string): Promise<number> {
@@ -69,7 +97,7 @@ export async function getWishlistProductIds(userId: string): Promise<string[]> {
   return result.rows.map((r: any) => r.product_id);
 }
 
-export async function addToWishlist(userId: string, productId: string): Promise<WishlistItem> {
+export async function addToWishlist(userId: string, productId: string): Promise<WishlistEntry> {
   await ensureTable();
   // Check if already exists
   const existing = await dbClient.execute(`

@@ -51,8 +51,8 @@ export const useWishlistStore = create<WishlistState>()(
               isLoading: false,
             })
           }
-        } catch {
-          // Silent fail — user may not be authenticated
+        } catch (err) {
+          console.error('Failed to fetch wishlist:', err)
         } finally {
           set({ isLoading: false })
         }
@@ -71,7 +71,7 @@ export const useWishlistStore = create<WishlistState>()(
           const res = await api.post('/wishlist/add', { productId })
           const data = await res.json()
           if (data.success) {
-            get().fetchWishlist()
+            await get().fetchWishlist()
             // Track for Velvet Vault challenge
             const { useGameStore } = await import('@/store/gameStore')
             useGameStore.getState().trackWishlistAdd(productId)
