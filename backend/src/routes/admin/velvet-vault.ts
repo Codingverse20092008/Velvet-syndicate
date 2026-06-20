@@ -203,6 +203,16 @@ async function ensureCrateTables(): Promise<void> {
   } catch (e) {
     console.error('Failed to ensure crate tables:', e);
   }
+
+  // Add new columns if they don't exist (safe migration)
+  for (const alterSql of [
+    `ALTER TABLE vault_crate_types ADD COLUMN image_url TEXT DEFAULT ''`,
+    `ALTER TABLE vault_crate_types ADD COLUMN acquisition_method TEXT DEFAULT ''`,
+    `ALTER TABLE vault_crate_types ADD COLUMN is_system INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE vault_crate_rewards ADD COLUMN rarity TEXT NOT NULL DEFAULT 'common'`,
+  ]) {
+    try { await dbClient.execute(alterSql); } catch { /* column may already exist */ }
+  }
 }
 
 // GET /overview
@@ -652,6 +662,9 @@ const createCrateSchema = z.object({
   crateType: z.enum(['basic', 'premium', 'event', 'seasonal']),
   cost: z.number().int().min(0).default(0),
   isActive: z.boolean().default(true),
+  imageUrl: z.string().max(500).optional().default(''),
+  acquisitionMethod: z.string().max(100).optional().default(''),
+  isSystem: z.boolean().optional().default(false),
 });
 
 const updateCrateSchema = z.object({
@@ -660,6 +673,8 @@ const updateCrateSchema = z.object({
   crateType: z.enum(['basic', 'premium', 'event', 'seasonal']).optional(),
   cost: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
+  imageUrl: z.string().max(500).optional(),
+  acquisitionMethod: z.string().max(100).optional(),
 });
 
 const createRewardSchema = z.object({
@@ -667,6 +682,7 @@ const createRewardSchema = z.object({
   rewardValue: z.string().optional().default(''),
   rewardName: z.string().min(1).max(200),
   probability: z.number().min(0).max(100),
+  rarity: z.string().optional().default('common'),
 });
 
 const updateRewardSchema = z.object({
@@ -674,6 +690,7 @@ const updateRewardSchema = z.object({
   rewardValue: z.string().optional(),
   rewardName: z.string().min(1).max(200).optional(),
   probability: z.number().min(0).max(100).optional(),
+  rarity: z.string().optional(),
 });
 
 // GET /crates/ensure-tables - Ensure crate tables exist
@@ -707,6 +724,9 @@ router.get('/crates', asyncHandler(async (req: Request, res: Response) => {
       isActive: r.is_active === 1,
       rewardCount: r.reward_count || 0,
       createdAt: r.created_at,
+      imageUrl: r.image_url || '',
+      acquisitionMethod: r.acquisition_method || '',
+      isSystem: r.is_system === 1,
     }));
     return successResponse(res, { crates });
   } catch (error) {
@@ -727,8 +747,8 @@ router.post('/crates', asyncHandler(async (req: Request, res: Response) => {
     const now = new Date().toISOString();
 
     await dbClient.execute(`
-      INSERT INTO vault_crate_types (id, name, description, crate_type, cost, is_active, created_at, updated_at)
-      VALUES (${esc(id)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.crateType)}, ${esc(data.cost)}, ${esc(data.isActive ? 1 : 0)}, ${esc(now)}, ${esc(now)})
+      INSERT INTO vault_crate_types (id, name, description, crate_type, cost, is_active, image_url, acquisition_method, is_system, created_at, updated_at)
+      VALUES (${esc(id)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.crateType)}, ${esc(data.cost)}, ${esc(data.isActive ? 1 : 0)}, ${esc(data.imageUrl || '')}, ${esc(data.acquisitionMethod || '')}, ${esc(data.isSystem ? 1 : 0)}, ${esc(now)}, ${esc(now)})
     `);
 
     await logAudit(admin, 'CREATE_CRATE', `Crate ${data.name} created`, null, data);
@@ -769,6 +789,7 @@ router.get('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
       rewardValue: r.reward_value || '',
       rewardName: r.reward_name || '',
       probability: r.probability,
+      rarity: r.rarity || 'common',
     }));
     const crate: any = {
       id: r.id,
@@ -779,6 +800,9 @@ router.get('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
       isActive: r.is_active === 1,
       createdAt: r.created_at,
       rewardCount: rewards.length,
+      imageUrl: r.image_url || '',
+      acquisitionMethod: r.acquisition_method || '',
+      isSystem: r.is_system === 1,
     };
 
     return successResponse(res, { crate, rewards });
@@ -802,6 +826,8 @@ router.patch('/crates/:id', asyncHandler(async (req: Request, res: Response) => 
       ...(data.crateType !== undefined && { crate_type: data.crateType }),
       ...(data.cost !== undefined && { cost: data.cost }),
       ...(data.isActive !== undefined && { is_active: data.isActive ? 1 : 0 }),
+      ...(data.imageUrl !== undefined && { image_url: data.imageUrl }),
+      ...(data.acquisitionMethod !== undefined && { acquisition_method: data.acquisitionMethod }),
     }).map(([key, val]) => `${key} = ${esc(val)}`).join(', ');
     const now = new Date().toISOString();
 
@@ -841,6 +867,10 @@ router.delete('/crates/:id', asyncHandler(async (req: Request, res: Response) =>
     );
     const previous = (prevResult.rows || []).length > 0 ? (prevResult.rows as any[])[0] : null;
 
+    if (previous?.is_system === 1) {
+      return res.status(403).json({ success: false, error: 'System crates cannot be deleted' });
+    }
+
     await dbClient.execute(`DELETE FROM vault_crate_types WHERE id = ${esc(req.params.id)}`);
     // Rewards cascade delete via FK constraint
 
@@ -860,13 +890,29 @@ router.patch('/crates/:id/toggle', asyncHandler(async (req: Request, res: Respon
 
   try {
     const result = await dbClient.execute(
-      `SELECT is_active FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
+      `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
     );
     if ((result.rows || []).length === 0) {
       return res.status(404).json({ success: false, error: 'Crate not found' });
     }
-    const current = (result.rows as any[])[0].is_active;
+    const crateRow = (result.rows as any[])[0];
+    const current = crateRow.is_active;
     const newStatus = current === 1 ? 0 : 1;
+
+    // Validate before enabling
+    if (newStatus === 1) {
+      const rewardsResult = await dbClient.execute(
+        `SELECT probability FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)}`
+      );
+      const totalProb = ((rewardsResult.rows || []) as any[]).reduce((s: number, r: any) => s + (r.probability || 0), 0);
+      if (Math.abs(totalProb - 100) > 0.01) {
+        return res.status(400).json({
+          success: false,
+          error: `Cannot enable crate: reward probabilities total ${totalProb.toFixed(1)}%, must equal exactly 100%`,
+          validationErrors: [{ field: 'probability', message: `Total probability is ${totalProb.toFixed(1)}%, must be 100%` }],
+        });
+      }
+    }
     const now = new Date().toISOString();
 
     await dbClient.execute(`
@@ -902,8 +948,8 @@ router.post('/crates/:id/rewards', asyncHandler(async (req: Request, res: Respon
     }
 
     await dbClient.execute(`
-      INSERT INTO vault_crate_rewards (id, crate_id, reward_type, reward_value, reward_name, probability, created_at)
-      VALUES (${esc(rewardId)}, ${esc(req.params.id)}, ${esc(data.rewardType)}, ${esc(data.rewardValue || '')}, ${esc(data.rewardName)}, ${esc(data.probability)}, ${esc(now)})
+      INSERT INTO vault_crate_rewards (id, crate_id, reward_type, reward_value, reward_name, probability, rarity, created_at)
+      VALUES (${esc(rewardId)}, ${esc(req.params.id)}, ${esc(data.rewardType)}, ${esc(data.rewardValue || '')}, ${esc(data.rewardName)}, ${esc(data.probability)}, ${esc(data.rarity || 'common')}, ${esc(now)})
     `);
 
     // Update reward count
@@ -939,6 +985,7 @@ router.patch('/crates/rewards/:rewardId', asyncHandler(async (req: Request, res:
       ...(data.rewardValue !== undefined && { reward_value: data.rewardValue }),
       ...(data.rewardName !== undefined && { reward_name: data.rewardName }),
       ...(data.probability !== undefined && { probability: data.probability }),
+      ...(data.rarity !== undefined && { rarity: data.rarity }),
     }).map(([key, val]) => `${key} = ${esc(val)}`).join(', ');
 
     if (!setClauses) {
@@ -1079,6 +1126,40 @@ router.get('/crates/analytics/overview', asyncHandler(async (req: Request, res: 
       totalRewards = Number((rewardsResult.rows as any[])[0]?.count || 0);
     } catch { /* ignore */ }
 
+    // Most opened crate
+    let mostOpenedCrate = 'N/A';
+    let mostOpenedCrateCount = 0;
+    try {
+      const crateResult = await dbClient.execute(`
+        SELECT ct.name, COUNT(col.id) as open_count
+        FROM vault_crate_types ct
+        LEFT JOIN vault_crate_open_log col ON col.crate_type = ct.crate_type
+        GROUP BY ct.id, ct.name
+        ORDER BY open_count DESC LIMIT 1
+      `);
+      if ((crateResult.rows || []).length > 0) {
+        mostOpenedCrate = (crateResult.rows as any[])[0].name;
+        mostOpenedCrateCount = Number((crateResult.rows as any[])[0].open_count) || 0;
+      }
+    } catch { /* ignore */ }
+
+    // Reward distribution
+    let rewardDistribution: { name: string; count: number; percentage: number }[] = [];
+    try {
+      const distResult = await dbClient.execute(`
+        SELECT reward_label, COUNT(*) as count
+        FROM vault_crate_open_log
+        GROUP BY reward_label
+        ORDER BY count DESC
+      `);
+      const totalLogged = ((distResult.rows || []) as any[]).reduce((s: number, r: any) => s + (Number(r.count) || 0), 0);
+      rewardDistribution = ((distResult.rows || []) as any[]).map((r: any) => ({
+        name: r.reward_label,
+        count: Number(r.count) || 0,
+        percentage: totalLogged > 0 ? Math.round((Number(r.count) / totalLogged) * 100) : 0,
+      }));
+    } catch { /* ignore */ }
+
     return successResponse(res, {
       totalOpened,
       openedToday,
@@ -1087,17 +1168,92 @@ router.get('/crates/analytics/overview', asyncHandler(async (req: Request, res: 
       activeCrates,
       totalCrates,
       totalRewards,
+      mostOpenedCrate,
+      mostOpenedCrateCount,
+      rewardDistribution,
     });
   } catch (error) {
     console.error('Failed to fetch crate analytics:', error);
     return successResponse(res, {
-      totalOpened: 0,
-      openedToday: 0,
-      mostCommonReward: 'N/A',
-      mostRareReward: 'N/A',
-      activeCrates: 0,
-      totalCrates: 0,
-      totalRewards: 0,
+      totalOpened: 0, openedToday: 0, mostCommonReward: 'N/A', mostRareReward: 'N/A',
+      activeCrates: 0, totalCrates: 0, totalRewards: 0,
+      mostOpenedCrate: 'N/A', mostOpenedCrateCount: 0, rewardDistribution: [],
+    });
+  }
+}));
+
+// GET /crates/health - Crate economy health dashboard
+router.get('/crates/health', asyncHandler(async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
+  await ensureCrateTables();
+
+  try {
+    const today = getToday();
+
+    // Active crates
+    let activeCrates = 0;
+    try {
+      const r = await dbClient.execute('SELECT COUNT(*) as c FROM vault_crate_types WHERE is_active = 1');
+      activeCrates = Number((r.rows as any[])[0]?.c || 0);
+    } catch { /* ignore */ }
+
+    // Invalid crates (active but prob != 100%)
+    let invalidCrates = 0;
+    try {
+      const r = await dbClient.execute(`
+        SELECT ct.id FROM vault_crate_types ct
+        WHERE ct.is_active = 1
+        AND (
+          SELECT COALESCE(SUM(cr.probability), 0) FROM vault_crate_rewards cr WHERE cr.crate_id = ct.id
+        ) != 100
+      `);
+      invalidCrates = (r.rows || []).length;
+    } catch { /* ignore */ }
+
+    // Unused crates (never opened)
+    let unusedCrates = 0;
+    try {
+      const r = await dbClient.execute(`
+        SELECT ct.id FROM vault_crate_types ct
+        WHERE ct.id NOT IN (
+          SELECT DISTINCT col.crate_id FROM vault_crate_open_log col WHERE col.crate_id IS NOT NULL
+        )
+      `);
+      unusedCrates = (r.rows || []).length;
+    } catch { /* ignore */ }
+
+    // Most awarded reward
+    let mostAwardedReward = 'N/A';
+    try {
+      const r = await dbClient.execute(`
+        SELECT reward_label, COUNT(*) as c FROM vault_crate_open_log
+        GROUP BY reward_label ORDER BY c DESC LIMIT 1
+      `);
+      if ((r.rows || []).length > 0) mostAwardedReward = (r.rows as any[])[0].reward_label;
+    } catch { /* ignore */ }
+
+    // Average rewards per crate
+    let avgRewardsPerCrate = 0;
+    try {
+      const r = await dbClient.execute(`
+        SELECT AVG(reward_count) as avg FROM vault_crate_types
+      `);
+      avgRewardsPerCrate = Math.round(Number((r.rows as any[])[0]?.avg || 0) * 100) / 100;
+    } catch { /* ignore */ }
+
+    return successResponse(res, {
+      activeCrates,
+      invalidCrates,
+      unusedCrates,
+      mostAwardedReward,
+      avgRewardsPerCrate,
+    });
+  } catch (error) {
+    console.error('Failed to fetch crate health:', error);
+    return successResponse(res, {
+      activeCrates: 0, invalidCrates: 0, unusedCrates: 0,
+      mostAwardedReward: 'N/A', avgRewardsPerCrate: 0,
     });
   }
 }));
