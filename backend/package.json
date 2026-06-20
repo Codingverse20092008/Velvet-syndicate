@@ -12,7 +12,8 @@
     "sync:down": "tsx scripts/sync-down.ts",
     "sync:up": "tsx scripts/sync-up.ts",
     "migrate:quizzes": "tsx scripts/migrate-quizzes.ts",
-    "seed:quizzes": "tsx scripts/seed-quizzes-now.ts"
+    "seed:quizzes": "tsx scripts/seed-quizzes-now.ts",
+    "seed:crates": "tsx scripts/seed-crates.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",
