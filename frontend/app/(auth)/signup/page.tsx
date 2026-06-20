@@ -74,8 +74,9 @@ function SignupContent() {
       return
     }
 
-    // On successful signup, redirect to OTP verification
-    router.replace(`/verify-otp?email=${encodeURIComponent(formData.email)}`)
+    // On successful signup, redirect to OTP verification (preserve redirect param)
+    const verifyRedirect = redirectPath !== '/' ? `&redirect=${encodeURIComponent(redirectPath)}` : ''
+    router.replace(`/verify-otp?email=${encodeURIComponent(formData.email)}${verifyRedirect}`)
   }
 
   return (

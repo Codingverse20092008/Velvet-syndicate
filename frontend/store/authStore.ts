@@ -6,9 +6,12 @@ function setEdgeAuthCookie(token: string | null) {
   const isProduction = window.location.protocol === 'https:'
   const secure = isProduction ? '; Secure' : ''
   if (token) {
-    document.cookie = `access_token=${token}; Path=/; Max-Age=900; SameSite=Lax${secure}`
+    // Max-Age matches refresh token TTL (7 days) — middleware verifies JWT expiry itself
+    document.cookie = `access_token=${token}; Path=/; Max-Age=604800; SameSite=Lax${secure}`
+    console.log('[AuthStore] Edge auth cookie SET, length:', token.length)
   } else {
     document.cookie = `access_token=; Path=/; Max-Age=0; SameSite=Lax${secure}`
+    console.log('[AuthStore] Edge auth cookie CLEARED')
   }
 }
 
@@ -43,10 +46,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isAuthenticated: false,
 
   setUser: (user) => {
+    const token = getStoredAccessToken()
+    if (token) setEdgeAuthCookie(token)
     set({ user, isAuthenticated: true, isLoading: false })
   },
 
   clearUser: () => {
+    console.log('[AuthStore] clearUser: clearing tokens and cookies')
     clearStoredTokens()
     setEdgeAuthCookie(null)
     set({ user: null, isAuthenticated: false, isLoading: false })
@@ -59,17 +65,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   checkAuth: async () => {
     set({ isLoading: true })
     try {
-      const token = getStoredAccessToken()
-      if (!token) {
+      const initialToken = getStoredAccessToken()
+      if (!initialToken) {
+        console.log('[AuthStore] checkAuth: no token found in localStorage')
         set({ user: null, isAuthenticated: false, isLoading: false })
         return
       }
 
+      console.log('[AuthStore] checkAuth: token found, verifying with /auth/me')
       const res = await api.get('/auth/me')
       const data = await res.json()
       if (data.success && data.data.user) {
+        // ⚠️ Re-read token AFTER API call — api.get may have internally refreshed it
+        const freshToken = getStoredAccessToken() || initialToken
+        console.log('[AuthStore] checkAuth: auth confirmed, setting cookie',
+          freshToken !== initialToken ? '(token was refreshed)' : '(token unchanged)')
         set({ user: data.data.user, isAuthenticated: true })
-        setEdgeAuthCookie(token)
+        setEdgeAuthCookie(freshToken)
         // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
         const { useCartStore } = await import('@/store/cartStore')
         if (!useCartStore.getState().checkoutInProgress) {
@@ -78,10 +90,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           console.log('🚫 Cart sync blocked during checkout - auth check')
         }
       } else {
+        console.log('[AuthStore] checkAuth: /auth/me returned unsuccessful:', data)
         set({ user: null, isAuthenticated: false })
       }
     } catch (err) {
-      console.warn('Auth check failed:', err)
+      console.warn('[AuthStore] checkAuth failed:', err)
       set({ user: null, isAuthenticated: false })
     } finally {
       set({ isLoading: false })
@@ -102,10 +115,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true })
     try {
+      console.log('[AuthStore] login: attempting login for', email)
       const res = await api.post('/auth/login', { email, password })
       const data = await res.json()
 
       if (data.success && data.data?.accessToken) {
+        console.log('[AuthStore] login: tokens received, storing')
         // Store tokens
         setStoredAccessToken(data.data.accessToken)
         setEdgeAuthCookie(data.data.accessToken)
@@ -118,6 +133,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const userData = await userRes.json()
 
         if (userData.success && userData.data.user) {
+          console.log('[AuthStore] login: user fetched, auth complete for', userData.data.user.email)
           set({ user: userData.data.user, isAuthenticated: true, isLoading: false })
           setEdgeAuthCookie(data.data.accessToken)
           // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
@@ -131,10 +147,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         }
       }
 
+      console.log('[AuthStore] login: failed -', data?.error || 'Unknown error')
       setEdgeAuthCookie(null)
       set({ isLoading: false })
       return { success: false, error: data?.error || 'Login failed' }
     } catch (err) {
+      console.warn('[AuthStore] login: error -', err)
       set({ isLoading: false })
       return { success: false, error: (err as Error).message }
     }
@@ -143,17 +161,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signup: async (name: string, email: string, password: string) => {
     set({ isLoading: true })
     try {
+      console.log('[AuthStore] signup: creating account for', email)
       const res = await api.post('/auth/signup', { name, email, password })
       const data = await res.json()
 
       set({ isLoading: false })
 
       if (data.success) {
+        console.log('[AuthStore] signup: account created, redirect to verify-otp')
         return { success: true }
       }
 
+      console.log('[AuthStore] signup: failed -', data?.error || 'Unknown error')
       return { success: false, error: data?.error || 'Signup failed' }
     } catch (err) {
+      console.warn('[AuthStore] signup: error -', err)
       set({ isLoading: false })
       return { success: false, error: (err as Error).message }
     }

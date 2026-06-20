@@ -17,6 +17,9 @@ function VerifyOTPContent() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  const rawRedirect = searchParams.get('redirect')
+  const redirectPath = rawRedirect?.startsWith('/') ? rawRedirect : null
+
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -42,8 +45,9 @@ function VerifyOTPContent() {
 
       setSuccess('Verified successfully! Redirecting...')
       
+      const loginRedirect = redirectPath ? `&redirect=${encodeURIComponent(redirectPath)}` : ''
       setTimeout(() => {
-        router.replace('/login?message=Email verified successfully. Please login.')
+        router.replace(`/login?message=Email verified successfully. Please login.${loginRedirect}`)
       }, 1500)
 
     } catch (err: any) {

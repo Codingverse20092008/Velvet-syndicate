@@ -47,13 +47,18 @@ export async function middleware(request: NextRequest) {
   }
 
   // After launch: require authentication
+  const accessCookie = request.cookies.get('access_token')
+  console.log(`[Middleware] path=${pathname} cookie=${accessCookie?.value ? 'present (len=' + accessCookie.value.length + ')' : 'MISSING'}`)
+
   const token = getTokenFromRequest(request)
   const payload = token ? await verifyToken(token) : null
 
   if (payload) {
+    console.log(`[Middleware] auth PASS for ${pathname} user=${payload.userId}`)
     return NextResponse.next()
   }
 
+  console.log(`[Middleware] auth FAIL for ${pathname} - redirecting to login`)
   // Guest — redirect to login
   const url = request.nextUrl.clone()
   url.pathname = '/login'
