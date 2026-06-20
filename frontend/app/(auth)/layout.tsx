@@ -13,7 +13,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   React.useEffect(() => {
     const timer = setTimeout(() => {
       setShowForm(true)
-    }, 10000)
+    }, 2000)
     return () => clearTimeout(timer)
   }, [])
 

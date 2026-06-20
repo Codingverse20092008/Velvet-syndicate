@@ -45,7 +45,7 @@ export async function createUser(data: { name: string; email: string; password: 
       name: data.name,
       email: data.email.toLowerCase(),
       passwordHash: hashedPassword,
-      emailVerified: false,
+      emailVerified: true,
     })
     .returning();
 
@@ -70,11 +70,6 @@ export async function authenticateUser(email: string, password: string): Promise
   const isValid = await verifyPassword(password, user.passwordHash);
   if (!isValid) {
     throw new UnauthorizedError('Invalid credentials');
-  }
-
-  // Block unverified users from logging in (except admins)
-  if (!user.emailVerified && user.role !== 'admin' && user.role !== 'super_admin') {
-    throw new UnauthorizedError('Please verify your email first. Check your inbox for the OTP.');
   }
 
   return createSession(user.id);

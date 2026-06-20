@@ -46,12 +46,14 @@ router.post('/signup', asyncHandler(async (req: Request, res: Response) => {
     password: parsed.password,
   });
 
-  // Auto-send OTP after account creation
-  await sendOtp(user.email);
+  // Best-effort OTP send — don't block signup if email delivery fails
+  sendOtp(user.email).catch((err) => {
+    logger.warn({ err, email: user.email }, 'Failed to send OTP email after signup');
+  });
 
   return successResponse(res, {
     user,
-    message: 'Account created. A verification code has been sent to your email.',
+    message: 'Account created. Welcome to Velvet Syndicate.',
   }, 201);
 }));
 
