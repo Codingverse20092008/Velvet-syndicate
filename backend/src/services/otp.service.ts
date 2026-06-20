@@ -26,13 +26,15 @@ import { NotFoundError, ValidationError } from '../lib/errors';
 const OTP_EXPIRY_MINUTES = 5;
 const OTP_MAX_ATTEMPTS = 5;
 
-// ─── Resend client ────────────────────────────────────────────────────────────
+// ─── Resend client (lazy init, best-effort) ────────────────────────────────────
 
-if (!env.RESEND_API_KEY) {
-  logger.error('RESEND_API_KEY is missing from environment variables');
+let resendInstance: Resend | null = null;
+function getResend(): Resend | null {
+  if (!resendInstance && env.RESEND_API_KEY) {
+    resendInstance = new Resend(env.RESEND_API_KEY);
+  }
+  return resendInstance;
 }
-
-const resend = new Resend(env.RESEND_API_KEY);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -91,13 +93,19 @@ export async function sendOtp(email: string): Promise<void> {
     attempts: 0,
   });
 
-  // 5. Send via Resend
+  // 5. Send via Resend (best-effort — skip if not configured)
+  const resendClient = getResend();
+  if (!resendClient) {
+    logger.warn({ email: normalised }, 'Resend not configured — OTP email skipped');
+    return;
+  }
+
   const fromEmail = env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
   
   logger.info({ email: normalised, from: fromEmail }, 'Attempting to send OTP email');
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await resendClient.emails.send({
       from: fromEmail,
       to: normalised,
       subject: 'Your Velvet Syndicate verification code',

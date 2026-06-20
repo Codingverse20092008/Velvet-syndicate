@@ -22,7 +22,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().default('info'),
   ALERT_WEBHOOK_URL: z.string().url().optional(),
   // Resend (email)
-  RESEND_API_KEY: z.string().min(1),
+  RESEND_API_KEY: z.string().optional(),
   RESEND_FROM_EMAIL: z.string().email().default('onboarding@resend.dev'),
   // Cloudinary (Permanent Storage)
   CLOUDINARY_CLOUD_NAME: z.string().optional(),
