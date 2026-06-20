@@ -29,7 +29,6 @@ function getAccessTokenFromRequest(req: Request): string | undefined {
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     if (token) {
-      logger.debug({ hasHeader: true }, 'Found access token in Authorization header');
       return token;
     }
   }
@@ -39,7 +38,6 @@ function getAccessTokenFromRequest(req: Request): string | undefined {
   if (cookieHeader) {
     const tokens = getTokensFromCookies(cookieHeader);
     if (tokens.accessToken) {
-      logger.debug({ hasCookie: true }, 'Found access token in cookie');
       return tokens.accessToken;
     }
   }

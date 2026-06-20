@@ -52,7 +52,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   clearUser: () => {
-    console.log('[AuthStore] clearUser: clearing tokens and cookies')
     clearStoredTokens()
     setEdgeAuthCookie(null)
     set({ user: null, isAuthenticated: false, isLoading: false })
@@ -67,19 +66,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const initialToken = getStoredAccessToken()
       if (!initialToken) {
-        console.log('[AuthStore] checkAuth: no token found in localStorage')
         set({ user: null, isAuthenticated: false, isLoading: false })
         return
       }
 
-      console.log('[AuthStore] checkAuth: token found, verifying with /auth/me')
       const res = await api.get('/auth/me')
       const data = await res.json()
+
       if (data.success && data.data.user) {
         // ⚠️ Re-read token AFTER API call — api.get may have internally refreshed it
         const freshToken = getStoredAccessToken() || initialToken
-        console.log('[AuthStore] checkAuth: auth confirmed, setting cookie',
-          freshToken !== initialToken ? '(token was refreshed)' : '(token unchanged)')
         set({ user: data.data.user, isAuthenticated: true })
         setEdgeAuthCookie(freshToken)
         // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
@@ -90,7 +86,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           console.log('🚫 Cart sync blocked during checkout - auth check')
         }
       } else {
-        console.log('[AuthStore] checkAuth: /auth/me returned unsuccessful:', data)
         set({ user: null, isAuthenticated: false })
       }
     } catch (err) {
@@ -115,27 +110,47 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true })
     try {
-      console.log('[AuthStore] login: attempting login for', email)
       const res = await api.post('/auth/login', { email, password })
       const data = await res.json()
 
       if (data.success && data.data?.accessToken) {
-        console.log('[AuthStore] login: tokens received, storing')
+        const token = data.data.accessToken
         // Store tokens
-        setStoredAccessToken(data.data.accessToken)
-        setEdgeAuthCookie(data.data.accessToken)
+        setStoredAccessToken(token)
+        setEdgeAuthCookie(token)
         if (data.data.refreshToken) {
           setStoredRefreshToken(data.data.refreshToken)
         }
 
-        // Fetch user data
-        const userRes = await api.get('/auth/me')
-        const userData = await userRes.json()
+        // Fetch user data — skip retry to avoid destructive refresh logic on fresh token
+        let userRes = await api.get('/auth/me', { skipRetry: true })
+        let userData = await userRes.json()
 
-        if (userData.success && userData.data.user) {
-          console.log('[AuthStore] login: user fetched, auth complete for', userData.data.user.email)
+        // If first attempt failed (transient), retry once directly
+        if (!userData.success || !userData.data?.user) {
+          const freshToken = getStoredAccessToken() || token
+          try {
+            const retryRes = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL || 'https://velvet-syndicate.onrender.com'}/api/auth/me`,
+              {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Bearer ${freshToken}`,
+                  'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+              }
+            )
+            userData = await retryRes.json()
+            userRes = retryRes
+          } catch (retryErr) {
+            console.warn('[AuthStore] login: retry failed', retryErr)
+          }
+        }
+
+        if (userData.success && userData.data?.user) {
           set({ user: userData.data.user, isAuthenticated: true, isLoading: false })
-          setEdgeAuthCookie(data.data.accessToken)
+          setEdgeAuthCookie(getStoredAccessToken() || token)
           // 🚫 BLOCK SYNC DURING CHECKOUT - Prevent cart mutations
           const { useCartStore } = await import('@/store/cartStore')
           if (!useCartStore.getState().checkoutInProgress) {
@@ -145,9 +160,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
           return { success: true }
         }
+
+        // /auth/me failed even after retry — store tokens for checkAuth to retry later
+        console.warn('[AuthStore] login: /auth/me failed after retry, user will be loaded by checkAuth')
+        set({ isLoading: false })
+        setEdgeAuthCookie(getStoredAccessToken() || token)
+        return { success: true }
       }
 
-      console.log('[AuthStore] login: failed -', data?.error || 'Unknown error')
       setEdgeAuthCookie(null)
       set({ isLoading: false })
       return { success: false, error: data?.error || 'Login failed' }
