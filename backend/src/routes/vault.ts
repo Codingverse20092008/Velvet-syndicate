@@ -404,6 +404,50 @@ router.post('/streak/token', asyncHandler(async (req: Request, res: Response) =>
   return successResponse(res, { bonusStreakTokens: state.bonusStreakTokens || 0 });
 }));
 
+// GET /api/vault/crates/types - Get all active crate types with rewards
+router.get('/crates/types', asyncHandler(async (req: Request, res: Response) => {
+  const result = await dbClient.execute(`
+    SELECT ct.*,
+           COALESCE(
+             json_group_array(
+               json_object(
+                 'id', cr.id,
+                 'rewardType', cr.reward_type,
+                 'rewardValue', cr.reward_value,
+                 'rewardName', cr.reward_name,
+                 'probability', cr.probability,
+                 'rarity', cr.rarity,
+                 'createdAt', cr.created_at
+               )
+             ) FILTER (WHERE cr.id IS NOT NULL),
+             '[]'
+           ) AS rewards
+    FROM vault_crate_types ct
+    LEFT JOIN vault_crate_rewards cr ON cr.crate_id = ct.id
+    WHERE ct.is_active = 1
+    GROUP BY ct.id
+    ORDER BY ct.created_at ASC
+  `);
+
+  const crateTypes = (result.rows || []).map((row: any) => ({
+    id: row.id,
+    crateId: row.crate_id,
+    name: row.name,
+    description: row.description,
+    crateType: row.crate_type,
+    cost: row.cost,
+    isActive: row.is_active === 1,
+    rewardCount: row.reward_count,
+    imageUrl: row.image_url || '',
+    acquisitionMethod: row.acquisition_method || '',
+    isSystem: row.is_system === 1,
+    createdAt: row.created_at,
+    rewards: JSON.parse(typeof row.rewards === 'string' ? row.rewards : '[]'),
+  }));
+
+  return successResponse(res, { crateTypes });
+}));
+
 // GET /api/vault/hidden-rewards - Get unlocked hidden rewards
 router.get('/hidden-rewards', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);

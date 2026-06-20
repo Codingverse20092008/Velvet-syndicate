@@ -615,7 +615,7 @@ export default function CratesPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-heading text-lg text-velvet-white">{viewCrate.name}</h3>
-                      {viewCrate.isSystem && <Shield size={14} className="text-cyan-400" title="System Crate" />}
+                      {viewCrate.isSystem && <span title="System Crate"><Shield size={14} className="text-cyan-400" /></span>}
                     </div>
                     <p className="text-[10px] text-velvet-muted uppercase tracking-wider">
                       {CRATE_TYPE_LABELS[viewCrate.crateType] || viewCrate.crateType} &middot; {viewCrate.cost} coins
@@ -767,7 +767,7 @@ export default function CratesPage() {
                         )}
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-velvet-white truncate">{crate.name}</span>
-                          {crate.isSystem && <Shield size={12} className="text-cyan-400 shrink-0" title="System Crate" />}
+                          {crate.isSystem && <span title="System Crate"><Shield size={12} className="text-cyan-400 shrink-0" /></span>}
                         </div>
                       </div>
                       <div className="col-span-1">
