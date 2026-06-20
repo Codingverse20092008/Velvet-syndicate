@@ -391,14 +391,83 @@ router.post('/crate-config', asyncHandler(async (req: Request, res: Response) =>
   }
 }));
 
+// ─── Badge Tables Initialization ────────────────────────────────────
+async function ensureBadgeTables(): Promise<void> {
+  try {
+    await dbClient.execute(`
+      CREATE TABLE IF NOT EXISTS vault_badges (
+        id TEXT PRIMARY KEY,
+        badge_id TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        emoji TEXT NOT NULL,
+        rarity TEXT NOT NULL DEFAULT 'common',
+        category TEXT NOT NULL DEFAULT 'progression',
+        unlock_condition TEXT NOT NULL DEFAULT '',
+        unlock_value INTEGER,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+        updated_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP)
+      )
+    `);
+    await dbClient.execute(`
+      CREATE TABLE IF NOT EXISTS vault_user_badges (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        badge_id TEXT NOT NULL,
+        unlocked_at TEXT NOT NULL DEFAULT (CURRENT_TIMESTAMP),
+        is_displayed INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (badge_id) REFERENCES vault_badges(badge_id) ON DELETE CASCADE
+      )
+    `);
+  } catch (e) {
+    console.error('Failed to ensure badge tables:', e);
+  }
+
+  for (const alterSql of [
+    `ALTER TABLE vault_badges ADD COLUMN image_url TEXT DEFAULT ''`,
+    `ALTER TABLE vault_badges ADD COLUMN reward_type TEXT DEFAULT ''`,
+    `ALTER TABLE vault_badges ADD COLUMN reward_value TEXT DEFAULT ''`,
+    `ALTER TABLE vault_badges ADD COLUMN reward_label TEXT DEFAULT ''`,
+  ]) {
+    try { await dbClient.execute(alterSql); } catch { /* column may already exist */ }
+  }
+}
+
 // GET /badges
 router.get('/badges', asyncHandler(async (req: Request, res: Response) => {
   const admin = await getAdminUser(req, res);
   if (!admin) return;
+  await ensureBadgeTables();
 
   try {
-    const result = await dbClient.execute('SELECT * FROM vault_badges ORDER BY badge_id ASC');
-    return successResponse(res, result.rows);
+    const result = await dbClient.execute(`
+      SELECT vb.*, COUNT(vub.id) AS unlock_count
+      FROM vault_badges vb
+      LEFT JOIN vault_user_badges vub ON vub.badge_id = vb.badge_id
+      GROUP BY vb.id
+      ORDER BY vb.badge_id ASC
+    `);
+    const badges = (result.rows || []).map((r: any) => ({
+      id: r.id,
+      badgeId: r.badge_id,
+      name: r.name,
+      description: r.description || '',
+      emoji: r.emoji || '',
+      rarity: r.rarity || 'common',
+      category: r.category || 'progression',
+      unlockCondition: r.unlock_condition || '',
+      unlockValue: r.unlock_value,
+      imageUrl: r.image_url || '',
+      rewardType: r.reward_type || '',
+      rewardValue: r.reward_value || '',
+      rewardLabel: r.reward_label || '',
+      isActive: r.is_active === 1,
+      unlockCount: Number(r.unlock_count) || 0,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    }));
+    return successResponse(res, badges);
   } catch (error) {
     console.error('Failed to fetch badges:', error);
     return successResponse(res, []);
@@ -412,18 +481,27 @@ const createBadgeSchema = z.object({
   emoji: z.string().min(1).max(10),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']),
   category: z.string().min(1).max(50),
+  unlockCondition: z.string().max(200).optional().default(''),
+  unlockValue: z.number().int().optional().nullable(),
+  imageUrl: z.string().max(500).optional().default(''),
+  rewardType: z.string().max(50).optional().default(''),
+  rewardValue: z.string().max(100).optional().default(''),
+  rewardLabel: z.string().max(200).optional().default(''),
+  isActive: z.boolean().optional().default(true),
 });
 
 // POST /badges
 router.post('/badges', asyncHandler(async (req: Request, res: Response) => {
   const admin = await getAdminUser(req, res);
   if (!admin) return;
+  await ensureBadgeTables();
 
   try {
     const data = createBadgeSchema.parse(req.body);
+    const now = new Date().toISOString();
     await dbClient.execute(`
-      INSERT INTO vault_badges (badge_id, name, description, emoji, rarity, category)
-      VALUES (${esc(data.badgeId)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.emoji)}, ${esc(data.rarity)}, ${esc(data.category)})
+      INSERT INTO vault_badges (id, badge_id, name, description, emoji, rarity, category, unlock_condition, unlock_value, image_url, reward_type, reward_value, reward_label, is_active, created_at, updated_at)
+      VALUES (${esc(crypto.randomUUID())}, ${esc(data.badgeId)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.emoji)}, ${esc(data.rarity)}, ${esc(data.category)}, ${esc(data.unlockCondition || '')}, ${esc(data.unlockValue ?? null)}, ${esc(data.imageUrl || '')}, ${esc(data.rewardType || '')}, ${esc(data.rewardValue || '')}, ${esc(data.rewardLabel || '')}, ${esc(data.isActive ? 1 : 0)}, ${esc(now)}, ${esc(now)})
     `);
     await logAudit(admin, 'CREATE_BADGE', `Badge ${data.badgeId} created`, null, data);
     return successResponse(res, { message: 'Badge created', badge: data }, 201);
@@ -442,20 +520,65 @@ const updateBadgeSchema = z.object({
   emoji: z.string().min(1).max(10).optional(),
   rarity: z.enum(['common', 'uncommon', 'rare', 'epic', 'legendary']).optional(),
   category: z.string().min(1).max(50).optional(),
+  unlockCondition: z.string().max(200).optional(),
+  unlockValue: z.number().int().optional().nullable(),
+  imageUrl: z.string().max(500).optional(),
+  rewardType: z.string().max(50).optional(),
+  rewardValue: z.string().max(100).optional(),
+  rewardLabel: z.string().max(200).optional(),
+  isActive: z.boolean().optional(),
 });
 
 // PATCH /badges/:badgeId
 router.patch('/badges/:badgeId', asyncHandler(async (req: Request, res: Response) => {
   const admin = await getAdminUser(req, res);
   if (!admin) return;
+  await ensureBadgeTables();
 
   try {
     const data = updateBadgeSchema.parse(req.body);
     const { badgeId } = req.params;
 
+    // Validate: if setting isActive=true, check requirements exist
+    if (data.isActive === true) {
+      const existing = await dbClient.execute(
+        `SELECT * FROM vault_badges WHERE badge_id = ${esc(badgeId)} LIMIT 1`
+      );
+      if ((existing.rows || []).length > 0) {
+        const b = (existing.rows as any[])[0];
+        if (!b.unlock_condition && !data.unlockCondition) {
+          return res.status(400).json({ success: false, error: 'Badge must have an unlock condition before activating' });
+        }
+        if (!b.category && !data.category) {
+          return res.status(400).json({ success: false, error: 'Badge must have a category before activating' });
+        }
+        if (!b.rarity && !data.rarity) {
+          return res.status(400).json({ success: false, error: 'Badge must have a rarity before activating' });
+        }
+      }
+    }
+
+    const colMap: Record<string, string> = {
+      name: 'name',
+      description: 'description',
+      emoji: 'emoji',
+      rarity: 'rarity',
+      category: 'category',
+      unlockCondition: 'unlock_condition',
+      unlockValue: 'unlock_value',
+      imageUrl: 'image_url',
+      rewardType: 'reward_type',
+      rewardValue: 'reward_value',
+      rewardLabel: 'reward_label',
+      isActive: 'is_active',
+    };
+
     const setClauses = Object.entries(data)
+      .filter(([key]) => colMap[key])
       .map(([key, val]) => {
-        const col = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        const col = colMap[key];
+        if (key === 'isActive') return `${col} = ${esc(val ? 1 : 0)}`;
+        if (key === 'unlockValue') return `${col} = ${esc(val ?? null)}`;
         return `${col} = ${esc(val)}`;
       })
       .join(', ');
@@ -464,10 +587,11 @@ router.patch('/badges/:badgeId', asyncHandler(async (req: Request, res: Response
       return res.status(400).json({ success: false, error: 'No fields to update' });
     }
 
+    const now = new Date().toISOString();
     const prevResult = await dbClient.execute(`SELECT * FROM vault_badges WHERE badge_id = ${esc(badgeId)} LIMIT 1`);
     const previous = prevResult.rows.length > 0 ? prevResult.rows[0] : null;
 
-    await dbClient.execute(`UPDATE vault_badges SET ${setClauses} WHERE badge_id = ${esc(badgeId)}`);
+    await dbClient.execute(`UPDATE vault_badges SET ${setClauses}, updated_at = ${esc(now)} WHERE badge_id = ${esc(badgeId)}`);
 
     const result = await dbClient.execute(`SELECT * FROM vault_badges WHERE badge_id = ${esc(badgeId)} LIMIT 1`);
     if (result.rows.length === 0) {
@@ -488,6 +612,7 @@ router.patch('/badges/:badgeId', asyncHandler(async (req: Request, res: Response
 router.delete('/badges/:badgeId', asyncHandler(async (req: Request, res: Response) => {
   const admin = await getAdminUser(req, res);
   if (!admin) return;
+  await ensureBadgeTables();
 
   try {
     const { badgeId } = req.params;
@@ -502,23 +627,153 @@ router.delete('/badges/:badgeId', asyncHandler(async (req: Request, res: Respons
   }
 }));
 
-// GET /badge-stats
+// GET /badges/stats - Enhanced badge statistics
+router.get('/badges/stats', asyncHandler(async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
+  await ensureBadgeTables();
+
+  try {
+    let totalBadges = 0, activeBadges = 0, disabledBadges = 0;
+    let totalUnlocks = 0;
+    let mostEarned = { badgeId: '', name: '', count: 0 };
+    let leastEarned = { badgeId: '', name: '', count: 0 };
+
+    try {
+      const allResult = await dbClient.execute('SELECT COUNT(*) as c FROM vault_badges');
+      totalBadges = Number((allResult.rows as any[])[0]?.c || 0);
+
+      const activeResult = await dbClient.execute('SELECT COUNT(*) as c FROM vault_badges WHERE is_active = 1');
+      activeBadges = Number((activeResult.rows as any[])[0]?.c || 0);
+
+      disabledBadges = totalBadges - activeBadges;
+    } catch { /* ignore */ }
+
+    try {
+      const unlockResult = await dbClient.execute('SELECT COUNT(*) as c FROM vault_user_badges');
+      totalUnlocks = Number((unlockResult.rows as any[])[0]?.c || 0);
+    } catch { /* ignore */ }
+
+    try {
+      const mostResult = await dbClient.execute(`
+        SELECT vb.badge_id, vb.name, COUNT(vub.id) as c
+        FROM vault_badges vb LEFT JOIN vault_user_badges vub ON vub.badge_id = vb.badge_id
+        GROUP BY vb.badge_id, vb.name ORDER BY c DESC LIMIT 1
+      `);
+      if ((mostResult.rows || []).length > 0) {
+        mostEarned.badgeId = (mostResult.rows as any[])[0].badge_id;
+        mostEarned.name = (mostResult.rows as any[])[0].name;
+        mostEarned.count = Number((mostResult.rows as any[])[0].c) || 0;
+      }
+
+      const leastResult = await dbClient.execute(`
+        SELECT vb.badge_id, vb.name, COUNT(vub.id) as c
+        FROM vault_badges vb LEFT JOIN vault_user_badges vub ON vub.badge_id = vb.badge_id
+        GROUP BY vb.badge_id, vb.name ORDER BY c ASC LIMIT 1
+      `);
+      if ((leastResult.rows || []).length > 0) {
+        leastEarned.badgeId = (leastResult.rows as any[])[0].badge_id;
+        leastEarned.name = (leastResult.rows as any[])[0].name;
+        leastEarned.count = Number((leastResult.rows as any[])[0].c) || 0;
+      }
+    } catch { /* ignore */ }
+
+    // Rarity distribution
+    let commonCount = 0, rareCount = 0, epicCount = 0, legendaryCount = 0;
+    try {
+      const rarityResult = await dbClient.execute(`
+        SELECT rarity, COUNT(*) as c FROM vault_badges GROUP BY rarity
+      `);
+      for (const row of (rarityResult.rows || []) as any[]) {
+        if (row.rarity === 'common') commonCount = Number(row.c) || 0;
+        else if (row.rarity === 'rare') rareCount = Number(row.c) || 0;
+        else if (row.rarity === 'epic') epicCount = Number(row.c) || 0;
+        else if (row.rarity === 'legendary') legendaryCount = Number(row.c) || 0;
+      }
+    } catch { /* ignore */ }
+
+    const avgUnlockRate = totalBadges > 0 ? Math.round((totalUnlocks / totalBadges) * 100) / 100 : 0;
+
+    return successResponse(res, {
+      totalBadges,
+      activeBadges,
+      disabledBadges,
+      totalUnlocks,
+      avgUnlockRate,
+      mostEarned,
+      leastEarned,
+      rarityDistribution: { common: commonCount, rare: rareCount, epic: epicCount, legendary: legendaryCount },
+    });
+  } catch (error) {
+    console.error('Failed to fetch badge stats:', error);
+    return successResponse(res, {
+      totalBadges: 0, activeBadges: 0, disabledBadges: 0,
+      totalUnlocks: 0, avgUnlockRate: 0,
+      mostEarned: { badgeId: '', name: 'N/A', count: 0 },
+      leastEarned: { badgeId: '', name: 'N/A', count: 0 },
+      rarityDistribution: { common: 0, rare: 0, epic: 0, legendary: 0 },
+    });
+  }
+}));
+
+// GET /badge-stats (legacy - simple per-badge unlock counts)
 router.get('/badge-stats', asyncHandler(async (req: Request, res: Response) => {
   const admin = await getAdminUser(req, res);
   if (!admin) return;
+  await ensureBadgeTables();
 
   try {
     const result = await dbClient.execute(`
-      SELECT vb.badge_id, vb.name, COUNT(vub.id) AS unlock_count
+      SELECT vb.badge_id, vb.name, vb.emoji, COUNT(vub.id) AS unlock_count
       FROM vault_badges vb
       LEFT JOIN vault_user_badges vub ON vub.badge_id = vb.badge_id
-      GROUP BY vb.badge_id, vb.name
+      GROUP BY vb.badge_id, vb.name, vb.emoji
       ORDER BY unlock_count DESC
     `);
     return successResponse(res, result.rows);
   } catch (error) {
     console.error('Failed to fetch badge stats:', error);
     return successResponse(res, []);
+  }
+}));
+
+// GET /badges/:badgeId - Badge detail
+router.get('/badges/:badgeId', asyncHandler(async (req: Request, res: Response) => {
+  const admin = await getAdminUser(req, res);
+  if (!admin) return;
+  await ensureBadgeTables();
+
+  try {
+    const { badgeId } = req.params;
+    const result = await dbClient.execute(
+      `SELECT vb.*, COUNT(vub.id) AS unlock_count FROM vault_badges vb LEFT JOIN vault_user_badges vub ON vub.badge_id = vb.badge_id WHERE vb.badge_id = ${esc(badgeId)} GROUP BY vb.id LIMIT 1`
+    );
+    if ((result.rows || []).length === 0) {
+      return res.status(404).json({ success: false, error: 'Badge not found' });
+    }
+    const r = (result.rows as any[])[0];
+    return successResponse(res, {
+      id: r.id,
+      badgeId: r.badge_id,
+      name: r.name,
+      description: r.description || '',
+      emoji: r.emoji || '',
+      rarity: r.rarity || 'common',
+      category: r.category || 'progression',
+      unlockCondition: r.unlock_condition || '',
+      unlockValue: r.unlock_value,
+      imageUrl: r.image_url || '',
+      rewardType: r.reward_type || '',
+      rewardValue: r.reward_value || '',
+      rewardLabel: r.reward_label || '',
+      isActive: r.is_active === 1,
+      unlockCount: Number(r.unlock_count) || 0,
+      createdAt: r.created_at,
+      updatedAt: r.updated_at,
+    });
+  } catch (error) {
+    console.error('Failed to fetch badge detail:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch badge detail' });
   }
 }));
 
