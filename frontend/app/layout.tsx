@@ -9,7 +9,6 @@ import { ActiveOrderBanner } from '@/components/user/ActiveOrderBanner'
 import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
 import { SplashScreen } from '@/components/ui/SplashScreen'
 import { SocialProof } from '@/components/ui/SocialProof'
-import { PrivacyAssurance } from '@/components/ui/PrivacyAssurance'
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 
 export const metadata: Metadata = {
@@ -46,7 +45,6 @@ export default function RootLayout({
       <body>
         <SplashScreen />
         <SocialProof />
-        <PrivacyAssurance />
         <MobileBottomNav />
         <AuthProvider>
           <Navigation />
