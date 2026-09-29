@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, ShoppingBag, LogIn, ExternalLink } from 'lucide-react'
+import { ShoppingBag, LogIn, ExternalLink } from 'lucide-react'
 
 // Dummy data for social proof
 const NAMES = [
@@ -24,11 +24,8 @@ const ACTIONS = [
 export function SocialProof() {
   const [settings, setSettings] = useState({
     enabled: true,
-    minVisitors: 480,
-    maxVisitors: 712,
     activityInterval: 90
   })
-  const [visitorCount, setVisitorCount] = useState(542)
   const [currentActivity, setCurrentActivity] = useState<{ name: string, action: typeof ACTIONS[0], product?: string } | null>(null)
   const [isVisible, setIsVisible] = useState(false)
   const [products, setProducts] = useState<string[]>([])
@@ -43,7 +40,6 @@ export function SocialProof() {
           const settingsData = await settingsRes.json()
           if (settingsData?.success && settingsData?.data) {
             setSettings(settingsData.data)
-            setVisitorCount(settingsData.data.minVisitors + Math.floor(Math.random() * (settingsData.data.maxVisitors - settingsData.data.minVisitors)))
           }
         }
 
@@ -64,20 +60,6 @@ export function SocialProof() {
     }
     loadData()
   }, [])
-
-  // Visitor count fluctuation - Every 1 Minute
-  useEffect(() => {
-    if (!settings.enabled) return
-
-    const interval = setInterval(() => {
-      setVisitorCount(prev => {
-        const change = Math.floor(Math.random() * 11) - 5 // -5 to +5
-        const next = prev + change
-        return Math.min(Math.max(next, settings.minVisitors), settings.maxVisitors)
-      })
-    }, 60000)
-    return () => clearInterval(interval)
-  }, [settings.enabled, settings.minVisitors, settings.maxVisitors])
 
   // Activity feed cycle - Based on settings.activityInterval
   useEffect(() => {
@@ -109,29 +91,12 @@ export function SocialProof() {
       clearTimeout(initialTimeout)
       clearInterval(interval)
     }
-  }, [settings.enabled, settings.activityInterval])
+  }, [settings.enabled, settings.activityInterval, products])
 
   if (!settings.enabled) return null
 
-
   return (
     <>
-      {/* Live Visitor Counter */}
-      <div className="fixed top-20 md:top-24 right-4 md:left-6 md:right-auto z-40">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-3 md:px-4 py-1 md:py-1.5 shadow-lg"
-        >
-          <div className="relative">
-            <Users size={12} className="text-velvet-accent" />
-            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-          </div>
-          <span className="text-[8px] md:text-[10px] uppercase tracking-widest text-velvet-white font-medium">
-            {visitorCount} LIVE VIEWERS
-          </span>
-        </motion.div>
-      </div>
 
       {/* Activity Toasts (Bottom Left - Elevated on mobile) */}
       <div className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-50 pointer-events-none">
