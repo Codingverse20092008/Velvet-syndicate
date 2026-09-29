@@ -38,6 +38,7 @@ import challengesRoutes from './src/routes/challenges';
 import wishlistRoutes from './src/routes/wishlist';
 import { vaultLaunchGuard } from './src/lib/vault-launch';
 import quizPackRoutes from './src/routes/quiz-packs';
+import aiRoutes from './src/routes/ai';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,6 +47,42 @@ const PORT = process.env.PORT || 3001;
 app.set('trust proxy', 1);
 
 import { requestContext } from './src/lib/context';
+
+// ─── CORS MUST BE FIRST ─────────────────────────────────────────────────────
+// Applied before helmet, rate-limiters, and all other middleware so that
+// preflight OPTIONS requests always receive proper CORS headers.
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://velvet-syndicate.vercel.app',
+  'https://velvet-syndicate-frontend.vercel.app',
+  'https://www.velvetsyndicate.shop',
+  'https://velvetsyndicate.shop',
+  process.env.FRONTEND_URL || '',
+  env.FRONTEND_URL || '',
+].filter(Boolean);
+
+const corsOptions: cors.CorsOptions = {
+  origin: (requestOrigin, callback) => {
+    if (!requestOrigin) return callback(null, true);
+    if (
+      allowedOrigins.includes(requestOrigin) ||
+      /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['X-Request-Id', 'Set-Cookie'],
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight OPTIONS requests explicitly
+app.options('*', cors(corsOptions));
 
 // Request ID Tracking + Logging (Elite level traceability)
 app.use((req: any, res, next) => {
@@ -117,38 +154,8 @@ app.use(helmet({
   },
 }));
 
-// 🛡️ BULLETPROOF CORS FOR CROSS-DOMAIN AUTH (Vercel → Render)
-app.use(cors({
-  origin: [
-    'https://velvet-syndicate.vercel.app',
-    'https://velvet-syndicate-frontend.vercel.app',
-    'https://www.velvetsyndicate.shop',
-    'https://velvetsyndicate.shop',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    env.FRONTEND_URL,
-  ].filter(Boolean),
-  credentials: true, // 🔴 CRITICAL: Allow cookies cross-domain
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['X-Request-Id', 'Set-Cookie'] // 🔴 EXPOSE Set-Cookie so browser accepts it
-}));
-
-// 🛡️ PRE-FLIGHT HANDLING FOR CORS
-app.options('*', cors({
-  origin: [
-    'https://velvet-syndicate.vercel.app',
-    'https://velvet-syndicate-frontend.vercel.app',
-    'https://www.velvetsyndicate.shop',
-    'https://velvetsyndicate.shop',
-    'http://localhost:3000',
-    env.FRONTEND_URL,
-  ].filter(Boolean),
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['X-Request-Id', 'Set-Cookie']
-}));
+// CORS is already applied at the top of the middleware stack (before helmet/rate-limiters)
+// so we do NOT re-apply it here. See the CORS_ORIGINS block above.
 
 // Body parsing with size limit (prevents payload abuse)
 app.use(express.json({ limit: '1mb' }));
@@ -308,9 +315,10 @@ app.use('/api/setup-reviews', setupReviewsRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/vault', vaultLaunchGuard, vaultRoutes);
 app.use('/api/vault/waitlist', vaultWaitlistRoutes);
-app.use('/api/quiz-packs', quizPackRoutes);
+// app.use('/api/quiz-packs', quizPackRoutes); // DEPRECATED: Old quiz packs unmounted for Syndicate VIP pivot
 app.use('/api/challenges', challengesRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Error handling
 app.use(errorHandler);
@@ -352,13 +360,15 @@ if (require.main === module) {
     logger.error({ err }, 'Failed to start fake review scheduler');
   }
 
-  // 4. Quiz Scheduler — generates 500 quizzes daily at 5:00 AM
+  // 4. Quiz Scheduler (Decommissioned for Syndicate VIP pivot)
+  /*
   try {
     quizScheduler.start();
     logger.info('Daily quiz scheduler started — 500 quizzes generated at 5:00 AM');
   } catch (err) {
     logger.error({ err }, 'Failed to start daily quiz scheduler');
   }
+  */
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────────
   const shutdown = async (signal: string) => {

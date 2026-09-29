@@ -7,12 +7,27 @@ import Image from 'next/image'
 import dynamic from 'next/dynamic'
 import { apiFetch, getFullImageUrl } from '@/lib/api'
 import { formatPrice } from '@/lib/utils'
+import { TrendingDrops } from '@/components/home/TrendingDrops'
+import { HowVaultWorks } from '@/components/home/HowVaultWorks'
 // Hero3D with 3D rotating shoes
 const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => ({ default: mod.Hero3D })), {
   ssr: false,
-  loading: () => <div className="w-full h-screen bg-[#060606] flex items-center justify-center">
-    <div className="text-white text-xl">Loading 3D Experience...</div>
-  </div>,
+  loading: () => (
+    <div className="relative w-full h-screen bg-[#060606] flex items-center justify-center overflow-hidden">
+      <Image
+        src="/images/sneaker-fallback.png"
+        alt="Velvet Syndicate Flagship Sneaker"
+        fill
+        sizes="100vw"
+        className="object-contain p-12 md:p-24 opacity-60 filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+        priority
+      />
+      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%)' }} />
+      <div className="relative z-10 text-white/50 text-xs tracking-[0.3em] uppercase animate-pulse">
+        Initializing 3D Archive...
+      </div>
+    </div>
+  ),
 })
 
 interface Product {
@@ -101,6 +116,12 @@ export default function HomePage() {
         <Hero3D />
       </section>
 
+      {/* Trending Drops - Product Showcase */}
+      <TrendingDrops />
+
+      {/* How the Vault Works - 3-Step Explainer */}
+      <HowVaultWorks />
+
       <section className="bg-velvet-card/40 py-16 px-6 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-7xl rounded-[2rem] border border-white/10 bg-black/30 p-10 shadow-2xl shadow-black/20">
           <div className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">
@@ -169,10 +190,17 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {isLoading ? (
-              <div className="col-span-full text-center py-12">
-                <div className="w-12 h-[1px] bg-white/10 relative overflow-hidden mx-auto">
-                  <div className="absolute inset-0 bg-velvet-white animate-loading-bar" />
-                </div>
+              <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="bg-velvet-dark border border-white/10 overflow-hidden animate-pulse">
+                    <div className="aspect-square bg-neutral-900" />
+                    <div className="p-6 space-y-3">
+                      <div className="h-5 bg-neutral-800 rounded w-3/4" />
+                      <div className="h-3 bg-neutral-800 rounded w-1/3" />
+                      <div className="h-4 bg-neutral-800 rounded w-1/4 mt-4" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               products.map((product, index) => {
@@ -180,31 +208,18 @@ export default function HomePage() {
                 return (
                   <div key={product.id} className="bg-velvet-dark border border-white/10 overflow-hidden group">
                     {/* Product Image */}
-                    <div className="relative aspect-square bg-velvet-black overflow-hidden">
-                      {isExternalImage(productImage) ? (
-                        <img
-                          src={productImage}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = '/images/placeholder-product.png'
-                          }}
-                        />
-                      ) : (
-                        <Image
-                          src={productImage}
-                          alt={product.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          unoptimized={isExternalImage(productImage)}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = '/images/placeholder-product.png'
-                          }}
-                        />
-                      )}
+                    <div className="relative aspect-square bg-neutral-900 overflow-hidden">
+                      <Image
+                        src={productImage}
+                        alt={product.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.src = '/images/placeholder-product.png'
+                        }}
+                      />
                     </div>
                     
                     {/* Product Info */}

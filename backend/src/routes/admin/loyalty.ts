@@ -12,7 +12,8 @@ const router = Router();
 const requireAdmin = async (req: Request, res: Response): Promise<boolean> => {
   try {
     const user = await getUserFromRequest(req);
-    if (!user || (user as any).role !== 'admin') {
+    const role = (user as any)?.role;
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       res.status(403).json({ success: false, error: 'Admin access required' });
       return false;
     }

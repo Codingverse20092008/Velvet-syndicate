@@ -62,6 +62,10 @@ export interface AdminProduct {
   salePercentage?: number
   salePrice?: number | null
   summerSale?: boolean
+  isNew?: boolean
+  isExclusive?: boolean
+  hasXPBonus?: boolean
+  sizesWithStock?: Array<{ size: string; stock: number }>
 }
 
 export interface AdminUser {
@@ -71,6 +75,26 @@ export interface AdminUser {
   phone: string | null
   totalOrders: number
   createdAt: string
+}
+
+export interface AbandonedCartLead {
+  id: string
+  email: string | null
+  phone: string | null
+  items: Array<{
+    id?: string
+    name?: string
+    price?: number
+    size?: string
+    image?: string
+    quantity?: number
+  }>
+  totalAmount: number
+  recovered: boolean
+  recoveredAt: string | null
+  source?: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface AdminStats {
@@ -128,6 +152,9 @@ interface AdminState {
   hardDeleteProduct: (productId: string) => Promise<void>
   toggleStock: (productId: string, inStock: boolean) => Promise<void>
   fetchUsers: () => Promise<void>
+  abandonedCarts: AbandonedCartLead[]
+  fetchAbandonedCarts: () => Promise<void>
+  markCartRecovered: (id: string, recovered?: boolean) => Promise<void>
 }
 
 function getPayload(data: any) {
@@ -139,6 +166,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   currentOrder: null,
   products: [],
   users: [],
+  abandonedCarts: [],
   stats: null,
   dashboardMetrics: null,
   isLoading: false,
@@ -329,6 +357,35 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       set({ users: payload.users ?? [], isLoading: false })
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false })
+    }
+  },
+
+  fetchAbandonedCarts: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const res = await apiFetch('/admin/abandoned-carts')
+      const data = await res.json()
+      if (!data.success) throw new Error(data.error || 'Failed to load abandoned carts')
+      const payload = getPayload(data)
+      set({ abandonedCarts: payload.leads ?? [], isLoading: false })
+    } catch (err) {
+      set({ error: (err as Error).message, isLoading: false })
+    }
+  },
+
+  markCartRecovered: async (id: string, recovered: boolean = true) => {
+    try {
+      await apiFetch(`/admin/abandoned-carts/${id}/recovered`, {
+        method: 'PATCH',
+        body: JSON.stringify({ recovered }),
+      })
+      set((state) => ({
+        abandonedCarts: state.abandonedCarts.map((c) =>
+          c.id === id ? { ...c, recovered, recoveredAt: recovered ? new Date().toISOString() : null } : c
+        ),
+      }))
+    } catch (err) {
+      console.error('Failed to mark cart recovered:', err)
     }
   },
 }))

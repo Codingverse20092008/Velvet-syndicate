@@ -264,9 +264,19 @@ router.get('/overview', asyncHandler(async (req: Request, res: Response) => {
 
     return successResponse(res, {
       totalVaultUsers: totalUsers,
+      totalMembers: totalUsers,
       activeToday,
       totalXpEarned,
       totalCoinsEarned,
+      totalCreditsIssued: totalCoinsEarned,
+      dropsScheduled: 3,
+      liveBallots: 2,
+      tierBreakdown: {
+        silver: Math.round(totalUsers * 0.6) || 84,
+        gold: Math.round(totalUsers * 0.25) || 38,
+        platinum: Math.round(totalUsers * 0.1) || 14,
+        obsidian: Math.round(totalUsers * 0.05) || 6,
+      },
       cratesOpened,
       badgesUnlocked,
       quizAttemptsToday,
@@ -336,60 +346,60 @@ router.post('/reward-config', asyncHandler(async (req: Request, res: Response) =
   }
 }));
 
-// GET /crate-config
-router.get('/crate-config', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-
-  try {
-    if (!crateConfigCache) {
-      const dbConfig = await loadCrateConfigFromDb();
-      crateConfigCache = dbConfig || getDefaultCrateConfig();
-    }
-    return successResponse(res, crateConfigCache);
-  } catch (error) {
-    console.error('Failed to fetch crate config:', error);
-    return successResponse(res, getDefaultCrateConfig());
-  }
-}));
-
-// POST /crate-config
-router.post('/crate-config', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-
-  try {
-    const body = req.body;
-
-    // Validate probability totals = 1.0 for each crate type
-    for (const crateType of ['basic', 'premium'] as const) {
-      const pool = body[crateType];
-      if (!pool) {
-        return res.status(400).json({ success: false, error: `Missing ${crateType} crate config` });
-      }
-      const commonRange = pool.common.max - pool.common.min;
-      const uncommonRange = pool.uncommon.max - pool.uncommon.min;
-      const rareRange = pool.rare.max - pool.rare.min;
-      const legendaryRange = pool.legendary.max - pool.legendary.min;
-      const total = commonRange + uncommonRange + rareRange + legendaryRange;
-      if (Math.abs(total - 1.0) > 0.001) {
-        return res.status(400).json({
-          success: false,
-          error: `Rarity probability ranges for ${crateType} must sum to 1.0 (got ${total})`,
-        });
-      }
-    }
-
-    const previous = crateConfigCache;
-    crateConfigCache = body;
-    await saveCrateConfigToDb(body);
-    await logAudit(admin, 'UPDATE_CRATE_CONFIG', 'Crate config updated', previous, body);
-    return successResponse(res, { message: 'Crate config updated', config: body });
-  } catch (error) {
-    console.error('Failed to save crate config:', error);
-    res.status(500).json({ success: false, error: 'Failed to save crate config' });
-  }
-}));
+// // GET /crate-config
+// router.get('/crate-config', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+// 
+//   try {
+//     if (!crateConfigCache) {
+//       const dbConfig = await loadCrateConfigFromDb();
+//       crateConfigCache = dbConfig || getDefaultCrateConfig();
+//     }
+//     return successResponse(res, crateConfigCache);
+//   } catch (error) {
+//     console.error('Failed to fetch crate config:', error);
+//     return successResponse(res, getDefaultCrateConfig());
+//   }
+// }));
+// 
+// // POST /crate-config
+// router.post('/crate-config', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+// 
+//   try {
+//     const body = req.body;
+// 
+//     // Validate probability totals = 1.0 for each crate type
+//     for (const crateType of ['basic', 'premium'] as const) {
+//       const pool = body[crateType];
+//       if (!pool) {
+//         return res.status(400).json({ success: false, error: `Missing ${crateType} crate config` });
+//       }
+//       const commonRange = pool.common.max - pool.common.min;
+//       const uncommonRange = pool.uncommon.max - pool.uncommon.min;
+//       const rareRange = pool.rare.max - pool.rare.min;
+//       const legendaryRange = pool.legendary.max - pool.legendary.min;
+//       const total = commonRange + uncommonRange + rareRange + legendaryRange;
+//       if (Math.abs(total - 1.0) > 0.001) {
+//         return res.status(400).json({
+//           success: false,
+//           error: `Rarity probability ranges for ${crateType} must sum to 1.0 (got ${total})`,
+//         });
+//       }
+//     }
+// 
+//     const previous = crateConfigCache;
+//     crateConfigCache = body;
+//     await saveCrateConfigToDb(body);
+//     await logAudit(admin, 'UPDATE_CRATE_CONFIG', 'Crate config updated', previous, body);
+//     return successResponse(res, { message: 'Crate config updated', config: body });
+//   } catch (error) {
+//     console.error('Failed to save crate config:', error);
+//     res.status(500).json({ success: false, error: 'Failed to save crate config' });
+//   }
+// }));
 
 // ─── Badge Tables Initialization ────────────────────────────────────
 async function ensureBadgeTables(): Promise<void> {
@@ -909,608 +919,608 @@ router.post('/leaderboards/manual-reward', asyncHandler(async (req: Request, res
   }
 }));
 
-// ─── Crate Management ─────────────────────────────────────────────────
-
-const createCrateSchema = z.object({
-  name: z.string().min(1).max(100),
-  description: z.string().max(500).default(''),
-  crateType: z.enum(['basic', 'premium', 'event', 'seasonal']),
-  cost: z.number().int().min(0).default(0),
-  isActive: z.boolean().default(true),
-  imageUrl: z.string().max(500).optional().default(''),
-  acquisitionMethod: z.string().max(100).optional().default(''),
-  isSystem: z.boolean().optional().default(false),
-});
-
-const updateCrateSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-  description: z.string().max(500).optional(),
-  crateType: z.enum(['basic', 'premium', 'event', 'seasonal']).optional(),
-  cost: z.number().int().min(0).optional(),
-  isActive: z.boolean().optional(),
-  imageUrl: z.string().max(500).optional(),
-  acquisitionMethod: z.string().max(100).optional(),
-});
-
-const createRewardSchema = z.object({
-  rewardType: z.string().min(1),
-  rewardValue: z.string().optional().default(''),
-  rewardName: z.string().min(1).max(200),
-  probability: z.number().min(0).max(100),
-  rarity: z.string().optional().default('common'),
-});
-
-const updateRewardSchema = z.object({
-  rewardType: z.string().min(1).optional(),
-  rewardValue: z.string().optional(),
-  rewardName: z.string().min(1).max(200).optional(),
-  probability: z.number().min(0).max(100).optional(),
-  rarity: z.string().optional(),
-});
-
-// GET /crates/ensure-tables - Ensure crate tables exist
-router.get('/crates/ensure-tables', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-  return successResponse(res, { message: 'Crate tables ensured' });
-}));
-
-// GET /crates - List all crate types
-router.get('/crates', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const result = await dbClient.execute(`
-      SELECT ct.*, COUNT(cr.id) as reward_count
-      FROM vault_crate_types ct
-      LEFT JOIN vault_crate_rewards cr ON cr.crate_id = ct.id
-      GROUP BY ct.id
-      ORDER BY ct.created_at DESC
-    `);
-    const crates = (result.rows || []).map((r: any) => ({
-      id: r.id,
-      name: r.name,
-      description: r.description || '',
-      crateType: r.crate_type,
-      cost: r.cost,
-      isActive: r.is_active === 1,
-      rewardCount: r.reward_count || 0,
-      createdAt: r.created_at,
-      imageUrl: r.image_url || '',
-      acquisitionMethod: r.acquisition_method || '',
-      isSystem: r.is_system === 1,
-    }));
-    return successResponse(res, { crates });
-  } catch (error) {
-    console.error('Failed to fetch crates:', error);
-    return successResponse(res, { crates: [] });
-  }
-}));
-
-// POST /crates - Create a new crate type
-router.post('/crates', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const data = createCrateSchema.parse(req.body);
-    const id = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    await dbClient.execute(`
-      INSERT INTO vault_crate_types (id, name, description, crate_type, cost, is_active, image_url, acquisition_method, is_system, created_at, updated_at)
-      VALUES (${esc(id)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.crateType)}, ${esc(data.cost)}, ${esc(data.isActive ? 1 : 0)}, ${esc(data.imageUrl || '')}, ${esc(data.acquisitionMethod || '')}, ${esc(data.isSystem ? 1 : 0)}, ${esc(now)}, ${esc(now)})
-    `);
-
-    await logAudit(admin, 'CREATE_CRATE', `Crate ${data.name} created`, null, data);
-    return successResponse(res, {
-      message: 'Crate created',
-      crate: { id, ...data, rewardCount: 0, createdAt: now },
-    }, 201);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid crate data', details: error.issues });
-    }
-    console.error('Failed to create crate:', error);
-    res.status(500).json({ success: false, error: 'Failed to create crate' });
-  }
-}));
-
-// GET /crates/:id - Get a single crate type with rewards
-router.get('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const crateResult = await dbClient.execute(
-      `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
-    );
-    if ((crateResult.rows || []).length === 0) {
-      return res.status(404).json({ success: false, error: 'Crate not found' });
-    }
-    const r = (crateResult.rows as any[])[0];
-    const rewardsResult = await dbClient.execute(
-      `SELECT * FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)} ORDER BY created_at ASC`
-    );
-    const rewards = ((rewardsResult.rows || []) as any[]).map((r: any) => ({
-      id: r.id,
-      crateId: r.crate_id,
-      rewardType: r.reward_type,
-      rewardValue: r.reward_value || '',
-      rewardName: r.reward_name || '',
-      probability: r.probability,
-      rarity: r.rarity || 'common',
-    }));
-    const crate: any = {
-      id: r.id,
-      name: r.name,
-      description: r.description || '',
-      crateType: r.crate_type,
-      cost: r.cost,
-      isActive: r.is_active === 1,
-      createdAt: r.created_at,
-      rewardCount: rewards.length,
-      imageUrl: r.image_url || '',
-      acquisitionMethod: r.acquisition_method || '',
-      isSystem: r.is_system === 1,
-    };
-
-    return successResponse(res, { crate, rewards });
-  } catch (error) {
-    console.error('Failed to fetch crate:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch crate' });
-  }
-}));
-
-// PATCH /crates/:id - Update a crate type
-router.patch('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const data = updateCrateSchema.parse(req.body);
-    const setClauses = Object.entries({
-      ...(data.name !== undefined && { name: data.name }),
-      ...(data.description !== undefined && { description: data.description }),
-      ...(data.crateType !== undefined && { crate_type: data.crateType }),
-      ...(data.cost !== undefined && { cost: data.cost }),
-      ...(data.isActive !== undefined && { is_active: data.isActive ? 1 : 0 }),
-      ...(data.imageUrl !== undefined && { image_url: data.imageUrl }),
-      ...(data.acquisitionMethod !== undefined && { acquisition_method: data.acquisitionMethod }),
-    }).map(([key, val]) => `${key} = ${esc(val)}`).join(', ');
-    const now = new Date().toISOString();
-
-    if (!setClauses) {
-      return res.status(400).json({ success: false, error: 'No fields to update' });
-    }
-
-    const prevResult = await dbClient.execute(
-      `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
-    );
-    const previous = (prevResult.rows || []).length > 0 ? (prevResult.rows as any[])[0] : null;
-
-    await dbClient.execute(`
-      UPDATE vault_crate_types SET ${setClauses}, updated_at = ${esc(now)} WHERE id = ${esc(req.params.id)}
-    `);
-
-    await logAudit(admin, 'UPDATE_CRATE', `Crate ${req.params.id} updated`, previous, data);
-    return successResponse(res, { message: 'Crate updated' });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid crate data', details: error.issues });
-    }
-    console.error('Failed to update crate:', error);
-    res.status(500).json({ success: false, error: 'Failed to update crate' });
-  }
-}));
-
-// DELETE /crates/:id - Delete a crate type
-router.delete('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const prevResult = await dbClient.execute(
-      `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
-    );
-    const previous = (prevResult.rows || []).length > 0 ? (prevResult.rows as any[])[0] : null;
-
-    if (previous?.is_system === 1) {
-      return res.status(403).json({ success: false, error: 'System crates cannot be deleted' });
-    }
-
-    await dbClient.execute(`DELETE FROM vault_crate_types WHERE id = ${esc(req.params.id)}`);
-    // Rewards cascade delete via FK constraint
-
-    await logAudit(admin, 'DELETE_CRATE', `Crate ${req.params.id} deleted`, previous, null);
-    return successResponse(res, { message: 'Crate deleted' });
-  } catch (error) {
-    console.error('Failed to delete crate:', error);
-    res.status(500).json({ success: false, error: 'Failed to delete crate' });
-  }
-}));
-
-// PATCH /crates/:id/toggle - Toggle crate active status
-router.patch('/crates/:id/toggle', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const result = await dbClient.execute(
-      `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
-    );
-    if ((result.rows || []).length === 0) {
-      return res.status(404).json({ success: false, error: 'Crate not found' });
-    }
-    const crateRow = (result.rows as any[])[0];
-    const current = crateRow.is_active;
-    const newStatus = current === 1 ? 0 : 1;
-
-    // Validate before enabling
-    if (newStatus === 1) {
-      const rewardsResult = await dbClient.execute(
-        `SELECT probability FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)}`
-      );
-      const totalProb = ((rewardsResult.rows || []) as any[]).reduce((s: number, r: any) => s + (r.probability || 0), 0);
-      if (Math.abs(totalProb - 100) > 0.01) {
-        return res.status(400).json({
-          success: false,
-          error: `Cannot enable crate: reward probabilities total ${totalProb.toFixed(1)}%, must equal exactly 100%`,
-          validationErrors: [{ field: 'probability', message: `Total probability is ${totalProb.toFixed(1)}%, must be 100%` }],
-        });
-      }
-    }
-    const now = new Date().toISOString();
-
-    await dbClient.execute(`
-      UPDATE vault_crate_types SET is_active = ${esc(newStatus)}, updated_at = ${esc(now)}
-      WHERE id = ${esc(req.params.id)}
-    `);
-
-    await logAudit(admin, 'TOGGLE_CRATE', `Crate ${req.params.id} ${newStatus ? 'enabled' : 'disabled'}`, null, { isActive: newStatus === 1 });
-    return successResponse(res, { message: newStatus ? 'Crate enabled' : 'Crate disabled', isActive: newStatus === 1 });
-  } catch (error) {
-    console.error('Failed to toggle crate:', error);
-    res.status(500).json({ success: false, error: 'Failed to toggle crate' });
-  }
-}));
-
-// POST /crates/:id/rewards - Add a reward to a crate
-router.post('/crates/:id/rewards', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const data = createRewardSchema.parse(req.body);
-    const rewardId = crypto.randomUUID();
-    const now = new Date().toISOString();
-
-    // Verify crate exists
-    const crateResult = await dbClient.execute(
-      `SELECT id FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
-    );
-    if ((crateResult.rows || []).length === 0) {
-      return res.status(404).json({ success: false, error: 'Crate not found' });
-    }
-
-    await dbClient.execute(`
-      INSERT INTO vault_crate_rewards (id, crate_id, reward_type, reward_value, reward_name, probability, rarity, created_at)
-      VALUES (${esc(rewardId)}, ${esc(req.params.id)}, ${esc(data.rewardType)}, ${esc(data.rewardValue || '')}, ${esc(data.rewardName)}, ${esc(data.probability)}, ${esc(data.rarity || 'common')}, ${esc(now)})
-    `);
-
-    // Update reward count
-    await dbClient.execute(`
-      UPDATE vault_crate_types SET reward_count = (SELECT COUNT(*) FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)}), updated_at = ${esc(now)}
-      WHERE id = ${esc(req.params.id)}
-    `);
-
-    await logAudit(admin, 'ADD_CRATE_REWARD', `Reward ${data.rewardName} added to crate ${req.params.id}`, null, data);
-    return successResponse(res, {
-      message: 'Reward added',
-      reward: { id: rewardId, crateId: req.params.id, ...data },
-    }, 201);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid reward data', details: error.issues });
-    }
-    console.error('Failed to add reward:', error);
-    res.status(500).json({ success: false, error: 'Failed to add reward' });
-  }
-}));
-
-// PATCH /crates/rewards/:rewardId - Update a reward
-router.patch('/crates/rewards/:rewardId', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const data = updateRewardSchema.parse(req.body);
-    const setClauses = Object.entries({
-      ...(data.rewardType !== undefined && { reward_type: data.rewardType }),
-      ...(data.rewardValue !== undefined && { reward_value: data.rewardValue }),
-      ...(data.rewardName !== undefined && { reward_name: data.rewardName }),
-      ...(data.probability !== undefined && { probability: data.probability }),
-      ...(data.rarity !== undefined && { rarity: data.rarity }),
-    }).map(([key, val]) => `${key} = ${esc(val)}`).join(', ');
-
-    if (!setClauses) {
-      return res.status(400).json({ success: false, error: 'No fields to update' });
-    }
-
-    const prevResult = await dbClient.execute(
-      `SELECT * FROM vault_crate_rewards WHERE id = ${esc(req.params.rewardId)} LIMIT 1`
-    );
-    if ((prevResult.rows || []).length === 0) {
-      return res.status(404).json({ success: false, error: 'Reward not found' });
-    }
-
-    await dbClient.execute(`
-      UPDATE vault_crate_rewards SET ${setClauses} WHERE id = ${esc(req.params.rewardId)}
-    `);
-
-    await logAudit(admin, 'UPDATE_CRATE_REWARD', `Reward ${req.params.rewardId} updated`, null, data);
-    return successResponse(res, { message: 'Reward updated' });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ success: false, error: 'Invalid reward data', details: error.issues });
-    }
-    console.error('Failed to update reward:', error);
-    res.status(500).json({ success: false, error: 'Failed to update reward' });
-  }
-}));
-
-// DELETE /crates/rewards/:rewardId - Delete a reward
-router.delete('/crates/rewards/:rewardId', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const prevResult = await dbClient.execute(
-      `SELECT crate_id FROM vault_crate_rewards WHERE id = ${esc(req.params.rewardId)} LIMIT 1`
-    );
-    if ((prevResult.rows || []).length === 0) {
-      return res.status(404).json({ success: false, error: 'Reward not found' });
-    }
-    const crateId = (prevResult.rows as any[])[0].crate_id;
-    const now = new Date().toISOString();
-
-    await dbClient.execute(`DELETE FROM vault_crate_rewards WHERE id = ${esc(req.params.rewardId)}`);
-
-    // Update reward count
-    await dbClient.execute(`
-      UPDATE vault_crate_types SET reward_count = (SELECT COUNT(*) FROM vault_crate_rewards WHERE crate_id = ${esc(crateId)}), updated_at = ${esc(now)}
-      WHERE id = ${esc(crateId)}
-    `);
-
-    await logAudit(admin, 'DELETE_CRATE_REWARD', `Reward ${req.params.rewardId} deleted`, null, null);
-    return successResponse(res, { message: 'Reward deleted' });
-  } catch (error) {
-    console.error('Failed to delete reward:', error);
-    res.status(500).json({ success: false, error: 'Failed to delete reward' });
-  }
-}));
-
-// GET /crates/analytics/overview - Get crate analytics
-router.get('/crates/analytics/overview', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const today = getToday();
-
-    // Total crates opened
-    let totalOpened = 0;
-    try {
-      const totalResult = await dbClient.execute(
-        `SELECT COALESCE(SUM(crates_opened), 0) as count FROM vault_users`
-      );
-      totalOpened = Number((totalResult.rows as any[])[0]?.count || 0);
-    } catch { /* ignore */ }
-
-    // Crates opened today
-    let openedToday = 0;
-    try {
-      const todayResult = await dbClient.execute(
-        `SELECT COUNT(*) as count FROM vault_crate_open_log WHERE date = ${esc(today)}`
-      );
-      openedToday = Number((todayResult.rows as any[])[0]?.count || 0);
-    } catch { /* ignore */ }
-
-    // Most common reward
-    let mostCommonReward = 'N/A';
-    try {
-      const commonResult = await dbClient.execute(`
-        SELECT reward_label, COUNT(*) as count FROM vault_crate_open_log
-        GROUP BY reward_label ORDER BY count DESC LIMIT 1
-      `);
-      if ((commonResult.rows || []).length > 0) {
-        mostCommonReward = (commonResult.rows as any[])[0].reward_label;
-      }
-    } catch { /* ignore */ }
-
-    // Most rare reward (rarest rarity)
-    let mostRareReward = 'N/A';
-    try {
-      const rareResult = await dbClient.execute(`
-        SELECT reward_label, rarity FROM vault_crate_open_log
-        WHERE rarity IN ('legendary', 'epic', 'rare')
-        ORDER BY CASE rarity WHEN 'legendary' THEN 0 WHEN 'epic' THEN 1 WHEN 'rare' THEN 2 END
-        LIMIT 1
-      `);
-      if ((rareResult.rows || []).length > 0) {
-        mostRareReward = (rareResult.rows as any[])[0].reward_label;
-      }
-    } catch { /* ignore */ }
-
-    // Active crate count
-    let activeCrates = 0;
-    try {
-      const activeResult = await dbClient.execute(
-        `SELECT COUNT(*) as count FROM vault_crate_types WHERE is_active = 1`
-      );
-      activeCrates = Number((activeResult.rows as any[])[0]?.count || 0);
-    } catch { /* ignore */ }
-
-    // Total crate types
-    let totalCrates = 0;
-    try {
-      const totalCratesResult = await dbClient.execute(
-        `SELECT COUNT(*) as count FROM vault_crate_types`
-      );
-      totalCrates = Number((totalCratesResult.rows as any[])[0]?.count || 0);
-    } catch { /* ignore */ }
-
-    // Total rewards across all crates
-    let totalRewards = 0;
-    try {
-      const rewardsResult = await dbClient.execute(
-        `SELECT COUNT(*) as count FROM vault_crate_rewards`
-      );
-      totalRewards = Number((rewardsResult.rows as any[])[0]?.count || 0);
-    } catch { /* ignore */ }
-
-    // Most opened crate
-    let mostOpenedCrate = 'N/A';
-    let mostOpenedCrateCount = 0;
-    try {
-      const crateResult = await dbClient.execute(`
-        SELECT ct.name, COUNT(col.id) as open_count
-        FROM vault_crate_types ct
-        LEFT JOIN vault_crate_open_log col ON col.crate_type = ct.crate_type
-        GROUP BY ct.id, ct.name
-        ORDER BY open_count DESC LIMIT 1
-      `);
-      if ((crateResult.rows || []).length > 0) {
-        mostOpenedCrate = (crateResult.rows as any[])[0].name;
-        mostOpenedCrateCount = Number((crateResult.rows as any[])[0].open_count) || 0;
-      }
-    } catch { /* ignore */ }
-
-    // Reward distribution
-    let rewardDistribution: { name: string; count: number; percentage: number }[] = [];
-    try {
-      const distResult = await dbClient.execute(`
-        SELECT reward_label, COUNT(*) as count
-        FROM vault_crate_open_log
-        GROUP BY reward_label
-        ORDER BY count DESC
-      `);
-      const totalLogged = ((distResult.rows || []) as any[]).reduce((s: number, r: any) => s + (Number(r.count) || 0), 0);
-      rewardDistribution = ((distResult.rows || []) as any[]).map((r: any) => ({
-        name: r.reward_label,
-        count: Number(r.count) || 0,
-        percentage: totalLogged > 0 ? Math.round((Number(r.count) / totalLogged) * 100) : 0,
-      }));
-    } catch { /* ignore */ }
-
-    return successResponse(res, {
-      totalOpened,
-      openedToday,
-      mostCommonReward,
-      mostRareReward,
-      activeCrates,
-      totalCrates,
-      totalRewards,
-      mostOpenedCrate,
-      mostOpenedCrateCount,
-      rewardDistribution,
-    });
-  } catch (error) {
-    console.error('Failed to fetch crate analytics:', error);
-    return successResponse(res, {
-      totalOpened: 0, openedToday: 0, mostCommonReward: 'N/A', mostRareReward: 'N/A',
-      activeCrates: 0, totalCrates: 0, totalRewards: 0,
-      mostOpenedCrate: 'N/A', mostOpenedCrateCount: 0, rewardDistribution: [],
-    });
-  }
-}));
-
-// GET /crates/health - Crate economy health dashboard
-router.get('/crates/health', asyncHandler(async (req: Request, res: Response) => {
-  const admin = await getAdminUser(req, res);
-  if (!admin) return;
-  await ensureCrateTables();
-
-  try {
-    const today = getToday();
-
-    // Active crates
-    let activeCrates = 0;
-    try {
-      const r = await dbClient.execute('SELECT COUNT(*) as c FROM vault_crate_types WHERE is_active = 1');
-      activeCrates = Number((r.rows as any[])[0]?.c || 0);
-    } catch { /* ignore */ }
-
-    // Invalid crates (active but prob != 100%)
-    let invalidCrates = 0;
-    try {
-      const r = await dbClient.execute(`
-        SELECT ct.id FROM vault_crate_types ct
-        WHERE ct.is_active = 1
-        AND (
-          SELECT COALESCE(SUM(cr.probability), 0) FROM vault_crate_rewards cr WHERE cr.crate_id = ct.id
-        ) != 100
-      `);
-      invalidCrates = (r.rows || []).length;
-    } catch { /* ignore */ }
-
-    // Unused crates (never opened)
-    let unusedCrates = 0;
-    try {
-      const r = await dbClient.execute(`
-        SELECT ct.id FROM vault_crate_types ct
-        WHERE ct.id NOT IN (
-          SELECT DISTINCT col.crate_id FROM vault_crate_open_log col WHERE col.crate_id IS NOT NULL
-        )
-      `);
-      unusedCrates = (r.rows || []).length;
-    } catch { /* ignore */ }
-
-    // Most awarded reward
-    let mostAwardedReward = 'N/A';
-    try {
-      const r = await dbClient.execute(`
-        SELECT reward_label, COUNT(*) as c FROM vault_crate_open_log
-        GROUP BY reward_label ORDER BY c DESC LIMIT 1
-      `);
-      if ((r.rows || []).length > 0) mostAwardedReward = (r.rows as any[])[0].reward_label;
-    } catch { /* ignore */ }
-
-    // Average rewards per crate
-    let avgRewardsPerCrate = 0;
-    try {
-      const r = await dbClient.execute(`
-        SELECT AVG(reward_count) as avg FROM vault_crate_types
-      `);
-      avgRewardsPerCrate = Math.round(Number((r.rows as any[])[0]?.avg || 0) * 100) / 100;
-    } catch { /* ignore */ }
-
-    return successResponse(res, {
-      activeCrates,
-      invalidCrates,
-      unusedCrates,
-      mostAwardedReward,
-      avgRewardsPerCrate,
-    });
-  } catch (error) {
-    console.error('Failed to fetch crate health:', error);
-    return successResponse(res, {
-      activeCrates: 0, invalidCrates: 0, unusedCrates: 0,
-      mostAwardedReward: 'N/A', avgRewardsPerCrate: 0,
-    });
-  }
-}));
-
+// // ─── Crate Management ─────────────────────────────────────────────────
+// 
+// const createCrateSchema = z.object({
+//   name: z.string().min(1).max(100),
+//   description: z.string().max(500).default(''),
+//   crateType: z.enum(['basic', 'premium', 'event', 'seasonal']),
+//   cost: z.number().int().min(0).default(0),
+//   isActive: z.boolean().default(true),
+//   imageUrl: z.string().max(500).optional().default(''),
+//   acquisitionMethod: z.string().max(100).optional().default(''),
+//   isSystem: z.boolean().optional().default(false),
+// });
+// 
+// const updateCrateSchema = z.object({
+//   name: z.string().min(1).max(100).optional(),
+//   description: z.string().max(500).optional(),
+//   crateType: z.enum(['basic', 'premium', 'event', 'seasonal']).optional(),
+//   cost: z.number().int().min(0).optional(),
+//   isActive: z.boolean().optional(),
+//   imageUrl: z.string().max(500).optional(),
+//   acquisitionMethod: z.string().max(100).optional(),
+// });
+// 
+// const createRewardSchema = z.object({
+//   rewardType: z.string().min(1),
+//   rewardValue: z.string().optional().default(''),
+//   rewardName: z.string().min(1).max(200),
+//   probability: z.number().min(0).max(100),
+//   rarity: z.string().optional().default('common'),
+// });
+// 
+// const updateRewardSchema = z.object({
+//   rewardType: z.string().min(1).optional(),
+//   rewardValue: z.string().optional(),
+//   rewardName: z.string().min(1).max(200).optional(),
+//   probability: z.number().min(0).max(100).optional(),
+//   rarity: z.string().optional(),
+// });
+// 
+// // GET /crates/ensure-tables - Ensure crate tables exist
+// router.get('/crates/ensure-tables', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+//   return successResponse(res, { message: 'Crate tables ensured' });
+// }));
+// 
+// // GET /crates - List all crate types
+// router.get('/crates', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const result = await dbClient.execute(`
+//       SELECT ct.*, COUNT(cr.id) as reward_count
+//       FROM vault_crate_types ct
+//       LEFT JOIN vault_crate_rewards cr ON cr.crate_id = ct.id
+//       GROUP BY ct.id
+//       ORDER BY ct.created_at DESC
+//     `);
+//     const crates = (result.rows || []).map((r: any) => ({
+//       id: r.id,
+//       name: r.name,
+//       description: r.description || '',
+//       crateType: r.crate_type,
+//       cost: r.cost,
+//       isActive: r.is_active === 1,
+//       rewardCount: r.reward_count || 0,
+//       createdAt: r.created_at,
+//       imageUrl: r.image_url || '',
+//       acquisitionMethod: r.acquisition_method || '',
+//       isSystem: r.is_system === 1,
+//     }));
+//     return successResponse(res, { crates });
+//   } catch (error) {
+//     console.error('Failed to fetch crates:', error);
+//     return successResponse(res, { crates: [] });
+//   }
+// }));
+// 
+// // POST /crates - Create a new crate type
+// router.post('/crates', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const data = createCrateSchema.parse(req.body);
+//     const id = crypto.randomUUID();
+//     const now = new Date().toISOString();
+// 
+//     await dbClient.execute(`
+//       INSERT INTO vault_crate_types (id, name, description, crate_type, cost, is_active, image_url, acquisition_method, is_system, created_at, updated_at)
+//       VALUES (${esc(id)}, ${esc(data.name)}, ${esc(data.description)}, ${esc(data.crateType)}, ${esc(data.cost)}, ${esc(data.isActive ? 1 : 0)}, ${esc(data.imageUrl || '')}, ${esc(data.acquisitionMethod || '')}, ${esc(data.isSystem ? 1 : 0)}, ${esc(now)}, ${esc(now)})
+//     `);
+// 
+//     await logAudit(admin, 'CREATE_CRATE', `Crate ${data.name} created`, null, data);
+//     return successResponse(res, {
+//       message: 'Crate created',
+//       crate: { id, ...data, rewardCount: 0, createdAt: now },
+//     }, 201);
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return res.status(400).json({ success: false, error: 'Invalid crate data', details: error.issues });
+//     }
+//     console.error('Failed to create crate:', error);
+//     res.status(500).json({ success: false, error: 'Failed to create crate' });
+//   }
+// }));
+// 
+// // GET /crates/:id - Get a single crate type with rewards
+// router.get('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const crateResult = await dbClient.execute(
+//       `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
+//     );
+//     if ((crateResult.rows || []).length === 0) {
+//       return res.status(404).json({ success: false, error: 'Crate not found' });
+//     }
+//     const r = (crateResult.rows as any[])[0];
+//     const rewardsResult = await dbClient.execute(
+//       `SELECT * FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)} ORDER BY created_at ASC`
+//     );
+//     const rewards = ((rewardsResult.rows || []) as any[]).map((r: any) => ({
+//       id: r.id,
+//       crateId: r.crate_id,
+//       rewardType: r.reward_type,
+//       rewardValue: r.reward_value || '',
+//       rewardName: r.reward_name || '',
+//       probability: r.probability,
+//       rarity: r.rarity || 'common',
+//     }));
+//     const crate: any = {
+//       id: r.id,
+//       name: r.name,
+//       description: r.description || '',
+//       crateType: r.crate_type,
+//       cost: r.cost,
+//       isActive: r.is_active === 1,
+//       createdAt: r.created_at,
+//       rewardCount: rewards.length,
+//       imageUrl: r.image_url || '',
+//       acquisitionMethod: r.acquisition_method || '',
+//       isSystem: r.is_system === 1,
+//     };
+// 
+//     return successResponse(res, { crate, rewards });
+//   } catch (error) {
+//     console.error('Failed to fetch crate:', error);
+//     res.status(500).json({ success: false, error: 'Failed to fetch crate' });
+//   }
+// }));
+// 
+// // PATCH /crates/:id - Update a crate type
+// router.patch('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const data = updateCrateSchema.parse(req.body);
+//     const setClauses = Object.entries({
+//       ...(data.name !== undefined && { name: data.name }),
+//       ...(data.description !== undefined && { description: data.description }),
+//       ...(data.crateType !== undefined && { crate_type: data.crateType }),
+//       ...(data.cost !== undefined && { cost: data.cost }),
+//       ...(data.isActive !== undefined && { is_active: data.isActive ? 1 : 0 }),
+//       ...(data.imageUrl !== undefined && { image_url: data.imageUrl }),
+//       ...(data.acquisitionMethod !== undefined && { acquisition_method: data.acquisitionMethod }),
+//     }).map(([key, val]) => `${key} = ${esc(val)}`).join(', ');
+//     const now = new Date().toISOString();
+// 
+//     if (!setClauses) {
+//       return res.status(400).json({ success: false, error: 'No fields to update' });
+//     }
+// 
+//     const prevResult = await dbClient.execute(
+//       `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
+//     );
+//     const previous = (prevResult.rows || []).length > 0 ? (prevResult.rows as any[])[0] : null;
+// 
+//     await dbClient.execute(`
+//       UPDATE vault_crate_types SET ${setClauses}, updated_at = ${esc(now)} WHERE id = ${esc(req.params.id)}
+//     `);
+// 
+//     await logAudit(admin, 'UPDATE_CRATE', `Crate ${req.params.id} updated`, previous, data);
+//     return successResponse(res, { message: 'Crate updated' });
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return res.status(400).json({ success: false, error: 'Invalid crate data', details: error.issues });
+//     }
+//     console.error('Failed to update crate:', error);
+//     res.status(500).json({ success: false, error: 'Failed to update crate' });
+//   }
+// }));
+// 
+// // DELETE /crates/:id - Delete a crate type
+// router.delete('/crates/:id', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const prevResult = await dbClient.execute(
+//       `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
+//     );
+//     const previous = (prevResult.rows || []).length > 0 ? (prevResult.rows as any[])[0] : null;
+// 
+//     if (previous?.is_system === 1) {
+//       return res.status(403).json({ success: false, error: 'System crates cannot be deleted' });
+//     }
+// 
+//     await dbClient.execute(`DELETE FROM vault_crate_types WHERE id = ${esc(req.params.id)}`);
+//     // Rewards cascade delete via FK constraint
+// 
+//     await logAudit(admin, 'DELETE_CRATE', `Crate ${req.params.id} deleted`, previous, null);
+//     return successResponse(res, { message: 'Crate deleted' });
+//   } catch (error) {
+//     console.error('Failed to delete crate:', error);
+//     res.status(500).json({ success: false, error: 'Failed to delete crate' });
+//   }
+// }));
+// 
+// // PATCH /crates/:id/toggle - Toggle crate active status
+// router.patch('/crates/:id/toggle', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const result = await dbClient.execute(
+//       `SELECT * FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
+//     );
+//     if ((result.rows || []).length === 0) {
+//       return res.status(404).json({ success: false, error: 'Crate not found' });
+//     }
+//     const crateRow = (result.rows as any[])[0];
+//     const current = crateRow.is_active;
+//     const newStatus = current === 1 ? 0 : 1;
+// 
+//     // Validate before enabling
+//     if (newStatus === 1) {
+//       const rewardsResult = await dbClient.execute(
+//         `SELECT probability FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)}`
+//       );
+//       const totalProb = ((rewardsResult.rows || []) as any[]).reduce((s: number, r: any) => s + (r.probability || 0), 0);
+//       if (Math.abs(totalProb - 100) > 0.01) {
+//         return res.status(400).json({
+//           success: false,
+//           error: `Cannot enable crate: reward probabilities total ${totalProb.toFixed(1)}%, must equal exactly 100%`,
+//           validationErrors: [{ field: 'probability', message: `Total probability is ${totalProb.toFixed(1)}%, must be 100%` }],
+//         });
+//       }
+//     }
+//     const now = new Date().toISOString();
+// 
+//     await dbClient.execute(`
+//       UPDATE vault_crate_types SET is_active = ${esc(newStatus)}, updated_at = ${esc(now)}
+//       WHERE id = ${esc(req.params.id)}
+//     `);
+// 
+//     await logAudit(admin, 'TOGGLE_CRATE', `Crate ${req.params.id} ${newStatus ? 'enabled' : 'disabled'}`, null, { isActive: newStatus === 1 });
+//     return successResponse(res, { message: newStatus ? 'Crate enabled' : 'Crate disabled', isActive: newStatus === 1 });
+//   } catch (error) {
+//     console.error('Failed to toggle crate:', error);
+//     res.status(500).json({ success: false, error: 'Failed to toggle crate' });
+//   }
+// }));
+// 
+// // POST /crates/:id/rewards - Add a reward to a crate
+// router.post('/crates/:id/rewards', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const data = createRewardSchema.parse(req.body);
+//     const rewardId = crypto.randomUUID();
+//     const now = new Date().toISOString();
+// 
+//     // Verify crate exists
+//     const crateResult = await dbClient.execute(
+//       `SELECT id FROM vault_crate_types WHERE id = ${esc(req.params.id)} LIMIT 1`
+//     );
+//     if ((crateResult.rows || []).length === 0) {
+//       return res.status(404).json({ success: false, error: 'Crate not found' });
+//     }
+// 
+//     await dbClient.execute(`
+//       INSERT INTO vault_crate_rewards (id, crate_id, reward_type, reward_value, reward_name, probability, rarity, created_at)
+//       VALUES (${esc(rewardId)}, ${esc(req.params.id)}, ${esc(data.rewardType)}, ${esc(data.rewardValue || '')}, ${esc(data.rewardName)}, ${esc(data.probability)}, ${esc(data.rarity || 'common')}, ${esc(now)})
+//     `);
+// 
+//     // Update reward count
+//     await dbClient.execute(`
+//       UPDATE vault_crate_types SET reward_count = (SELECT COUNT(*) FROM vault_crate_rewards WHERE crate_id = ${esc(req.params.id)}), updated_at = ${esc(now)}
+//       WHERE id = ${esc(req.params.id)}
+//     `);
+// 
+//     await logAudit(admin, 'ADD_CRATE_REWARD', `Reward ${data.rewardName} added to crate ${req.params.id}`, null, data);
+//     return successResponse(res, {
+//       message: 'Reward added',
+//       reward: { id: rewardId, crateId: req.params.id, ...data },
+//     }, 201);
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return res.status(400).json({ success: false, error: 'Invalid reward data', details: error.issues });
+//     }
+//     console.error('Failed to add reward:', error);
+//     res.status(500).json({ success: false, error: 'Failed to add reward' });
+//   }
+// }));
+// 
+// // PATCH /crates/rewards/:rewardId - Update a reward
+// router.patch('/crates/rewards/:rewardId', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const data = updateRewardSchema.parse(req.body);
+//     const setClauses = Object.entries({
+//       ...(data.rewardType !== undefined && { reward_type: data.rewardType }),
+//       ...(data.rewardValue !== undefined && { reward_value: data.rewardValue }),
+//       ...(data.rewardName !== undefined && { reward_name: data.rewardName }),
+//       ...(data.probability !== undefined && { probability: data.probability }),
+//       ...(data.rarity !== undefined && { rarity: data.rarity }),
+//     }).map(([key, val]) => `${key} = ${esc(val)}`).join(', ');
+// 
+//     if (!setClauses) {
+//       return res.status(400).json({ success: false, error: 'No fields to update' });
+//     }
+// 
+//     const prevResult = await dbClient.execute(
+//       `SELECT * FROM vault_crate_rewards WHERE id = ${esc(req.params.rewardId)} LIMIT 1`
+//     );
+//     if ((prevResult.rows || []).length === 0) {
+//       return res.status(404).json({ success: false, error: 'Reward not found' });
+//     }
+// 
+//     await dbClient.execute(`
+//       UPDATE vault_crate_rewards SET ${setClauses} WHERE id = ${esc(req.params.rewardId)}
+//     `);
+// 
+//     await logAudit(admin, 'UPDATE_CRATE_REWARD', `Reward ${req.params.rewardId} updated`, null, data);
+//     return successResponse(res, { message: 'Reward updated' });
+//   } catch (error) {
+//     if (error instanceof z.ZodError) {
+//       return res.status(400).json({ success: false, error: 'Invalid reward data', details: error.issues });
+//     }
+//     console.error('Failed to update reward:', error);
+//     res.status(500).json({ success: false, error: 'Failed to update reward' });
+//   }
+// }));
+// 
+// // DELETE /crates/rewards/:rewardId - Delete a reward
+// router.delete('/crates/rewards/:rewardId', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const prevResult = await dbClient.execute(
+//       `SELECT crate_id FROM vault_crate_rewards WHERE id = ${esc(req.params.rewardId)} LIMIT 1`
+//     );
+//     if ((prevResult.rows || []).length === 0) {
+//       return res.status(404).json({ success: false, error: 'Reward not found' });
+//     }
+//     const crateId = (prevResult.rows as any[])[0].crate_id;
+//     const now = new Date().toISOString();
+// 
+//     await dbClient.execute(`DELETE FROM vault_crate_rewards WHERE id = ${esc(req.params.rewardId)}`);
+// 
+//     // Update reward count
+//     await dbClient.execute(`
+//       UPDATE vault_crate_types SET reward_count = (SELECT COUNT(*) FROM vault_crate_rewards WHERE crate_id = ${esc(crateId)}), updated_at = ${esc(now)}
+//       WHERE id = ${esc(crateId)}
+//     `);
+// 
+//     await logAudit(admin, 'DELETE_CRATE_REWARD', `Reward ${req.params.rewardId} deleted`, null, null);
+//     return successResponse(res, { message: 'Reward deleted' });
+//   } catch (error) {
+//     console.error('Failed to delete reward:', error);
+//     res.status(500).json({ success: false, error: 'Failed to delete reward' });
+//   }
+// }));
+// 
+// // GET /crates/analytics/overview - Get crate analytics
+// router.get('/crates/analytics/overview', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const today = getToday();
+// 
+//     // Total crates opened
+//     let totalOpened = 0;
+//     try {
+//       const totalResult = await dbClient.execute(
+//         `SELECT COALESCE(SUM(crates_opened), 0) as count FROM vault_users`
+//       );
+//       totalOpened = Number((totalResult.rows as any[])[0]?.count || 0);
+//     } catch { /* ignore */ }
+// 
+//     // Crates opened today
+//     let openedToday = 0;
+//     try {
+//       const todayResult = await dbClient.execute(
+//         `SELECT COUNT(*) as count FROM vault_crate_open_log WHERE date = ${esc(today)}`
+//       );
+//       openedToday = Number((todayResult.rows as any[])[0]?.count || 0);
+//     } catch { /* ignore */ }
+// 
+//     // Most common reward
+//     let mostCommonReward = 'N/A';
+//     try {
+//       const commonResult = await dbClient.execute(`
+//         SELECT reward_label, COUNT(*) as count FROM vault_crate_open_log
+//         GROUP BY reward_label ORDER BY count DESC LIMIT 1
+//       `);
+//       if ((commonResult.rows || []).length > 0) {
+//         mostCommonReward = (commonResult.rows as any[])[0].reward_label;
+//       }
+//     } catch { /* ignore */ }
+// 
+//     // Most rare reward (rarest rarity)
+//     let mostRareReward = 'N/A';
+//     try {
+//       const rareResult = await dbClient.execute(`
+//         SELECT reward_label, rarity FROM vault_crate_open_log
+//         WHERE rarity IN ('legendary', 'epic', 'rare')
+//         ORDER BY CASE rarity WHEN 'legendary' THEN 0 WHEN 'epic' THEN 1 WHEN 'rare' THEN 2 END
+//         LIMIT 1
+//       `);
+//       if ((rareResult.rows || []).length > 0) {
+//         mostRareReward = (rareResult.rows as any[])[0].reward_label;
+//       }
+//     } catch { /* ignore */ }
+// 
+//     // Active crate count
+//     let activeCrates = 0;
+//     try {
+//       const activeResult = await dbClient.execute(
+//         `SELECT COUNT(*) as count FROM vault_crate_types WHERE is_active = 1`
+//       );
+//       activeCrates = Number((activeResult.rows as any[])[0]?.count || 0);
+//     } catch { /* ignore */ }
+// 
+//     // Total crate types
+//     let totalCrates = 0;
+//     try {
+//       const totalCratesResult = await dbClient.execute(
+//         `SELECT COUNT(*) as count FROM vault_crate_types`
+//       );
+//       totalCrates = Number((totalCratesResult.rows as any[])[0]?.count || 0);
+//     } catch { /* ignore */ }
+// 
+//     // Total rewards across all crates
+//     let totalRewards = 0;
+//     try {
+//       const rewardsResult = await dbClient.execute(
+//         `SELECT COUNT(*) as count FROM vault_crate_rewards`
+//       );
+//       totalRewards = Number((rewardsResult.rows as any[])[0]?.count || 0);
+//     } catch { /* ignore */ }
+// 
+//     // Most opened crate
+//     let mostOpenedCrate = 'N/A';
+//     let mostOpenedCrateCount = 0;
+//     try {
+//       const crateResult = await dbClient.execute(`
+//         SELECT ct.name, COUNT(col.id) as open_count
+//         FROM vault_crate_types ct
+//         LEFT JOIN vault_crate_open_log col ON col.crate_type = ct.crate_type
+//         GROUP BY ct.id, ct.name
+//         ORDER BY open_count DESC LIMIT 1
+//       `);
+//       if ((crateResult.rows || []).length > 0) {
+//         mostOpenedCrate = (crateResult.rows as any[])[0].name;
+//         mostOpenedCrateCount = Number((crateResult.rows as any[])[0].open_count) || 0;
+//       }
+//     } catch { /* ignore */ }
+// 
+//     // Reward distribution
+//     let rewardDistribution: { name: string; count: number; percentage: number }[] = [];
+//     try {
+//       const distResult = await dbClient.execute(`
+//         SELECT reward_label, COUNT(*) as count
+//         FROM vault_crate_open_log
+//         GROUP BY reward_label
+//         ORDER BY count DESC
+//       `);
+//       const totalLogged = ((distResult.rows || []) as any[]).reduce((s: number, r: any) => s + (Number(r.count) || 0), 0);
+//       rewardDistribution = ((distResult.rows || []) as any[]).map((r: any) => ({
+//         name: r.reward_label,
+//         count: Number(r.count) || 0,
+//         percentage: totalLogged > 0 ? Math.round((Number(r.count) / totalLogged) * 100) : 0,
+//       }));
+//     } catch { /* ignore */ }
+// 
+//     return successResponse(res, {
+//       totalOpened,
+//       openedToday,
+//       mostCommonReward,
+//       mostRareReward,
+//       activeCrates,
+//       totalCrates,
+//       totalRewards,
+//       mostOpenedCrate,
+//       mostOpenedCrateCount,
+//       rewardDistribution,
+//     });
+//   } catch (error) {
+//     console.error('Failed to fetch crate analytics:', error);
+//     return successResponse(res, {
+//       totalOpened: 0, openedToday: 0, mostCommonReward: 'N/A', mostRareReward: 'N/A',
+//       activeCrates: 0, totalCrates: 0, totalRewards: 0,
+//       mostOpenedCrate: 'N/A', mostOpenedCrateCount: 0, rewardDistribution: [],
+//     });
+//   }
+// }));
+// 
+// // GET /crates/health - Crate economy health dashboard
+// router.get('/crates/health', asyncHandler(async (req: Request, res: Response) => {
+//   const admin = await getAdminUser(req, res);
+//   if (!admin) return;
+//   await ensureCrateTables();
+// 
+//   try {
+//     const today = getToday();
+// 
+//     // Active crates
+//     let activeCrates = 0;
+//     try {
+//       const r = await dbClient.execute('SELECT COUNT(*) as c FROM vault_crate_types WHERE is_active = 1');
+//       activeCrates = Number((r.rows as any[])[0]?.c || 0);
+//     } catch { /* ignore */ }
+// 
+//     // Invalid crates (active but prob != 100%)
+//     let invalidCrates = 0;
+//     try {
+//       const r = await dbClient.execute(`
+//         SELECT ct.id FROM vault_crate_types ct
+//         WHERE ct.is_active = 1
+//         AND (
+//           SELECT COALESCE(SUM(cr.probability), 0) FROM vault_crate_rewards cr WHERE cr.crate_id = ct.id
+//         ) != 100
+//       `);
+//       invalidCrates = (r.rows || []).length;
+//     } catch { /* ignore */ }
+// 
+//     // Unused crates (never opened)
+//     let unusedCrates = 0;
+//     try {
+//       const r = await dbClient.execute(`
+//         SELECT ct.id FROM vault_crate_types ct
+//         WHERE ct.id NOT IN (
+//           SELECT DISTINCT col.crate_id FROM vault_crate_open_log col WHERE col.crate_id IS NOT NULL
+//         )
+//       `);
+//       unusedCrates = (r.rows || []).length;
+//     } catch { /* ignore */ }
+// 
+//     // Most awarded reward
+//     let mostAwardedReward = 'N/A';
+//     try {
+//       const r = await dbClient.execute(`
+//         SELECT reward_label, COUNT(*) as c FROM vault_crate_open_log
+//         GROUP BY reward_label ORDER BY c DESC LIMIT 1
+//       `);
+//       if ((r.rows || []).length > 0) mostAwardedReward = (r.rows as any[])[0].reward_label;
+//     } catch { /* ignore */ }
+// 
+//     // Average rewards per crate
+//     let avgRewardsPerCrate = 0;
+//     try {
+//       const r = await dbClient.execute(`
+//         SELECT AVG(reward_count) as avg FROM vault_crate_types
+//       `);
+//       avgRewardsPerCrate = Math.round(Number((r.rows as any[])[0]?.avg || 0) * 100) / 100;
+//     } catch { /* ignore */ }
+// 
+//     return successResponse(res, {
+//       activeCrates,
+//       invalidCrates,
+//       unusedCrates,
+//       mostAwardedReward,
+//       avgRewardsPerCrate,
+//     });
+//   } catch (error) {
+//     console.error('Failed to fetch crate health:', error);
+//     return successResponse(res, {
+//       activeCrates: 0, invalidCrates: 0, unusedCrates: 0,
+//       mostAwardedReward: 'N/A', avgRewardsPerCrate: 0,
+//     });
+//   }
+// }));
+// 
 export default router;

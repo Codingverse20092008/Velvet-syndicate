@@ -39,6 +39,10 @@ const mapProduct = (p: any) => {
       isOnSale,
       summerSale: Boolean(p.isSummerSale || p.is_summer_sale),
       salePercentage,
+      isNew: Boolean(p.isNew ?? p.is_new ?? false),
+      isExclusive: Boolean(p.isExclusive ?? p.is_exclusive ?? false),
+      hasXPBonus: Boolean(p.hasXPBonus ?? p.has_xp_bonus ?? false),
+      isVisible: Boolean(p.isVisible ?? p.is_visible ?? true),
       variants: (p.variants || []).map((v: any) => ({
         id: v.id,
         name: v.name ?? '',

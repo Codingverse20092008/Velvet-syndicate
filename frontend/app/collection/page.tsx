@@ -21,6 +21,9 @@ interface Product {
   salePercentage?: number
   salePrice?: number | null
   summerSale?: boolean
+  isNew?: boolean
+  isExclusive?: boolean
+  hasXPBonus?: boolean
   variants: {
     id: string
     color: string
@@ -43,8 +46,11 @@ export default function CollectionPage() {
         const response = await apiFetch('/products')
         const data = await response.json()
         
-        if (data.success) {
-          setProducts(data.data.products || [])
+        if (data.success && data.data) {
+          const rawProducts = data.data.products || (Array.isArray(data.data) ? data.data : [])
+          setProducts(rawProducts)
+        } else if (data.products && Array.isArray(data.products)) {
+          setProducts(data.products)
         }
       } catch (error) {
         console.error('Failed to fetch products:', error)
@@ -230,10 +236,17 @@ export default function CollectionPage() {
 
         {/* Products Grid */}
         {isLoading ? (
-          <div className="text-center py-20">
-            <div className="w-12 h-[1px] bg-white/10 relative overflow-hidden mx-auto">
-              <div className="absolute inset-0 bg-velvet-white animate-loading-bar" />
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-velvet-dark border border-white/10 rounded-2xl overflow-hidden animate-pulse">
+                <div className="aspect-square bg-neutral-900" />
+                <div className="p-4 md:p-8 space-y-3">
+                  <div className="h-3 bg-neutral-800 rounded w-1/3" />
+                  <div className="h-4 bg-neutral-800 rounded w-3/4" />
+                  <div className="h-4 bg-neutral-800 rounded w-1/4 mt-4" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : filteredProducts.length === 0 ? (
           <div className="text-center py-32 border border-white/5 rounded-3xl bg-white/2 overflow-hidden">
@@ -258,31 +271,36 @@ export default function CollectionPage() {
                   href={`/product/${product.slug}`}
                   className="bg-velvet-dark border border-white/10 rounded-2xl overflow-hidden group flex flex-col h-full hover:border-white/20 transition-all duration-500"
                 >
-                  <div className="relative aspect-square bg-velvet-black overflow-hidden">
-                    {isExternalImage(productImage) ? (
-                      <img
-                        src={productImage}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = '/images/placeholder-product.png'
-                        }}
-                      />
-                    ) : (
-                      <Image
-                        src={productImage}
-                        alt={product.name}
-                        fill
-                        className="object-cover group-hover:scale-110 transition-transform duration-700"
-                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
-                        unoptimized={isExternalImage(productImage)}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = '/images/placeholder-product.png'
-                        }}
-                      />
-                    )}
+                  <div className="relative aspect-square bg-neutral-900 overflow-hidden">
+                    <Image
+                      src={productImage}
+                      alt={product.name}
+                      fill
+                      className="object-cover group-hover:scale-110 transition-transform duration-700"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = '/images/placeholder-product.png'
+                      }}
+                    />
+                    {/* Badges Overlay */}
+                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5 pointer-events-none">
+                      {product.isNew && (
+                        <span className="px-2 py-0.5 text-[8px] md:text-[9px] uppercase tracking-wider font-semibold rounded bg-emerald-500/90 text-white backdrop-blur-sm shadow-sm">
+                          NEW DROP
+                        </span>
+                      )}
+                      {product.isExclusive && (
+                        <span className="px-2 py-0.5 text-[8px] md:text-[9px] uppercase tracking-wider font-semibold rounded bg-purple-600/90 text-white backdrop-blur-sm shadow-sm">
+                          EXCLUSIVE
+                        </span>
+                      )}
+                      {product.hasXPBonus && (
+                        <span className="px-2 py-0.5 text-[8px] md:text-[9px] uppercase tracking-wider font-semibold rounded bg-[#C9A961]/90 text-black backdrop-blur-sm shadow-sm">
+                          XP BONUS
+                        </span>
+                      )}
+                    </div>
                     {/* Hover Overlay */}
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                       <span className="text-[10px] uppercase tracking-[0.3em] text-white px-4 py-2 border border-white/20 backdrop-blur-md rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">

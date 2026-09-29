@@ -1,11 +1,14 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
 import { Button } from './Button'
 import { formatPrice } from '@/lib/utils'
-import { X } from 'lucide-react'
+import { getFullImageUrl } from '@/lib/api'
+import Image from 'next/image'
+import { X, Flame } from 'lucide-react'
 
 import { useRouter } from 'next/navigation'
 
@@ -15,6 +18,52 @@ export function CartDrawer() {
   const totalItems = hasHydrated ? items.reduce((sum, item) => sum + item.quantity, 0) : 0
   const totalPrice = hasHydrated ? items.reduce((sum, item) => sum + item.price * item.quantity, 0) : 0
   const { isAuthenticated, isLoading: authLoading } = useAuthStore()
+
+  // Stock Reservation Timer
+  const [timeLeft, setTimeLeft] = useState<string>('14:59')
+
+  useEffect(() => {
+    if (!hasHydrated) return
+
+    if (items.length === 0) {
+      try {
+        localStorage.removeItem('velvet_cart_reservation_expiry')
+      } catch {}
+      setTimeLeft('14:59')
+      return
+    }
+
+    const HOLD_DURATION_MS = 15 * 60 * 1000 // 15 minutes
+    let expiry = 0
+
+    try {
+      const savedExpiry = localStorage.getItem('velvet_cart_reservation_expiry')
+      if (savedExpiry) {
+        const parsed = parseInt(savedExpiry, 10)
+        if (!isNaN(parsed) && parsed > Date.now()) {
+          expiry = parsed
+        }
+      }
+    } catch {}
+
+    if (!expiry) {
+      expiry = Date.now() + HOLD_DURATION_MS
+      try {
+        localStorage.setItem('velvet_cart_reservation_expiry', expiry.toString())
+      } catch {}
+    }
+
+    const updateTimer = () => {
+      const remaining = Math.max(0, expiry - Date.now())
+      const minutes = Math.floor(remaining / 60000)
+      const seconds = Math.floor((remaining % 60000) / 1000)
+      setTimeLeft(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`)
+    }
+
+    updateTimer()
+    const interval = setInterval(updateTimer, 1000)
+    return () => clearInterval(interval)
+  }, [hasHydrated, items.length])
 
   return (
     <AnimatePresence>
@@ -51,6 +100,19 @@ export function CartDrawer() {
                 </button>
               </div>
 
+              {/* Stock Reservation Ribbon */}
+              {items.length > 0 && (
+                <div className="bg-[#14120B] border-b border-[#C9A961]/25 px-5 py-2.5 flex items-center justify-between text-xs">
+                  <span className="text-[#C9A961] flex items-center gap-1.5 font-medium tracking-wide">
+                    <Flame size={13} className="text-amber-400" />
+                    High Demand: Sneaker allocation reserved for
+                  </span>
+                  <span className="font-mono font-bold text-amber-200 bg-[#C9A961]/15 border border-[#C9A961]/40 px-2 py-0.5 rounded text-[11px] tracking-wider shadow-inner">
+                    [ {timeLeft} ]
+                  </span>
+                </div>
+              )}
+
               {/* Items */}
               <div className="flex-1 overflow-y-auto p-6">
                 {items.length === 0 ? (
@@ -70,11 +132,13 @@ export function CartDrawer() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                       >
-                        <div className="w-24 h-24 bg-velvet-card overflow-hidden">
-                          <img 
-                            src={item.image || '/images/placeholder-product.png'} 
+                        <div className="relative w-24 h-24 aspect-square bg-neutral-900 rounded overflow-hidden shrink-0">
+                          <Image 
+                            src={getFullImageUrl(item.image)} 
                             alt={item.name} 
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="96px"
+                            className="object-cover"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
                               target.src = '/images/placeholder-product.png'

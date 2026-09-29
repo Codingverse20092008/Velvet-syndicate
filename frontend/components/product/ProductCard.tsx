@@ -93,7 +93,7 @@ export function ProductCard({ id, name, slug, price, image, variants, index = 0 
                 'group-hover:brightness-[1.06]',
                 imgLoaded ? 'opacity-100' : 'opacity-20',
               ].join(' ')}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             />
           </motion.div>
         </div>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useAdminStore, AdminOrderStatus } from '@/store/adminStore'
 import { StatusBadge } from '@/components/admin/StatusBadge'
+import { SalesTrendChart } from '@/components/admin/SalesTrendChart'
 import { formatPrice } from '@/lib/utils'
 
 export default function AdminDashboardPage() {
@@ -136,6 +137,9 @@ export default function AdminDashboardPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Visual Sales & Revenue Trend Chart */}
+      <SalesTrendChart data={metrics.salesByDay} />
 
       {/* Secondary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

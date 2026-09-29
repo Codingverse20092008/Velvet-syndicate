@@ -41,7 +41,7 @@ export function vaultLaunchGuard(req: Request, _res: Response, next: NextFunctio
   // Before launch: admin only
   getUserFromRequest(req)
     .then((user) => {
-      if (user.role === 'admin') {
+      if (user.role === 'admin' || user.role === 'super_admin') {
         return next();
       }
       throw new ForbiddenError('Velvet Vault is not yet available.');

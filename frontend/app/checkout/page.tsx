@@ -10,7 +10,8 @@ import { useOrderStore } from '@/store/orderStore'
 import { useGameStore } from '@/store/gameStore'
 import { Button } from '@/components/ui/Button'
 import { formatPrice } from '@/lib/utils'
-import { apiFetch } from '@/lib/api'
+import { apiFetch, syncAbandonedCart, getFullImageUrl } from '@/lib/api'
+import Image from 'next/image'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { events } from '@/lib/analytics'
 import { getVariant, trackABConversion } from '@/lib/ab-testing'
@@ -36,6 +37,48 @@ function CheckoutPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [addressToDelete, setAddressToDelete] = useState<string | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  // Contact details & Abandoned Cart Tracking
+  const [contactEmail, setContactEmail] = useState<string>('')
+  const [contactPhone, setContactPhone] = useState<string>('')
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const triggerAbandonedCartSync = useCallback((emailVal: string, phoneVal: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      if ((emailVal || phoneVal) && items && items.length > 0) {
+        syncAbandonedCart({
+          email: emailVal ? emailVal.trim() : null,
+          phone: phoneVal ? phoneVal.trim() : null,
+          items,
+          totalAmount: totalPrice,
+          recovered: false,
+        })
+      }
+    }, 500)
+  }, [items, totalPrice])
+
+  const handleEmailChange = (val: string) => {
+    setContactEmail(val)
+    triggerAbandonedCartSync(val, contactPhone)
+  }
+
+  const handlePhoneChange = (val: string) => {
+    setContactPhone(val)
+    triggerAbandonedCartSync(contactEmail, val)
+  }
+
+  // Pre-fill contact details from user profile
+  useEffect(() => {
+    if (user?.email && !contactEmail) {
+      setContactEmail(user.email)
+    }
+    if (user?.phone && !contactPhone) {
+      setContactPhone(user.phone)
+    }
+  }, [user, contactEmail, contactPhone])
   
   // ENTERPRISE LOCK SYSTEM - Multiple layers of protection
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID())
@@ -58,9 +101,13 @@ function CheckoutPage() {
       const defaultAddr = addresses.find(a => a.isDefault) || addresses[0]
       if (defaultAddr) {
         setSelectedAddressId(defaultAddr.id)
+        if (defaultAddr.phone) {
+          setContactPhone(prev => prev || defaultAddr.phone)
+          triggerAbandonedCartSync(contactEmail || user?.email || '', defaultAddr.phone)
+        }
       }
     }
-  }, [addresses, selectedAddressId])
+  }, [addresses, selectedAddressId, contactEmail, user, triggerAbandonedCartSync])
 
   useEffect(() => {
     if (authLoading) return
@@ -120,9 +167,18 @@ function CheckoutPage() {
       
       console.log('✅ ORDER SUCCESS', { orderId: order.id })
 
-      // 6. ANALYTICS
+      // 6. ANALYTICS & RECOVERY MARK
       events.orderCreated(order.id, currentTotal)
       trackABConversion('checkout_cta', ctaVariant, 'checkout_success')
+
+      // Mark abandoned cart as recovered
+      syncAbandonedCart({
+        email: contactEmail || user?.email,
+        phone: contactPhone || user?.phone,
+        items,
+        totalAmount: currentTotal,
+        recovered: true,
+      })
 
       // 7. BACKGROUND SYNC (Non-blocking)
       const selectedAddress = addresses.find(a => a.id === selectedAddressId)
@@ -269,6 +325,42 @@ function CheckoutPage() {
               <Plus size={14} /> New Address
             </button>
           </div>
+
+          {/* Contact Details & WhatsApp Delivery Updates */}
+          <div className="mb-8 p-6 bg-velvet-dark border border-white/10 rounded-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs uppercase tracking-widest font-bold text-velvet-white">Contact & Order Updates</h2>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-[#C9A961]/15 text-[#C9A961] border border-[#C9A961]/30 font-medium">WhatsApp Dispatch Alerts</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-neutral-400 block mb-1.5 font-medium">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  placeholder="your@email.com"
+                  className="w-full bg-black/60 border border-white/15 focus:border-[#C9A961] text-xs text-white px-3.5 py-2.5 rounded-xl outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-neutral-400 block mb-1.5 font-medium">
+                  WhatsApp / Phone
+                </label>
+                <input
+                  type="tel"
+                  value={contactPhone}
+                  onChange={(e) => handlePhoneChange(e.target.value)}
+                  placeholder="10-digit mobile number"
+                  className="w-full bg-black/60 border border-white/15 focus:border-[#C9A961] text-xs text-white px-3.5 py-2.5 rounded-xl outline-none transition-colors"
+                />
+              </div>
+            </div>
+          </div>
           
           <div className="space-y-4">
             {addressesLoading && (addresses || []).length === 0 ? (
@@ -374,8 +466,18 @@ function CheckoutPage() {
             <div className="space-y-6 mb-12 max-h-[40vh] overflow-y-auto pr-4 custom-scrollbar">
               {(items || []).filter(item => item && item.id).map((item) => (
                 <div key={`${item.id}-${item.variantId}-${item.size}`} className="flex gap-4">
-                  <div className="w-16 h-20 bg-velvet-black border border-white/5 overflow-hidden flex-shrink-0 rounded-lg">
-                    <img src={item.image || '/images/placeholder-product.png'} alt={item.name || 'Product'} className="w-full h-full object-cover" />
+                  <div className="relative w-16 h-20 bg-neutral-900 border border-white/5 overflow-hidden flex-shrink-0 rounded-lg">
+                    <Image
+                      src={getFullImageUrl(item.image)}
+                      alt={item.name || 'Product'}
+                      fill
+                      sizes="64px"
+                      className="object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = '/images/placeholder-product.png'
+                      }}
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-heading text-sm text-velvet-white truncate">{item.name || 'Unknown Product'}</h3>

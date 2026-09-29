@@ -3,6 +3,8 @@
 import { ShoppingBag } from 'lucide-react'
 import { Order } from '@/store/orderStore'
 import { formatPrice } from '@/lib/utils'
+import { getFullImageUrl } from '@/lib/api'
+import Image from 'next/image'
 
 export function OrderItemsTable({ items }: { items: Order['items'] }) {
   return (
@@ -16,9 +18,9 @@ export function OrderItemsTable({ items }: { items: Order['items'] }) {
       {items.map((item) => (
         <div key={item.id} className="grid grid-cols-1 md:grid-cols-4 gap-4 py-4 border-b border-white/5 items-center">
           <div className="col-span-2 flex items-center gap-4">
-            <div className="w-16 h-20 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+            <div className="relative w-16 h-20 rounded-lg overflow-hidden bg-neutral-900 border border-white/10 shrink-0">
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                <Image src={getFullImageUrl(item.imageUrl)} alt={item.productName} fill sizes="64px" className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ShoppingBag size={20} className="text-velvet-muted" />

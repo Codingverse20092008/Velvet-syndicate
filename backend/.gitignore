@@ -8,5 +8,7 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.tsbuildinfo
-
+*.log
+scratch/
+logs/
 .vercel

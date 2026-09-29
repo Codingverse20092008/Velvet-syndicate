@@ -63,6 +63,9 @@ export const products = sqliteTable('products', {
   isOnSale: integer('is_on_sale', { mode: 'boolean' }).notNull().default(false),
   isSummerSale: integer('is_summer_sale', { mode: 'boolean' }).notNull().default(false),
   salePercentage: integer('sale_percentage').notNull().default(0),
+  isNew: integer('is_new', { mode: 'boolean' }).notNull().default(false),
+  isExclusive: integer('is_exclusive', { mode: 'boolean' }).notNull().default(false),
+  hasXPBonus: integer('has_xp_bonus', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
   updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
 }, (table) => ({
@@ -414,6 +417,28 @@ export type NewVaultWaitlist = typeof vaultWaitlist.$inferInsert;
 
 export type WishlistItem = typeof wishlistItems.$inferSelect;
 export type NewWishlistItem = typeof wishlistItems.$inferInsert;
+
+// ─── Abandoned Carts (Recovery & Retention) ─────────────────────────
+export const abandonedCarts = sqliteTable('abandoned_carts', {
+  id: text('id').primaryKey(),
+  email: text('email'),
+  phone: text('phone'),
+  items: text('items').notNull(), // JSON string array of cart items
+  totalAmount: real('total_amount').notNull().default(0),
+  recovered: integer('recovered', { mode: 'boolean' }).notNull().default(false),
+  recoveredAt: text('recovered_at'),
+  source: text('source').default('checkout'),
+  createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+  updatedAt: text('updated_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),
+}, (table) => ({
+  emailIdx: index('abandoned_carts_email_idx').on(table.email),
+  phoneIdx: index('abandoned_carts_phone_idx').on(table.phone),
+  recoveredIdx: index('abandoned_carts_recovered_idx').on(table.recovered),
+  createdAtIdx: index('abandoned_carts_created_at_idx').on(table.createdAt),
+}));
+
+export type AbandonedCart = typeof abandonedCarts.$inferSelect;
+export type NewAbandonedCart = typeof abandonedCarts.$inferInsert;
 
 // ─── Quiz Pack System (imported from quiz-pack/schema.ts) ────────────
 export {

@@ -9,7 +9,20 @@ if (!process.env.NEXT_PUBLIC_API_URL) {
 const TOKEN_KEY = 'velvet_access_token'
 const REFRESH_TOKEN_KEY = 'velvet_refresh_token'
 
-// Helper to get full image URL (handles relative paths from backend)
+// Cloudinary Optimization Helper - injects f_auto,q_auto for optimal WebP/AVIF compression
+export const optimizeCloudinaryUrl = (url: string, transformations = 'f_auto,q_auto'): string => {
+  if (!url || typeof url !== 'string') return url
+  if (!url.includes('res.cloudinary.com') || !url.includes('/image/upload/')) {
+    return url
+  }
+  // Check if f_auto or q_auto already present
+  if (url.includes('/f_auto') || url.includes('/q_auto') || url.includes(transformations)) {
+    return url
+  }
+  return url.replace('/image/upload/', `/image/upload/${transformations}/`)
+}
+
+// Helper to get full image URL (handles relative paths from backend & optimizes Cloudinary)
 export const getFullImageUrl = (url: any): string => {
   // If url is null, undefined, or empty string, return placeholder
   if (!url) return '/images/placeholder-product.png'
@@ -25,27 +38,24 @@ export const getFullImageUrl = (url: any): string => {
     return '/images/placeholder-product.png'
   }
   
-  // If URL is already absolute, use it
-  if (finalUrl.startsWith('http://') || finalUrl.startsWith('https://')) {
-    // Keep it as is
-  }
   // If URL starts with /uploads, prepend the API URL
-  else if (finalUrl.startsWith('/uploads')) {
+  if (finalUrl.startsWith('/uploads')) {
     const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL
     finalUrl = `${baseUrl}${finalUrl}`
   }
   // If it's a relative path but not starting with /uploads, maybe it's just the filename
-  else if (!finalUrl.startsWith('/') && finalUrl.includes('.')) {
+  else if (!finalUrl.startsWith('/') && !finalUrl.startsWith('http') && finalUrl.includes('.')) {
     const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL
     finalUrl = `${baseUrl}/uploads/products/${finalUrl}`
   }
   
-  // Encode the URL to handle spaces and special characters
+  // Encode the URL to handle spaces and special characters, then optimize Cloudinary
   try {
-    return encodeURI(finalUrl)
+    const encoded = encodeURI(finalUrl)
+    return optimizeCloudinaryUrl(encoded)
   } catch (e) {
     console.error('Failed to encode image URL:', finalUrl, e)
-    return finalUrl
+    return optimizeCloudinaryUrl(finalUrl)
   }
 }
 
@@ -126,7 +136,7 @@ async function refreshAuthToken(): Promise<string | null> {
 
 // Retry configuration
 const MAX_RETRIES = 1
-const REQUEST_TIMEOUT_MS = 15000
+const REQUEST_TIMEOUT_MS = 45000
 
 async function fetchWithTimeout(
   url: string,
@@ -266,3 +276,28 @@ export const api = {
   delete: (path: string, options?: Omit<ApiFetchOptions, 'method'>) =>
     apiFetch(path, { ...options, method: 'DELETE' }),
 }
+
+// ─── Abandoned Cart Sync Helper ──────────────────────────────────────
+export interface AbandonedCartSyncPayload {
+  email?: string | null
+  phone?: string | null
+  items: any[]
+  totalAmount: number
+  recovered?: boolean
+}
+
+export async function syncAbandonedCart(payload: AbandonedCartSyncPayload) {
+  try {
+    const res = await apiFetch('/cart/abandoned', {
+      method: 'POST',
+      skipAuth: true,
+      skipRetry: true,
+      body: JSON.stringify(payload),
+    })
+    return await res.json()
+  } catch (err) {
+    console.warn('[syncAbandonedCart] Failed to sync lead:', err)
+    return null
+  }
+}
+

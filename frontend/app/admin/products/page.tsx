@@ -7,6 +7,11 @@ import { Button } from '@/components/ui/Button'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
 import { apiFetch, getFullImageUrl } from '@/lib/api'
 
+export type SizeInventory = {
+  size: string
+  stock: number
+}
+
 type ProductForm = {
   name: string
   price: string
@@ -17,6 +22,7 @@ type ProductForm = {
   brand: string
   color: string
   sizes: string
+  sizeInventories: SizeInventory[]
   gender: 'men' | 'women' | 'unisex' | ''
   subcategory: 'casual' | 'walking' | 'jogging' | 'running' | 'sports' | 'sneakers' | 'streetwear' | ''
   featured: boolean
@@ -25,6 +31,9 @@ type ProductForm = {
   salePercentage: string
   salePrice: string
   summerSale: boolean
+  isNew: boolean
+  isExclusive: boolean
+  hasXPBonus: boolean
 }
 
 const emptyForm: ProductForm = {
@@ -33,10 +42,17 @@ const emptyForm: ProductForm = {
   image: '',
   images: [],
   description: '',
-  stock: '',
+  stock: '0',
   brand: '',
   color: '',
-  sizes: '',
+  sizes: '7,8,9,10,11',
+  sizeInventories: [
+    { size: '7', stock: 5 },
+    { size: '8', stock: 5 },
+    { size: '9', stock: 5 },
+    { size: '10', stock: 5 },
+    { size: '11', stock: 5 },
+  ],
   gender: '',
   subcategory: '',
   featured: false,
@@ -45,6 +61,9 @@ const emptyForm: ProductForm = {
   salePercentage: '',
   salePrice: '',
   summerSale: false,
+  isNew: false,
+  isExclusive: false,
+  hasXPBonus: false,
 }
 
 const GENDERS = ['men', 'women', 'unisex'] as const
@@ -67,6 +86,68 @@ export default function AdminProductsPage() {
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [customSizeInput, setCustomSizeInput] = useState('')
+
+  const toggleSize = (size: string) => {
+    setForm((prev) => {
+      const exists = prev.sizeInventories.some((s) => s.size === size)
+      const nextInventories = exists
+        ? prev.sizeInventories.filter((s) => s.size !== size)
+        : [...prev.sizeInventories, { size, stock: 5 }]
+      const sum = nextInventories.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0)
+      return {
+        ...prev,
+        sizeInventories: nextInventories,
+        sizes: nextInventories.map((s) => s.size).join(','),
+        stock: String(sum),
+      }
+    })
+  }
+
+  const updateSizeStock = (size: string, stockVal: number) => {
+    setForm((prev) => {
+      const nextInventories = prev.sizeInventories.map((s) =>
+        s.size === size ? { ...s, stock: Math.max(0, stockVal) } : s
+      )
+      const sum = nextInventories.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0)
+      return {
+        ...prev,
+        sizeInventories: nextInventories,
+        stock: String(sum),
+      }
+    })
+  }
+
+  const quickFillAllStock = (amount: number) => {
+    setForm((prev) => {
+      const nextInventories = prev.sizeInventories.map((s) => ({ ...s, stock: amount }))
+      const sum = nextInventories.length * amount
+      return {
+        ...prev,
+        sizeInventories: nextInventories,
+        stock: String(sum),
+      }
+    })
+  }
+
+  const addCustomSize = () => {
+    const trimmed = customSizeInput.trim()
+    if (!trimmed) return
+    setForm((prev) => {
+      if (prev.sizeInventories.some((s) => s.size.toLowerCase() === trimmed.toLowerCase())) {
+        return prev
+      }
+      const nextInventories = [...prev.sizeInventories, { size: trimmed, stock: 5 }]
+      const sum = nextInventories.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0)
+      return {
+        ...prev,
+        sizeInventories: nextInventories,
+        sizes: nextInventories.map((s) => s.size).join(','),
+        stock: String(sum),
+      }
+    })
+    setCustomSizeInput('')
+  }
 
   useEffect(() => {
     fetchProducts()
@@ -165,24 +246,32 @@ export default function AdminProductsPage() {
   }
 
   const submit = async () => {
+    const calculatedTotalStock = form.sizeInventories.length > 0
+      ? form.sizeInventories.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0)
+      : Number(form.stock || 0)
+
     const payload = {
       name: form.name.trim(),
       price: Number(form.price),
       image: form.image.trim() || (form.images[0] || ''),
       images: form.images,
       description: form.description.trim(),
-      stock: Number(form.stock),
+      stock: calculatedTotalStock,
       brand: form.brand.trim(),
       color: form.color.trim(),
-      sizes: form.sizes.trim(),
+      sizes: form.sizeInventories.length > 0 ? form.sizeInventories.map(s => s.size).join(',') : form.sizes.trim(),
+      sizesWithStock: form.sizeInventories.map(s => ({ size: s.size, stock: Math.max(0, Number(s.stock) || 0) })),
       gender: form.gender || 'unisex',
       subcategory: form.subcategory || 'sneakers',
       featured: form.featured,
-      isOutOfStock: form.isOutOfStock,
+      isOutOfStock: form.isOutOfStock || calculatedTotalStock === 0,
       isOnSale: form.isOnSale,
       summerSale: form.summerSale,
       salePercentage: Number(form.salePercentage || 0),
       salePrice: form.isOnSale && form.salePrice ? Number(form.salePrice) : undefined,
+      isNew: form.isNew,
+      isExclusive: form.isExclusive,
+      hasXPBonus: form.hasXPBonus,
     }
 
     if (editingProduct) {
@@ -198,24 +287,46 @@ export default function AdminProductsPage() {
 
   const startEdit = (product: AdminProduct) => {
     setEditingProduct(product)
+
+    let sizeInvs: SizeInventory[] = []
+    if (product.sizesWithStock && product.sizesWithStock.length > 0) {
+      sizeInvs = product.sizesWithStock.map(s => ({ size: s.size, stock: Number(s.stock) || 0 }))
+    } else if (product.sizes) {
+      const splitSizes = product.sizes.split(',').map(s => s.trim()).filter(Boolean)
+      const perSize = splitSizes.length > 0 ? Math.floor(product.stock / splitSizes.length) : 0
+      const remainder = splitSizes.length > 0 ? product.stock % splitSizes.length : 0
+      sizeInvs = splitSizes.map((sz, i) => ({
+        size: sz,
+        stock: perSize + (i < remainder ? 1 : 0)
+      }))
+    }
+
+    const totalStockVal = sizeInvs.length > 0
+      ? sizeInvs.reduce((acc, curr) => acc + curr.stock, 0)
+      : product.stock
+
     setForm({
       name: product.name,
       price: String(product.price),
       image: product.image,
       images: [],
       description: product.description,
-      stock: String(product.stock),
+      stock: String(totalStockVal),
       brand: product.brand,
       color: product.color || '',
-      sizes: product.sizes || '',
+      sizes: sizeInvs.map(s => s.size).join(','),
+      sizeInventories: sizeInvs,
       gender: (product.gender as any) || '',
       subcategory: (product.subcategory as any) || '',
       featured: product.featured || false,
-      isOutOfStock: product.isOutOfStock || false,
+      isOutOfStock: product.isOutOfStock || totalStockVal === 0,
       isOnSale: product.isOnSale || false,
       salePercentage: String(product.salePercentage || ''),
       salePrice: product.salePrice ? String(product.salePrice) : '',
       summerSale: product.summerSale || false,
+      isNew: product.isNew || false,
+      isExclusive: product.isExclusive || false,
+      hasXPBonus: product.hasXPBonus || false,
     })
     setImagePreview(product.image)
     setImagePreviews([])
@@ -255,35 +366,161 @@ export default function AdminProductsPage() {
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Name" value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Brand" value={form.brand} onChange={(e) => setForm((prev) => ({ ...prev, brand: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Price" type="number" min="0" value={form.price} onChange={(e) => setForm((prev) => ({ ...prev, price: e.target.value }))} />
-          <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Stock" type="number" min="0" value={form.stock} onChange={(e) => setForm((prev) => ({ ...prev, stock: e.target.value }))} />
           <input className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" placeholder="Color (e.g., Red, Blue, Black)" value={form.color} onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))} />
-          <div className="md:col-span-2 bg-black border border-white/15 rounded-xl p-4">
-            <span className="text-sm text-velvet-white block mb-3">Available Sizes</span>
-            <div className="flex flex-wrap gap-2">
-              {['6', '7', '8', '9', '10', '11', '12', 'Standard'].map(size => {
-                const isSelected = form.sizes.split(',').map(s => s.trim()).includes(size);
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => {
-                      const currentSizes = form.sizes ? form.sizes.split(',').map(s => s.trim()).filter(Boolean) : [];
-                      const newSizes = currentSizes.includes(size)
-                        ? currentSizes.filter(s => s !== size)
-                        : [...currentSizes, size];
-                      setForm(prev => ({ ...prev, sizes: newSizes.join(',') }));
-                    }}
-                    className={`px-4 py-2 rounded-lg text-sm transition-colors border ${
-                      isSelected 
-                        ? 'bg-velvet-accent text-black border-velvet-accent' 
-                        : 'bg-black text-velvet-white border-white/15 hover:border-white/30'
-                    }`}
-                  >
-                    {size}
-                  </button>
-                )
-              })}
+          <div className="bg-black/80 border border-white/15 rounded-xl px-4 py-2.5 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] uppercase tracking-widest text-velvet-muted block">Total Inventory Stock</span>
+              <span className="text-xs text-velvet-muted">Sum of all size inventories</span>
             </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-heading text-[#C9A961] font-bold">
+                {form.sizeInventories.reduce((acc, curr) => acc + (Number(curr.stock) || 0), 0)}
+              </span>
+              <span className="text-xs text-velvet-muted">pairs</span>
+            </div>
+          </div>
+
+          {/* Per-Size Variant Inventory Tracking Module */}
+          <div className="md:col-span-2 bg-black/90 border border-white/15 rounded-2xl p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+              <div>
+                <span className="text-sm font-medium text-velvet-white block flex items-center gap-2">
+                  <span>Per-Size Variant Inventory Tracking</span>
+                  <span className="px-2 py-0.5 rounded bg-[#C9A961]/15 text-[#C9A961] text-[9px] font-bold uppercase tracking-wider border border-[#C9A961]/30">
+                    Live Sync
+                  </span>
+                </span>
+                <p className="text-xs text-velvet-muted mt-0.5">Toggle available sizes and specify exact real-time stock for each size variant.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-velvet-muted">Active Sizes:</span>
+                <span className="px-2 py-0.5 bg-white/10 text-white rounded-md text-xs font-mono font-semibold">
+                  {form.sizeInventories.length}
+                </span>
+              </div>
+            </div>
+
+            {/* Standard Size Selector Pills */}
+            <div>
+              <span className="text-[10px] uppercase tracking-widest text-velvet-muted block mb-2">Toggle Standard Sizes</span>
+              <div className="flex flex-wrap gap-2">
+                {['6', '7', '8', '9', '10', '11', '12', 'Standard'].map((size) => {
+                  const isSelected = form.sizeInventories.some((s) => s.size === size)
+                  const currentStock = form.sizeInventories.find((s) => s.size === size)?.stock ?? 0
+                  return (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => toggleSize(size)}
+                      className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-2 ${
+                        isSelected
+                          ? 'bg-[#C9A961] text-black border-[#C9A961] shadow-[0_0_12px_rgba(201,169,97,0.25)]'
+                          : 'bg-neutral-900/80 text-neutral-400 border-white/10 hover:border-white/25 hover:text-white'
+                      }`}
+                    >
+                      <span>Size {size}</span>
+                      {isSelected && (
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold ${
+                          currentStock === 0 ? 'bg-red-500/20 text-red-950' : 'bg-black/20 text-black'
+                        }`}>
+                          {currentStock}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Custom Size Addition */}
+            <div className="flex items-center gap-2 max-w-sm">
+              <input
+                type="text"
+                placeholder="Add custom size (e.g. 6.5, UK 9, XL)..."
+                value={customSizeInput}
+                onChange={(e) => setCustomSizeInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomSize(); } }}
+                className="bg-neutral-900 border border-white/15 rounded-lg px-3 py-2 text-xs text-velvet-white w-full outline-none focus:border-[#C9A961]"
+              />
+              <button
+                type="button"
+                onClick={addCustomSize}
+                className="px-3.5 py-2 bg-neutral-800 hover:bg-neutral-700 text-white text-xs rounded-lg border border-white/10 transition-colors whitespace-nowrap font-medium"
+              >
+                + Add
+              </button>
+            </div>
+
+            {/* Per-Size Inventory Table */}
+            {form.sizeInventories.length > 0 && (
+              <div className="space-y-3 pt-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[10px] uppercase tracking-widest text-velvet-muted">
+                    Stock Breakdown by Size ({form.sizeInventories.length} variants)
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-velvet-muted mr-1">Quick fill:</span>
+                    {[0, 5, 10, 20].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => quickFillAllStock(num)}
+                        className="px-2 py-0.5 bg-neutral-900 hover:bg-neutral-800 border border-white/10 rounded text-[10px] text-neutral-300 transition-colors hover:text-white"
+                      >
+                        All {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto pr-1">
+                  {form.sizeInventories.map((item) => {
+                    const isOOS = Number(item.stock) === 0
+                    const isLow = Number(item.stock) > 0 && Number(item.stock) <= 3
+                    return (
+                      <div
+                        key={item.size}
+                        className={`flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
+                          isOOS
+                            ? 'bg-red-500/10 border-red-500/30'
+                            : isLow
+                            ? 'bg-amber-500/10 border-amber-500/30'
+                            : 'bg-neutral-900/60 border-white/10'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-white px-2 py-0.5 rounded bg-white/10">
+                            Size {item.size}
+                          </span>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                            isOOS ? 'text-red-400' : isLow ? 'text-amber-400' : 'text-emerald-400'
+                          }`}>
+                            {isOOS ? 'Out of Stock' : isLow ? `Low (${item.stock})` : 'In Stock'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            value={item.stock}
+                            onChange={(e) => updateSizeStock(item.size, parseInt(e.target.value) || 0)}
+                            className="w-16 bg-black border border-white/20 rounded-lg px-2 py-1 text-xs text-right text-white font-mono focus:border-[#C9A961] outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => toggleSize(item.size)}
+                            className="text-neutral-500 hover:text-red-400 p-1 transition-colors"
+                            title="Remove size"
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
           <select className="bg-black border border-white/15 rounded-xl px-4 py-3 text-sm text-velvet-white" value={form.gender} onChange={(e) => setForm((prev) => ({ ...prev, gender: e.target.value as any }))}>
             <option value="">Select Gender</option>
@@ -294,38 +531,88 @@ export default function AdminProductsPage() {
             {SUBCATEGORIES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
           </select>
           
-          {/* Inventory & Sales Toggles */}
-          <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 rounded border-white/15 bg-black text-velvet-accent focus:ring-velvet-accent"
-                checked={form.featured}
-                onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
-              />
-              <span className="text-sm text-velvet-white">Featured</span>
-            </label>
+          {/* Inventory, Badges & Sales Toggles */}
+          <div className="md:col-span-2 space-y-3">
+            <span className="text-[10px] uppercase tracking-widest text-velvet-muted block">Product Flags & Badges</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {/* Featured */}
+              <label className="flex items-center justify-between gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <span className="text-sm text-velvet-white">Featured</span>
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-white/15 bg-black text-velvet-accent focus:ring-velvet-accent cursor-pointer"
+                  checked={form.featured}
+                  onChange={(e) => setForm((prev) => ({ ...prev, featured: e.target.checked }))}
+                />
+              </label>
 
-            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 rounded border-white/15 bg-black text-red-500 focus:ring-red-500"
-                checked={form.isOutOfStock}
-                onChange={(e) => setForm((prev) => ({ ...prev, isOutOfStock: e.target.checked }))}
-              />
-              <span className="text-sm text-velvet-white">Out of Stock</span>
-            </label>
+              {/* Mark as New Drop */}
+              <label className="flex items-center justify-between gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-velvet-white">Mark as New Drop</span>
+                  <span className="bg-sky-500/10 text-sky-400 text-[9px] px-1.5 py-0.5 rounded border border-sky-500/20 font-bold uppercase">New</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-white/15 bg-black text-sky-400 focus:ring-sky-400 cursor-pointer"
+                  checked={form.isNew}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isNew: e.target.checked }))}
+                />
+              </label>
 
-            <label className="flex items-center gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
-              <input 
-                type="checkbox" 
-                className="w-4 h-4 rounded border-white/15 bg-black text-emerald-500 focus:ring-emerald-500"
-                checked={form.isOnSale}
-                onChange={(e) => setForm((prev) => ({ ...prev, isOnSale: e.target.checked }))}
-              />
-              <span className="text-sm text-velvet-white">On Sale</span>
-            </label>
+              {/* Exclusive / Vault Only */}
+              <label className="flex items-center justify-between gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-velvet-white">Exclusive / Vault Only</span>
+                  <span className="bg-[#C9A961]/15 text-[#C9A961] text-[9px] px-1.5 py-0.5 rounded border border-[#C9A961]/30 font-bold uppercase">Vault</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-white/15 bg-black text-[#C9A961] focus:ring-[#C9A961] cursor-pointer"
+                  checked={form.isExclusive}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isExclusive: e.target.checked }))}
+                />
+              </label>
 
+              {/* XP Bonus Drop */}
+              <label className="flex items-center justify-between gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-velvet-white">XP Bonus Drop</span>
+                  <span className="bg-purple-500/15 text-purple-300 text-[9px] px-1.5 py-0.5 rounded border border-purple-500/30 font-bold uppercase">+XP</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-white/15 bg-black text-purple-400 focus:ring-purple-400 cursor-pointer"
+                  checked={form.hasXPBonus}
+                  onChange={(e) => setForm((prev) => ({ ...prev, hasXPBonus: e.target.checked }))}
+                />
+              </label>
+
+              {/* Out of Stock */}
+              <label className="flex items-center justify-between gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <span className="text-sm text-velvet-white">Out of Stock</span>
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-white/15 bg-black text-red-500 focus:ring-red-500 cursor-pointer"
+                  checked={form.isOutOfStock}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isOutOfStock: e.target.checked }))}
+                />
+              </label>
+
+              {/* On Sale */}
+              <label className="flex items-center justify-between gap-3 px-4 py-3 bg-black border border-white/15 rounded-xl cursor-pointer hover:bg-white/5 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-velvet-white">On Sale</span>
+                  <span className="bg-emerald-500/10 text-emerald-400 text-[9px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold uppercase">Sale</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-white/15 bg-black text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                  checked={form.isOnSale}
+                  onChange={(e) => setForm((prev) => ({ ...prev, isOnSale: e.target.checked }))}
+                />
+              </label>
+            </div>
           </div>
 
           {form.isOnSale && (
@@ -428,13 +715,29 @@ export default function AdminProductsPage() {
           {products.map((product) => (
             <div key={product.id} className="grid grid-cols-12 px-5 py-4 items-center">
               <div className="col-span-3">
-                <div className="text-velvet-white flex items-center gap-2">
-                  {product.name}
-                  {product.isOnSale && <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1.5 py-0.5 rounded border border-emerald-500/20">-{product.salePercentage}%</span>}
+                <div className="text-velvet-white flex items-center gap-1.5 flex-wrap">
+                  <span className="font-medium">{product.name}</span>
+                  {product.isOnSale && <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold uppercase">-{product.salePercentage}%</span>}
+                  {product.isNew && <span className="bg-sky-500/10 text-sky-400 text-[8px] px-1.5 py-0.5 rounded border border-sky-500/20 font-bold uppercase">New Drop</span>}
+                  {product.isExclusive && <span className="bg-[#C9A961]/15 text-[#C9A961] text-[8px] px-1.5 py-0.5 rounded border border-[#C9A961]/30 font-bold uppercase">Vault Only</span>}
+                  {product.hasXPBonus && <span className="bg-purple-500/15 text-purple-300 text-[8px] px-1.5 py-0.5 rounded border border-purple-500/30 font-bold uppercase">+XP Bonus</span>}
                 </div>
                 <div className="text-xs text-velvet-muted mt-1 line-clamp-1">{product.brand}</div>
               </div>
-              <div className="col-span-1 text-velvet-white">{product.stock}</div>
+              <div className="col-span-1 text-velvet-white">
+                <span className="font-medium">{product.stock}</span>
+                {product.sizesWithStock && product.sizesWithStock.length > 0 && (
+                  <div className="text-[9px] mt-0.5">
+                    {product.sizesWithStock.some(s => s.stock === 0) ? (
+                      <span className="text-red-400 font-medium">
+                        {product.sizesWithStock.filter(s => s.stock === 0).length} OOS
+                      </span>
+                    ) : (
+                      <span className="text-emerald-400 font-medium">{product.sizesWithStock.length} sizes</span>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="col-span-2">
                 {product.isOutOfStock ? (
                   <span className="text-red-400 text-[10px] uppercase tracking-widest bg-red-400/10 px-2 py-1 rounded">Out of Stock</span>
@@ -479,10 +782,13 @@ export default function AdminProductsPage() {
         {products.map((product) => (
           <div key={product.id} className="bg-velvet-card border border-white/10 rounded-2xl p-4">
             <div className="flex items-start justify-between mb-3">
-              <div className="flex-1 min-w-0">
-                <div className="text-velvet-white font-medium truncate flex items-center gap-2">
-                  {product.name}
-                  {product.isOnSale && <span className="text-emerald-400 text-[10px]">-{product.salePercentage}%</span>}
+              <div className="flex-1 min-w-0 pr-2">
+                <div className="text-velvet-white font-medium flex items-center gap-1.5 flex-wrap">
+                  <span>{product.name}</span>
+                  {product.isOnSale && <span className="text-emerald-400 text-[10px] font-bold">-{product.salePercentage}%</span>}
+                  {product.isNew && <span className="bg-sky-500/10 text-sky-400 text-[8px] px-1.5 py-0.5 rounded border border-sky-500/20 font-bold uppercase">New</span>}
+                  {product.isExclusive && <span className="bg-[#C9A961]/15 text-[#C9A961] text-[8px] px-1.5 py-0.5 rounded border border-[#C9A961]/30 font-bold uppercase">Vault</span>}
+                  {product.hasXPBonus && <span className="bg-purple-500/15 text-purple-300 text-[8px] px-1.5 py-0.5 rounded border border-purple-500/30 font-bold uppercase">+XP</span>}
                 </div>
                 <div className="text-xs text-velvet-muted mt-1">{product.brand}</div>
               </div>
@@ -492,7 +798,12 @@ export default function AdminProductsPage() {
               </div>
             </div>
             <div className="flex items-center gap-4 text-xs text-velvet-muted mb-3">
-              <span>Stock: {product.stock}</span>
+              <span>
+                Stock: {product.stock}
+                {product.sizesWithStock && product.sizesWithStock.some(s => s.stock === 0) && (
+                  <span className="text-red-400 ml-1.5 font-medium">({product.sizesWithStock.filter(s => s.stock === 0).length} sizes OOS)</span>
+                )}
+              </span>
               <span className={product.isVisible ? 'text-emerald-400' : 'text-amber-400'}>
                 {product.isVisible ? 'Active' : 'Inactive'}
               </span>

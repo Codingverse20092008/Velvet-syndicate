@@ -60,6 +60,13 @@ const productCreateSchema = z.object({
   summerSale: z.boolean().default(false),
   salePercentage: z.number().int().min(0).max(100).default(0),
   salePrice: z.number().positive().optional(),
+  isNew: z.boolean().default(false),
+  isExclusive: z.boolean().default(false),
+  hasXPBonus: z.boolean().default(false),
+  sizesWithStock: z.array(z.object({
+    size: z.string().min(1),
+    stock: z.number().int().min(0),
+  })).optional(),
 });
 
 const productUpdateSchema = z.object({
@@ -81,6 +88,13 @@ const productUpdateSchema = z.object({
   summerSale: z.boolean().optional(),
   salePercentage: z.number().int().min(0).max(100).optional(),
   salePrice: z.number().positive().optional(),
+  isNew: z.boolean().optional(),
+  isExclusive: z.boolean().optional(),
+  hasXPBonus: z.boolean().optional(),
+  sizesWithStock: z.array(z.object({
+    size: z.string().min(1),
+    stock: z.number().int().min(0),
+  })).optional(),
 });
 
 const productStockToggleSchema = z.object({
@@ -131,6 +145,13 @@ router.post('/products', asyncHandler(async (req: Request, res: Response) => {
   const data = productCreateSchema.parse(req.body);
   const product = await createAdminProduct(data);
   return successResponse(res, { product, message: 'Product created' }, 201);
+}));
+
+router.put('/products/:id', asyncHandler(async (req: Request, res: Response) => {
+  await requireAdmin(req);
+  const data = productUpdateSchema.parse(req.body);
+  const product = await updateAdminProduct(req.params.id, data);
+  return successResponse(res, { product, message: 'Product updated' });
 }));
 
 router.patch('/products/:id', asyncHandler(async (req: Request, res: Response) => {
@@ -193,6 +214,26 @@ router.patch('/orders/:id/return-status', asyncHandler(async (req: Request, res:
   await db.update(orders).set({ returnStatus: returnStatus as any, updatedAt: new Date().toISOString() }).where(eq(orders.id, req.params.id));
   const [updated] = await db.select().from(orders).where(eq(orders.id, req.params.id)).limit(1);
   return successResponse(res, { order: updated, message: `Return status updated to ${returnStatus}` });
+}));
+
+// GET /api/admin/abandoned-carts - Admin view abandoned carts
+router.get('/abandoned-carts', asyncHandler(async (req: Request, res: Response) => {
+  await requireAdmin(req);
+  const { getAbandonedCarts } = await import('../services/cart.service');
+  const limit = req.query.limit ? Number(req.query.limit) : 100;
+  const offset = req.query.offset ? Number(req.query.offset) : 0;
+  const leads = await getAbandonedCarts({ limit, offset });
+  return successResponse(res, { leads });
+}));
+
+// PATCH /api/admin/abandoned-carts/:id/recovered - Admin mark recovered
+router.patch('/abandoned-carts/:id/recovered', asyncHandler(async (req: Request, res: Response) => {
+  await requireAdmin(req);
+  const { markCartRecovered } = await import('../services/cart.service');
+  const { id } = req.params;
+  const recovered = req.body.recovered !== false;
+  await markCartRecovered(id, recovered);
+  return successResponse(res, { message: 'Cart recovery status updated' });
 }));
 
 export default router;

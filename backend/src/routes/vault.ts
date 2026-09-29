@@ -268,7 +268,8 @@ router.post('/referral', asyncHandler(async (req: Request, res: Response) => {
   return successResponse(res, result);
 }));
 
-// POST /api/vault/crate/open - Open a crate
+// DEPRECATED: Mystery crates unmounted for Syndicate VIP Club pivot
+/*
 router.post('/crate/open', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
   const { crateType } = crateOpenSchema.parse(req.body);
@@ -288,12 +289,12 @@ router.post('/crate/open', asyncHandler(async (req: Request, res: Response) => {
   return successResponse(res, result);
 }));
 
-// GET /api/vault/crate/history - Crate opening history
 router.get('/crate/history', asyncHandler(async (req: Request, res: Response) => {
   const user = await getUserFromRequest(req);
   const history = await getCrateHistory(user.id);
   return successResponse(res, { history });
 }));
+*/
 
 // GET /api/vault/level/rewards - Get pending level rewards
 router.get('/level/rewards', asyncHandler(async (req: Request, res: Response) => {

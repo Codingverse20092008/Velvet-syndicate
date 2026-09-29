@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
-// Force redeploy - Production Wipe Complete
+import { Cormorant_Garamond, Montserrat } from 'next/font/google'
+// @ts-ignore
 import './globals.css'
 import { Navigation } from '@/components/layout/Navigation'
 import { Footer } from '@/components/layout/Footer'
@@ -10,6 +11,8 @@ import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
 import { SplashScreen } from '@/components/ui/SplashScreen'
 import { SocialProof } from '@/components/ui/SocialProof'
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
+import { ExitIntentModal } from '@/components/cart/ExitIntentModal'
+import { SyndicateAIWidget } from '@/components/ai/SyndicateAIWidget'
 
 export const metadata: Metadata = {
   title: 'Velvet Syndicate | Wear the Unspoken',
@@ -30,19 +33,28 @@ export const metadata: Metadata = {
 
 import { MainWrapper } from '@/components/layout/MainWrapper'
 
+const cormorant = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-cormorant',
+})
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600'],
+  display: 'swap',
+  variable: '--font-montserrat',
+})
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Montserrat:wght@300;400;500&display=swap" rel="stylesheet" />
-      </head>
-      <body>
+    <html lang="en" className={`${cormorant.variable} ${montserrat.variable}`}>
+      <body className={montserrat.className}>
         <SplashScreen />
         <SocialProof />
         <MobileBottomNav />
@@ -55,6 +67,8 @@ export default function RootLayout({
             <Footer />
           </div>
           <CartDrawer />
+          <ExitIntentModal />
+          <SyndicateAIWidget />
         </AuthProvider>
       </body>
     </html>

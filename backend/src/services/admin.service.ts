@@ -82,6 +82,10 @@ export interface AdminProductItem {
   salePercentage?: number;
   salePrice?: number | null;
   summerSale?: boolean;
+  isNew?: boolean;
+  isExclusive?: boolean;
+  hasXPBonus?: boolean;
+  sizesWithStock?: Array<{ size: string; stock: number }>;
 }
 
 export interface AdminUserItem {
@@ -316,6 +320,9 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
         p.is_on_sale as isOnSale,
         p.is_summer_sale as summerSale,
         p.sale_percentage as salePercentage,
+        p.is_new as isNew,
+        p.is_exclusive as isExclusive,
+        p.has_xp_bonus as hasXPBonus,
         COALESCE(GROUP_CONCAT(DISTINCT pv.color), '') as color,
         COALESCE(GROUP_CONCAT(DISTINCT ps.size), '') as sizes,
         COALESCE(SUM(ps.stock), 0) as stock
@@ -328,8 +335,34 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
     args: [],
   });
 
+  const sizesResult = await dbClient.execute({
+    sql: `
+      SELECT pv.product_id, ps.size, ps.stock
+      FROM product_sizes ps
+      JOIN product_variants pv ON pv.id = ps.variant_id
+    `,
+    args: [],
+  });
+
+  const sizesByProduct = new Map<string, Array<{ size: string; stock: number }>>();
+  for (const r of sizesResult.rows as any[]) {
+    const list = sizesByProduct.get(r.product_id) || [];
+    list.push({ size: String(r.size), stock: Number(r.stock ?? 0) });
+    sizesByProduct.set(r.product_id, list);
+  }
+
   return (result.rows as any[]).map((row) => {
     const mainImage = row.imageUrl || row.image_url || '';
+    const sizesWithStock = (sizesByProduct.get(row.id) || []).sort((a, b) => {
+      const numA = parseFloat(a.size);
+      const numB = parseFloat(b.size);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.size.localeCompare(b.size);
+    });
+    const calculatedStock = sizesWithStock.length > 0
+      ? sizesWithStock.reduce((acc, s) => acc + s.stock, 0)
+      : Number(row.stock || 0);
+
     return {
       id: row.id,
       name: row.name,
@@ -339,18 +372,22 @@ export async function getAdminProducts(): Promise<AdminProductItem[]> {
       image: mainImage,
       imageUrl: mainImage,
       brand: row.brand,
-      stock: row.stock,
+      stock: calculatedStock,
+      sizesWithStock,
       isVisible: Boolean(row.isVisible),
       createdAt: row.createdAt,
       color: row.color,
-      sizes: row.sizes,
+      sizes: sizesWithStock.length > 0 ? sizesWithStock.map(s => s.size).join(',') : row.sizes,
       gender: row.gender,
       subcategory: row.subcategory,
       featured: Boolean(row.featured),
-      isOutOfStock: Boolean(row.isOutOfStock),
+      isOutOfStock: Boolean(row.isOutOfStock) || calculatedStock === 0,
       isOnSale: Boolean(row.isOnSale),
       summerSale: Boolean(row.summerSale),
       salePercentage: row.salePercentage,
+      isNew: Boolean(row.isNew),
+      isExclusive: Boolean(row.isExclusive),
+      hasXPBonus: Boolean(row.hasXPBonus),
       salePrice: Boolean(row.isOnSale) && Number(row.salePercentage || 0) > 0
         ? Math.max(0, Math.round(Number(row.price) * (1 - Number(row.salePercentage || 0) / 100)))
         : null,
@@ -376,20 +413,32 @@ export async function createAdminProduct(data: {
   salePercentage: number;
   salePrice?: number;
   summerSale: boolean;
+  isNew?: boolean;
+  isExclusive?: boolean;
+  hasXPBonus?: boolean;
+  sizesWithStock?: Array<{ size: string; stock: number }>;
 }): Promise<AdminProductItem> {
   const productId = crypto.randomUUID();
   const variantId = crypto.randomUUID();
   const slug = await generateUniqueSlug(data.name);
 
+  const hasPerSizeStock = Array.isArray(data.sizesWithStock) && data.sizesWithStock.length > 0;
+  const calculatedStock = hasPerSizeStock
+    ? data.sizesWithStock!.reduce((acc, s) => acc + s.stock, 0)
+    : data.stock;
+  const computedOutOfStock = data.isOutOfStock || calculatedStock === 0;
+
   // Parse sizes (comma-separated like "7,8,9,10,11,12")
-  const sizeList = data.sizes
-    ? data.sizes.split(',').map(s => s.trim()).filter(s => s)
-    : [];
+  const sizeList = hasPerSizeStock
+    ? data.sizesWithStock!.map(s => s.size)
+    : (data.sizes
+      ? data.sizes.split(',').map(s => s.trim()).filter(s => s)
+      : []);
   if (sizeList.length === 0) sizeList.push('Standard');
 
-  // Calculate stock per size (divide total stock evenly)
-  const stockPerSize = sizeList.length > 0 ? Math.floor(data.stock / sizeList.length) : 0;
-  const remainderStock = sizeList.length > 0 ? data.stock - (stockPerSize * sizeList.length) : 0;
+  // Calculate stock per size (divide total stock evenly if distributed)
+  const stockPerSize = sizeList.length > 0 ? Math.floor(calculatedStock / sizeList.length) : 0;
+  const remainderStock = sizeList.length > 0 ? calculatedStock - (stockPerSize * sizeList.length) : 0;
   const saleFields = resolveSaleFields({
     currentPrice: data.price,
     price: data.price,
@@ -411,10 +460,13 @@ export async function createAdminProduct(data: {
       gender: data.gender || 'unisex',
       productType: data.subcategory || 'sneakers',
       featured: data.featured || false,
-      isOutOfStock: data.isOutOfStock || false,
+      isOutOfStock: computedOutOfStock,
       isOnSale: saleFields.isOnSale,
       isSummerSale: data.summerSale || false,
       salePercentage: saleFields.salePercentage,
+      isNew: data.isNew || false,
+      isExclusive: data.isExclusive || false,
+      hasXPBonus: data.hasXPBonus || false,
       isVisible: true,
     });
 
@@ -442,16 +494,27 @@ export async function createAdminProduct(data: {
       });
     }
 
-    // Insert sizes with distributed stock
-    for (let index = 0; index < sizeList.length; index++) {
-      const size = sizeList[index];
-      const sizeStock = stockPerSize + (index < remainderStock ? 1 : 0);
-      await tx.insert(productSizes).values({
-        id: crypto.randomUUID(),
-        variantId,
-        size: size,
-        stock: sizeStock,
-      });
+    // Insert sizes with exact per-size stock or distributed stock
+    if (hasPerSizeStock) {
+      for (const item of data.sizesWithStock!) {
+        await tx.insert(productSizes).values({
+          id: crypto.randomUUID(),
+          variantId,
+          size: item.size,
+          stock: item.stock,
+        });
+      }
+    } else {
+      for (let index = 0; index < sizeList.length; index++) {
+        const size = sizeList[index];
+        const sizeStock = stockPerSize + (index < remainderStock ? 1 : 0);
+        await tx.insert(productSizes).values({
+          id: crypto.randomUUID(),
+          variantId,
+          size: size,
+          stock: sizeStock,
+        });
+      }
     }
   });
 
@@ -486,6 +549,10 @@ export async function updateAdminProduct(
     salePercentage: number;
     salePrice: number;
     summerSale: boolean;
+    isNew?: boolean;
+    isExclusive?: boolean;
+    hasXPBonus?: boolean;
+    sizesWithStock?: Array<{ size: string; stock: number }>;
   }>
 ): Promise<AdminProductItem> {
   const existing = await db.query.products.findFirst({
@@ -510,6 +577,9 @@ export async function updateAdminProduct(
     if (data.featured !== undefined) patch.featured = data.featured;
     if (data.isOutOfStock !== undefined) patch.isOutOfStock = data.isOutOfStock;
     if (data.summerSale !== undefined) patch.isSummerSale = data.summerSale;
+    if (data.isNew !== undefined) patch.isNew = data.isNew;
+    if (data.isExclusive !== undefined) patch.isExclusive = data.isExclusive;
+    if (data.hasXPBonus !== undefined) patch.hasXPBonus = data.hasXPBonus;
     // Summer sale products should be immediately discoverable on customer listing pages.
     // If admin enables summer sale and doesn't explicitly set visibility, auto-activate it.
     if (data.summerSale === true && data.isVisible === undefined) {
@@ -588,7 +658,40 @@ export async function updateAdminProduct(
     }
 
     // Handle sizes and stock update
-    if (data.stock !== undefined || data.sizes !== undefined) {
+    if (data.sizesWithStock !== undefined && data.sizesWithStock.length > 0) {
+      let variantIds = variants.map((variant) => variant.id);
+      if (variantIds.length === 0) {
+        const variantId = crypto.randomUUID();
+        await tx.insert(productVariants).values({
+          id: variantId,
+          productId,
+          name: data.color || 'Standard',
+          color: data.color || '#808080',
+          slug: existing.slug,
+        });
+        variantIds = [variantId];
+      }
+
+      const firstVariantId = variantIds[0];
+
+      // Delete existing sizes for this variant
+      await tx.delete(productSizes).where(eq(productSizes.variantId, firstVariantId));
+
+      // Insert new sizes with exact per-size stock
+      for (const item of data.sizesWithStock) {
+        await tx.insert(productSizes).values({
+          id: crypto.randomUUID(),
+          variantId: firstVariantId,
+          size: item.size,
+          stock: item.stock,
+        });
+      }
+
+      const totalSizeStock = data.sizesWithStock.reduce((acc, s) => acc + s.stock, 0);
+      if (data.isOutOfStock === undefined) {
+        await tx.update(products).set({ isOutOfStock: totalSizeStock === 0 }).where(eq(products.id, productId));
+      }
+    } else if (data.stock !== undefined || data.sizes !== undefined) {
       let variantIds = variants.map((variant) => variant.id);
       if (variantIds.length === 0) {
         const variantId = crypto.randomUUID();

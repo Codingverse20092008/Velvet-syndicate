@@ -48,6 +48,7 @@ temp/
 # IDE
 .continue/
 .codebuddy
+.idea/
 
 # generated / transient
 gemini-code-*.json

@@ -27,7 +27,8 @@ const settingsSchema = z.object({
 const requireAdmin = async (req: Request, res: Response): Promise<boolean> => {
   try {
     const user = await getUserFromRequest(req);
-    if (!user || (user as any).role !== 'admin') {
+    const role = (user as any)?.role;
+    if (!user || (role !== 'admin' && role !== 'super_admin')) {
       res.status(403).json({ success: false, error: 'Admin access required' });
       return false;
     }
@@ -52,21 +53,37 @@ const defaultSettings = {
   activityInterval: 90,
 };
 
+// Helper: safely extract settings from cache (handles string, object, or null)
+function safeParseSettings(cached: any): any {
+  if (!cached) return { ...defaultSettings };
+  if (typeof cached === 'string') {
+    try {
+      const parsed = JSON.parse(cached);
+      return typeof parsed === 'object' && parsed !== null
+        ? { ...defaultSettings, ...parsed }
+        : { ...defaultSettings };
+    } catch {
+      return { ...defaultSettings };
+    }
+  }
+  if (typeof cached === 'object' && cached !== null) {
+    return { ...defaultSettings, ...cached };
+  }
+  return { ...defaultSettings };
+}
+
 // GET /api/admin/settings - Get settings
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
   const isAdmin = await requireAdmin(req, res);
   if (!isAdmin) return;
 
   try {
-    const cached = await cacheGet<string>(SETTINGS_KEY);
-    if (cached) {
-      return successResponse(res, { data: JSON.parse(cached) });
-    }
-
-    return successResponse(res, { data: defaultSettings });
+    const cached = await cacheGet<any>(SETTINGS_KEY);
+    const settings = safeParseSettings(cached);
+    return successResponse(res, { data: settings });
   } catch (error) {
     console.error('Failed to fetch settings:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch settings' });
+    return successResponse(res, { data: defaultSettings });
   }
 }));
 
@@ -99,48 +116,63 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 }));
 
 // Public endpoint to get shipping settings (for frontend checkout)
-router.get('/public/shipping', asyncHandler(async (req: Request, res: Response) => {
+router.get('/public/shipping', async (req: Request, res: Response) => {
   try {
-    const cached = await cacheGet<string>(SETTINGS_KEY);
-    const settings = cached ? JSON.parse(cached) : defaultSettings;
+    let settings = defaultSettings;
+    try {
+      const cached = await cacheGet<any>(SETTINGS_KEY);
+      if (cached) {
+        settings = safeParseSettings(cached);
+      }
+    } catch (cacheErr) {
+      console.warn('Shipping settings cache read failed, using defaults:', cacheErr);
+    }
 
     return successResponse(res, { 
-      shippingFee: settings.standardShippingFee,
-      deliveryEstimate: settings.deliveryEstimate,
-      freeShippingThreshold: settings.freeShippingThreshold,
+      shippingFee: settings?.standardShippingFee ?? 20,
+      deliveryEstimate: settings?.deliveryEstimate ?? '7-8',
+      freeShippingThreshold: settings?.freeShippingThreshold ?? 0,
     });
   } catch (error) {
     console.error('Failed to fetch public settings:', error);
-    // Return defaults on error
     return successResponse(res, { 
       shippingFee: 20,
       deliveryEstimate: '7-8',
       freeShippingThreshold: 0,
     });
   }
-}));
+});
 
 // Public endpoint to get social proof settings
-router.get('/public/social-proof', asyncHandler(async (req: Request, res: Response) => {
-  try {
-    const cached = await cacheGet<string>(SETTINGS_KEY);
-    const settings = cached ? JSON.parse(cached) : defaultSettings;
+router.get('/public/social-proof', async (req: Request, res: Response) => {
+  const fallback = {
+    enabled: true,
+    minVisitors: 480,
+    maxVisitors: 712,
+    activityInterval: 90,
+  };
 
-    return successResponse(res, { 
-      enabled: settings.enableSocialProof ?? true,
-      minVisitors: settings.minVisitors ?? 480,
-      maxVisitors: settings.maxVisitors ?? 712,
-      activityInterval: settings.activityInterval ?? 90,
+  try {
+    let settings: any = defaultSettings;
+    try {
+      const cached = await cacheGet<any>(SETTINGS_KEY);
+      if (cached) {
+        settings = safeParseSettings(cached);
+      }
+    } catch (cacheErr) {
+      console.warn('Social proof settings cache read failed, using defaults:', cacheErr);
+    }
+
+    return successResponse(res, {
+      enabled: typeof settings?.enableSocialProof === 'boolean' ? settings.enableSocialProof : fallback.enabled,
+      minVisitors: typeof settings?.minVisitors === 'number' ? settings.minVisitors : fallback.minVisitors,
+      maxVisitors: typeof settings?.maxVisitors === 'number' ? settings.maxVisitors : fallback.maxVisitors,
+      activityInterval: typeof settings?.activityInterval === 'number' ? settings.activityInterval : fallback.activityInterval,
     });
   } catch (error) {
     console.error('Failed to fetch public social proof settings:', error);
-    return successResponse(res, { 
-      enabled: true,
-      minVisitors: 480,
-      maxVisitors: 712,
-      activityInterval: 90,
-    });
+    return successResponse(res, fallback);
   }
-}));
+});
 
 export default router;

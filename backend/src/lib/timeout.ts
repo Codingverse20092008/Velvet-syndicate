@@ -10,15 +10,16 @@ export function withTimeout<T>(
   ms = 3000,
   label = 'Operation'
 ): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => {
-        logger.warn({ label, timeoutMs: ms }, 'Operation timed out');
-        reject(new Error(`${label} timed out after ${ms}ms`));
-      }, ms)
-    ),
-  ]);
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<T>((_, reject) => {
+    timer = setTimeout(() => {
+      logger.warn({ label, timeoutMs: ms }, 'Operation timed out');
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timer);
+  });
 }
 
 /**

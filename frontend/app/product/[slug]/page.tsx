@@ -1,428 +1,99 @@
-'use client'
+import type { Metadata } from 'next'
+import { apiFetch, getFullImageUrl } from '@/lib/api'
+import ProductClient from './ProductClient'
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { ProductGallery } from '@/components/product/ProductGallery'
-import { SizeSelector } from '@/components/product/SizeSelector'
-import { ProductReviews } from '@/components/product/ProductReviews'
-import { Button } from '@/components/ui/Button'
-import { useCartStore } from '@/store/cartStore'
-import { useGameStore } from '@/store/gameStore'
-import { useWishlistStore } from '@/store/wishlistStore'
-import { Heart, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { formatPrice } from '@/lib/utils'
-import { events } from '@/lib/analytics'
-import { apiFetch } from '@/lib/api'
-
-interface Variant {
-  id: string
-  name: string
-  color: string
-  slug: string | null
-  images: string[]
-  sizes: { size: string; stock: number }[]
+interface Props {
+  params: {
+    slug: string
+  }
 }
 
-interface Product {
-  id: string
-  name: string
-  slug: string
-  description: string
-  price: number
-  category: string
-  image?: string // Standardized key
-  imageUrl?: string // Alternative key
-  featured: boolean
-  variants: Variant[]
-  isOnSale?: boolean
-  salePercentage?: number
-  salePrice?: number | null
-  summerSale?: boolean
-}
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = params
 
-const RECENTLY_VIEWED_KEY = 'velvet_recently_viewed'
+  try {
+    const res = await apiFetch(`/products/${slug}`, { skipAuth: true })
+    if (res.ok) {
+      const json = await res.json()
+      const product = json?.data?.product
 
-export default function ProductPage() {
-  const params = useParams()
-  const router = useRouter()
-  const slug = params.slug as string
+      if (product) {
+        const title = `${product.name} | Velvet Syndicate`
+        const priceStr = `₹${product.price}`
 
-  const [product, setProduct] = useState<Product | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null)
-  const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [isAdding, setIsAdding] = useState(false)
-  const { addItem, toggleCart } = useCartStore()
-  
-  const wishlistIds = useWishlistStore((s) => s.ids)
-  const addToWishlist = useWishlistStore((s) => s.addToWishlist)
-  const removeFromWishlist = useWishlistStore((s) => s.removeFromWishlist)
-  const isWishlisted = product ? wishlistIds.includes(product.id) : false
-  const trackProductView = useGameStore((s) => s.trackProductView)
+        // Clean truncated description highlighting pricing and limited sneaker availability
+        const rawDesc = (product.description || '')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
 
-  useEffect(() => {
-    if (slug) {
-      fetchProduct(slug)
-    }
-  }, [slug])
+        const cleanSnippet = rawDesc.length > 120 ? `${rawDesc.slice(0, 117)}...` : rawDesc
+        const description = cleanSnippet
+          ? `${cleanSnippet} Available now for ${priceStr}. Limited sneaker availability — secure your pair at Velvet Syndicate.`
+          : `Limited sneaker availability priced at ${priceStr}. Handcrafted luxury footwear by Velvet Syndicate.`
 
-  const fetchProduct = async (slug: string) => {
-    try {
-      const res = await apiFetch(`/products/${slug}`)
-      const data = await res.json()
-      if (data.success) {
-        const p = data.data.product
-        setProduct(p)
-        if (p.variants && p.variants.length > 0) {
-          setSelectedVariantId(p.variants[0].id)
-          // Auto-select size if there's only one
-          if (p.variants[0].sizes && p.variants[0].sizes.length === 1) {
-            setSelectedSize(p.variants[0].sizes[0].size)
-          }
+        const ogDescription = rawDesc
+          ? `${rawDesc.length > 150 ? rawDesc.slice(0, 147) + '...' : rawDesc} — ${priceStr}`
+          : `${product.name} — ${priceStr}`
+
+        const rawImage =
+          product.imageUrl ||
+          (Array.isArray(product.images) && product.images[0]) ||
+          (product.variants?.[0]?.images && product.variants[0].images[0]) ||
+          product.image ||
+          '/favicon.png'
+
+        const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://velvetsyndicate.shop').replace(/\/$/, '')
+        const fullImage = getFullImageUrl(rawImage)
+        const ogImageUrl = fullImage.startsWith('http')
+          ? fullImage
+          : `${siteUrl}${fullImage.startsWith('/') ? '' : '/'}${fullImage}`
+
+        return {
+          title,
+          description,
+          openGraph: {
+            title: product.name,
+            description: ogDescription,
+            images: [ogImageUrl],
+            type: 'website',
+          },
+          twitter: {
+            card: 'summary_large_image',
+            title: product.name,
+            images: [ogImageUrl],
+          },
         }
-      } else {
-        setProduct(null)
       }
-    } catch (error) {
-      console.error('Failed to fetch product:', error)
-    } finally {
-      setIsLoading(false)
     }
+  } catch (error) {
+    console.error(`[generateMetadata] Failed to fetch product metadata for slug "${slug}":`, error)
   }
 
-  const selectedVariant = product?.variants.find(v => v.id === selectedVariantId) || product?.variants[0]
+  // Fallback metadata if fetch fails or product is not found
+  const fallbackName = slug
+    ? slug
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    : 'Exclusive Footwear'
+  const fallbackTitle = `${fallbackName} | Velvet Syndicate`
+  const fallbackDescription = 'Discover limited edition luxury sneakers and footwear crafted for silent presence at Velvet Syndicate.'
 
-  useEffect(() => {
-    if (!product?.id) return
-    events.viewProduct(product.id)
-    trackProductView(product.id)
-    const primaryImage = product.variants?.[0]?.images?.[0] || product.image || product.imageUrl || ''
-    const entry = {
-      id: product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.isOnSale && product.salePrice ? product.salePrice : product.price,
-      imageUrl: primaryImage,
-      viewedAt: Date.now(),
-    }
-
-    try {
-      const existingRaw = localStorage.getItem(RECENTLY_VIEWED_KEY)
-      const existing = existingRaw ? JSON.parse(existingRaw) : []
-      const next = [entry, ...(Array.isArray(existing) ? existing : [])]
-        .filter((item, index, arr) => index === arr.findIndex((x: any) => x.id === item.id))
-        .slice(0, 12)
-      localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(next))
-    } catch {
-      // Ignore local storage failures silently.
-    }
-  }, [product])
-
-  const handleAddToCart = () => {
-    if (!product || !selectedVariant || !selectedSize) return
-
-    setIsAdding(true)
-
-    // Simulate animation delay
-    setTimeout(() => {
-      addItem({
-        id: product.id,
-        variantId: selectedVariant.id,
-        name: product.name,
-        variantName: selectedVariant.name !== 'Standard' ? selectedVariant.name : undefined,
-        slug: product.slug,
-        price: product.isOnSale && product.salePrice ? product.salePrice : product.price,
-        image: selectedVariant.images[0] || '',
-        size: selectedSize,
-      })
-      events.addToCart(product.id, 1)
-      setIsAdding(false)
-      toggleCart()
-    }, 600)
+  return {
+    title: fallbackTitle,
+    description: fallbackDescription,
+    openGraph: {
+      title: fallbackTitle,
+      description: fallbackDescription,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: fallbackTitle,
+    },
   }
+}
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
-        <motion.div
-          className="w-10 h-10 border-2 border-velvet-accent border-t-transparent rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-        />
-      </div>
-    )
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center text-center">
-        <div>
-          <p className="text-velvet-muted mb-4">Product not found</p>
-          <Link href="/collection">
-            <Button variant="outline">Back to Collection</Button>
-          </Link>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="min-h-screen pt-24 pb-16">
-      {/* Back Link - Desktop Only */}
-      <div className="max-w-7xl mx-auto px-6 mb-4 md:mb-8 hidden md:block">
-        <Link
-          href="/collection"
-          className="inline-flex items-center gap-2 text-sm text-velvet-muted hover:text-velvet-white transition-colors interactive"
-        >
-          <ArrowLeft size={16} />
-          Back to Collection
-        </Link>
-      </div>
-
-      {/* Product Content */}
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-          {/* Gallery */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7, ease: [0.215, 0.61, 0.355, 1] }}
-            key={product.id} // Reset animation on product change
-          >
-            <ProductGallery 
-              images={selectedVariant?.images || []} 
-              productName={product.name} 
-            />
-          </motion.div>
-
-          {/* Product Info */}
-          <motion.div
-            className="flex flex-col"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.215, 0.61, 0.355, 1] }}
-          >
-            <div className="mb-6">
-              <h1 className="font-heading text-3xl md:text-5xl text-velvet-white mb-2 leading-tight">
-                {product.name}
-              </h1>
-              <div className="flex items-baseline gap-3 flex-wrap">
-                {product.isOnSale && product.salePrice && product.salePrice < product.price ? (
-                  <>
-                    <span className="text-2xl md:text-3xl text-velvet-accent font-medium">
-                      {formatPrice(product.salePrice)}
-                    </span>
-                    <span className="text-lg md:text-xl text-velvet-muted line-through">
-                      {formatPrice(product.price)}
-                    </span>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded">
-                      -{product.salePercentage}%
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-2xl md:text-3xl text-velvet-accent font-medium">
-                    {formatPrice(product.price)}
-                  </span>
-                )}
-                <span className="text-xs text-emerald-500 font-medium uppercase tracking-widest self-center">
-                  In Stock & Ready
-                </span>
-              </div>
-            </div>
-
-            <motion.div
-              className="prose prose-invert mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <p className="text-velvet-muted font-light leading-relaxed">
-                {product.description}
-              </p>
-            </motion.div>
-
-            {/* Size Selector */}
-            <motion.div
-              id="size-selector"
-              className="mb-8"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <SizeSelector
-                availableSizes={(selectedVariant?.sizes || []).map(s => s.size)}
-                selectedSize={selectedSize}
-                onSelectSize={setSelectedSize}
-                stock={Object.fromEntries((selectedVariant?.sizes || []).map(s => [s.size, s.stock]))}
-              />
-            </motion.div>
-
-            {/* Actions - Desktop Only */}
-            <motion.div
-              className="mb-8 hidden md:flex flex-col gap-3"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleAddToCart}
-                disabled={!selectedSize}
-                isLoading={isAdding}
-              >
-                {selectedSize ? 'Add to Selection' : 'Select a Size'}
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                size="lg"
-                onClick={() => {
-                  if (!selectedSize) return;
-                  handleAddToCart();
-                  setTimeout(() => router.push('/checkout'), 800);
-                }}
-                disabled={!selectedSize}
-              >
-                Buy Now
-              </Button>
-              <Button
-                variant="outline"
-                className={`w-full border-white/10 text-velvet-white ${
-                  isWishlisted 
-                    ? 'border-red-500/30 bg-red-500/10 text-red-400' 
-                    : 'hover:border-red-500/50 hover:text-red-400'
-                }`}
-                size="lg"
-                onClick={() => {
-                  if (isWishlisted) {
-                    removeFromWishlist(product.id)
-                  } else {
-                    addToWishlist(product.id)
-                  }
-                }}
-              >
-                {isWishlisted ? 'Added to Wishlist ❤️' : 'Add to Wishlist ♡'}
-              </Button>
-            </motion.div>
-
-            {/* Additional Info */}
-            <motion.div
-              className="space-y-4 pt-8 border-t border-white/10"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              {/* Color Name Display */}
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-velvet-muted">Color</span>
-                <span className="text-velvet-white capitalize">{selectedVariant?.name || 'Standard'}</span>
-              </div>
-              
-              {/* Selected Size Display */}
-              {selectedSize && (
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-velvet-muted">Selected Size</span>
-                  <span className="text-velvet-white font-medium">
-                    {selectedSize === 'Standard' ? 'Standard' : `UK ${selectedSize}`}
-                  </span>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-velvet-muted">Category</span>
-                <span className="text-velvet-white capitalize">{product.category}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-velvet-muted">Shipping</span>
-                <span className="text-velvet-white">Complimentary</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-velvet-muted">Delivery</span>
-                <span className="text-velvet-white">7-8 business days</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-velvet-muted">Returns</span>
-                <span className="text-velvet-white">7 days</span>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Story Section */}
-      <motion.section
-        className="max-w-4xl mx-auto px-6 mt-32 md:mt-32 mb-20 md:mb-0 text-center"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-      >
-        <h2 className="font-heading text-3xl text-velvet-white mb-6">
-          The Story Behind
-        </h2>
-        <p className="text-velvet-muted font-light leading-relaxed">
-          Every Velvet Syndicate piece emerges from the intersection of silence and presence.
-          Crafted with intention, designed for those who understand that true luxury
-          doesn&apos;t announce itself—it simply exists.
-        </p>
-      </motion.section>
-      {/* Sticky Bottom Bar - Mobile Only (Elevated to clear bottom nav) */}
-      <div className="fixed bottom-[72px] left-0 right-0 z-40 md:hidden bg-black/90 backdrop-blur-2xl border-t border-white/10 p-3 flex gap-3 shadow-[0_-10px_20px_rgba(0,0,0,0.5)]">
-        <button
-          onClick={() => {
-            if (isWishlisted) {
-              removeFromWishlist(product.id)
-            } else {
-              addToWishlist(product.id)
-            }
-          }}
-          className={`px-4 rounded-xl border flex items-center justify-center transition-colors ${
-            isWishlisted 
-              ? 'border-red-500/30 bg-red-500/10 text-red-400' 
-              : 'border-white/20 text-velvet-white hover:bg-white/10'
-          }`}
-        >
-          {isWishlisted ? '❤️' : '♡'}
-        </button>
-        <Button
-          variant="outline"
-          className="flex-1 py-3.5 text-[10px] tracking-[0.2em] border-white/20"
-          onClick={handleAddToCart}
-          disabled={!selectedSize}
-          isLoading={isAdding}
-        >
-          {isAdding ? 'Adding...' : 'Selection'}
-        </Button>
-        <Button
-          className="flex-1 py-3.5 text-[10px] tracking-[0.2em] bg-velvet-white text-black hover:bg-white/90 border-none font-bold"
-          onClick={() => {
-            if (!selectedSize) {
-              const sizeSelector = document.getElementById('size-selector')
-              sizeSelector?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-              return;
-            }
-            handleAddToCart();
-            setTimeout(() => router.push('/checkout'), 800);
-          }}
-          disabled={!selectedSize}
-        >
-          Buy Now
-        </Button>
-      </div>
-
-      {/* Product Reviews */}
-      <div className="max-w-7xl mx-auto px-6 mt-16">
-        <ProductReviews productId={product.id} productName={product.name} />
-      </div>
-
-      <style jsx global>{`
-        .pb-safe-offset-4 {
-          padding-bottom: calc(1rem + env(safe-area-inset-bottom));
-        }
-      `}</style>
-    </div>
-  )
+export default function ProductPage({ params }: Props) {
+  return <ProductClient slug={params.slug} />
 }

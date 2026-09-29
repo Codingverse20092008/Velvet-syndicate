@@ -1,655 +1,509 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import Link from 'next/link'
 import {
-  Sparkles, Gift, ShieldCheck, Trophy, Zap, Coins,
-  Flame, Star, Lock, CheckCircle2, Package, ShoppingBag,
-  CreditCard, BadgePercent, Truck, Key, Gem, Medal,
-  X, Award, ScrollText,
+  Crown,
+  Sparkles,
+  Ticket,
+  Clock,
+  ShieldCheck,
+  ArrowRight,
+  Calendar,
+  Wallet,
+  CheckCircle2,
+  Bell,
+  Star,
+  Zap,
+  Lock
 } from 'lucide-react'
-import { useVaultStore, getLevelForXp, getXpForLevel, LEVELS } from '@/lib/vault-store'
-import { CrateOpeningModal } from '@/components/game/CrateOpeningModal'
-import { XPProgression } from '@/components/game/XPProgression'
+import { useAuthStore } from '@/store/authStore'
+import { formatPrice } from '@/lib/utils'
+import { apiFetch } from '@/lib/api'
 
-const REWARD_SHOP_ITEMS = {
-  basic: [
-    { id: 'xp-boost-50', title: '50 XP Boost', description: 'Instantly earn 50 progression XP', cost: 100, icon: Zap, category: 'basic' },
-    { id: 'profile-frame', title: 'Profile Frame', description: 'Unlock an exclusive profile frame', cost: 150, icon: Medal, category: 'basic' },
-    { id: 'title-unlock', title: 'Title Unlock', description: 'Unlock a unique display title', cost: 200, icon: ScrollText, category: 'basic' },
-    { id: 'coupon-5', title: '5% Coupon', description: 'Get 5% off on your next order', cost: 300, icon: BadgePercent, category: 'basic' },
-  ],
-  mid: [
-    { id: 'free-shipping', title: 'Free Shipping', description: 'Free shipping on your next order', cost: 500, icon: Truck, category: 'mid' },
-    { id: 'basic-crate', title: 'Basic Mystery Crate', description: 'Open a mystery crate for random rewards', cost: 600, icon: Package, category: 'mid' },
-    { id: 'coupon-10', title: '10% Coupon (Selected)', description: '10% off on selected products only', cost: 800, icon: BadgePercent, category: 'mid' },
-    { id: 'early-access', title: 'Early Access Pass', description: 'Get early access to new drops', cost: 900, icon: Key, category: 'mid' },
-  ],
-  premium: [
-    { id: 'double-xp-day', title: 'Double XP Day', description: 'Earn 2x XP for 24 hours', cost: 1200, icon: Zap, category: 'premium' },
-    { id: 'premium-crate', title: 'Premium Mystery Crate', description: 'Open a premium crate with better rewards', cost: 1500, icon: Gem, category: 'premium' },
-    { id: 'exclusive-badge', title: 'Exclusive Badge', description: 'Unlock a limited-edition badge', cost: 2000, icon: Award, category: 'premium' },
-    { id: 'vip-drop-access', title: 'VIP Drop Access', description: 'Get VIP access to exclusive drops', cost: 2500, icon: Star, category: 'premium' },
-  ],
+const EASE = [0.22, 1, 0.36, 1]
+
+interface UpcomingDrop {
+  id: string
+  title: string
+  edition: string
+  releaseDate: string
+  releaseTime: string
+  tierAccess: string
+  price: number
+  imageUrl: string
+  status: 'RESERVE_OPEN' | 'UPCOMING' | 'BALLOT_ONLY'
 }
 
-const BADGE_DISPLAY: Record<string, { name: string; emoji: string; description: string }> = {
-  'vault-rookie': { name: 'Vault Rookie', emoji: '🌱', description: 'Reach Level 2' },
-  'quiz-master': { name: 'Quiz Master', emoji: '🧠', description: '100 Correct Answers' },
-  'streak-warrior': { name: 'Streak Warrior', emoji: '🔥', description: '30-Day Streak' },
-  'vault-legend': { name: 'Vault Legend', emoji: '👑', description: '500 Correct Answers' },
-  'collector': { name: 'Collector', emoji: '📦', description: 'Open 50 Crates' },
-  'vault-elite': { name: 'Vault Elite', emoji: '💎', description: 'Reach Level 10' },
-  'exclusive_badge': { name: 'Exclusive', emoji: '⭐', description: 'Premium Crate Reward' },
+interface ActiveRaffle {
+  id: string
+  title: string
+  description: string
+  drawDate: string
+  totalAllocations: number
+  tierRequirement: string
+  entryStatus: 'OPEN' | 'ENTERED'
+  retailPrice: number
 }
 
-const STREAK_DISPLAY: Record<number, { label: string; reward: string }> = {
-  3: { label: '3 Days', reward: '25 XP + 10 Coins' },
-  7: { label: '7 Days', reward: '50 XP + 25 Coins' },
-  14: { label: '14 Days', reward: 'Basic Mystery Crate' },
-  30: { label: '30 Days', reward: 'Exclusive Badge' },
-  60: { label: '60 Days', reward: 'Premium Mystery Crate' },
-  100: { label: '100 Days', reward: 'VIP Title + Profile Frame' },
-}
+const UPCOMING_DROPS: UpcomingDrop[] = [
+  {
+    id: 'drop-01',
+    title: 'Air Jordan 1 Low Travis Scott Style',
+    edition: 'Limited Run • 25 Pairs',
+    releaseDate: 'OCT 12, 2026',
+    releaseTime: '10:00 AM IST',
+    tierAccess: '15m VIP Priority Window',
+    price: 2899,
+    imageUrl: '/images/placeholder-product.png',
+    status: 'RESERVE_OPEN'
+  },
+  {
+    id: 'drop-02',
+    title: 'Nike SB Dunk Low “Chunky Dunky”',
+    edition: 'Special Box Edition • 30 Pairs',
+    releaseDate: 'OCT 26, 2026',
+    releaseTime: '06:00 PM IST',
+    tierAccess: 'Silver & Gold Early Window',
+    price: 2699,
+    imageUrl: '/images/placeholder-product.png',
+    status: 'UPCOMING'
+  },
+  {
+    id: 'drop-03',
+    title: 'Nike Air Force 1 Low “Coffee Milk Shadow”',
+    edition: 'Bespoke Velvet Capsule',
+    releaseDate: 'NOV 04, 2026',
+    releaseTime: '12:00 PM IST',
+    tierAccess: 'Members Only Ballot',
+    price: 3199,
+    imageUrl: '/images/placeholder-product.png',
+    status: 'BALLOT_ONLY'
+  }
+]
 
-const HIDDEN_REWARDS_DISPLAY = [
-  { answers: 50, reward: 'Secret Crate' },
-  { answers: 100, reward: 'Rare Badge' },
-  { answers: 250, reward: 'Premium Crate' },
-  { answers: 500, reward: 'Vault Legend Title' },
+const ACTIVE_RAFFLES: ActiveRaffle[] = [
+  {
+    id: 'raffle-01',
+    title: 'Community Ballot: Air Jordan 1 Low Travis Scott Style',
+    description: 'Exclusive member ballot allocation for the iconic reverse mocha low silhouette with premium tumbled leather.',
+    drawDate: 'OCT 15, 2026',
+    totalAllocations: 20,
+    tierRequirement: 'All Syndicate Members',
+    entryStatus: 'OPEN',
+    retailPrice: 2899
+  },
+  {
+    id: 'raffle-02',
+    title: 'Vault Reserve Draw: Nike SB Dunk Low “Chunky Dunky”',
+    description: 'Community allocation draw for the coveted Ben & Jerry’s tribute dunk with faux cowhide accents and cloud insoles.',
+    drawDate: 'OCT 29, 2026',
+    totalAllocations: 15,
+    tierRequirement: 'Silver (Initiate) & Gold Members',
+    entryStatus: 'OPEN',
+    retailPrice: 2699
+  }
+]
+
+const TIER_BENEFITS = [
+  {
+    tier: 'Silver Member (Initiate)',
+    badge: 'Tier 1 • Default',
+    perks: ['Standard Drop Access', 'Curated Editorial', '₹150 Welcome Drop Credit', 'Community Ballot Entries']
+  },
+  {
+    tier: 'Gold Insider',
+    badge: 'Tier 2 • ₹25k Spend',
+    perks: ['15-Minute Early Drop Window', 'Priority Allocation Ballots', 'Free Express Shipping', '1.25x Credit Multiplier']
+  },
+  {
+    tier: 'Platinum Syndicate',
+    badge: 'Tier 3 • VIP Elite',
+    perks: ['1-Hour Priority Allocation Window', '2x Ballot Draw Multiplier', 'Access to Archived Vault Sneakers', 'Dedicated WhatsApp Concierge']
+  }
 ]
 
 export default function VaultPage() {
-  const {
-    xp, vaultCoins, streakDays, level, bonusStreakTokens,
-    correctAnswers, cratesOpened, ownedBadges,
-    pendingLevelRewards, dailyXpEarned, dailyCoinsEarned,
-    dailyQuizCompleted, lastLoginClaim, crateHistory,
-    unlockedHiddenRewards, checkDailyReset,
-    addXp, addCoins, claimDailyLogin, claimLevelReward,
-    openCrate, processPurchaseReward, processProductDiscovery,
-    getLimits, getLeaderboardScore,
-  } = useVaultStore()
+  const { user } = useAuthStore()
+  const [notifiedDrops, setNotifiedDrops] = useState<string[]>([])
+  const [enteredRaffles, setEnteredRaffles] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState<'drops' | 'raffles' | 'tiers'>('drops')
 
-  checkDailyReset()
-  const today = new Date().toISOString().slice(0, 10)
-  const limits = getLimits()
-  const levelProg = getLevelForXp(xp)
-  const nextLevelXp = getXpForLevel(levelProg + 1)
-  const currentLevelXpStart = getXpForLevel(levelProg)
-  const progressInLevel = xp - currentLevelXpStart
-  const neededForNext = nextLevelXp - currentLevelXpStart
-  const progressPct = neededForNext > 0 ? Math.min((progressInLevel / neededForNext) * 100, 100) : 100
+  // Dynamic user wallet balance & tier standing (defaults to Silver Initiate with ₹150 welcome credit)
+  const [walletBalance, setWalletBalance] = useState<number>(150)
+  const [memberTier, setMemberTier] = useState<string>('Silver Member (Initiate)')
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'shop' | 'leaderboard' | 'badges'>('dashboard')
-  const [claimMsg, setClaimMsg] = useState<string | null>(null)
-  const [showCrate, setShowCrate] = useState<'basic' | 'premium' | null>(null)
-  const [shopMessage, setShopMessage] = useState<string | null>(null)
+  useEffect(() => {
+    let isCancelled = false
 
-  const showMessage = (msg: string) => {
-    setClaimMsg(msg)
-    setTimeout(() => setClaimMsg(null), 4000)
-  }
+    if (user) {
+      apiFetch('/user/stats')
+        .then(res => (res.ok ? res.json() : null))
+        .then(res => {
+          if (isCancelled || !res) return
+          if (res.success && res.data?.stats) {
+            const stats = res.data.stats
+            const points = Number(stats.loyaltyPoints) || 0
+            // Display user points or default to ₹150 welcome credit
+            setWalletBalance(points > 0 ? points : 150)
 
-  const handleDailyLogin = () => {
-    const res = claimDailyLogin()
-    if (res.success) {
-      showMessage(`+${res.xpAwarded} XP & +${res.coinsAwarded} Coins from daily login!`)
+            const totalSpent = Number(stats.totalSpent) || 0
+            if (totalSpent >= 75000) {
+              setMemberTier('Platinum Syndicate')
+            } else if (totalSpent >= 25000) {
+              setMemberTier('Gold Insider')
+            } else {
+              setMemberTier('Silver Member (Initiate)')
+            }
+          }
+        })
+        .catch(() => {
+          if (!isCancelled) {
+            setWalletBalance(150)
+            setMemberTier('Silver Member (Initiate)')
+          }
+        })
     } else {
-      showMessage('Daily login already claimed today')
+      setWalletBalance(150)
+      setMemberTier('Silver Member (Initiate)')
     }
+
+    return () => {
+      isCancelled = true
+    }
+  }, [user])
+
+  const toggleNotify = (id: string) => {
+    setNotifiedDrops(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    )
   }
 
-  const handleClaimLevel = (lvl: number) => {
-    const res = claimLevelReward(lvl)
-    if (res.success && res.reward) {
-      showMessage(`Claimed Level ${lvl}: ${res.reward.label}`)
+  const enterRaffle = (id: string) => {
+    if (!enteredRaffles.includes(id)) {
+      setEnteredRaffles(prev => [...prev, id])
     }
   }
-
-  const handleBuyItem = (item: typeof REWARD_SHOP_ITEMS.basic[0]) => {
-    if (vaultCoins < item.cost) {
-      setShopMessage('Not enough Vault Coins!')
-      setTimeout(() => setShopMessage(null), 3000)
-      return
-    }
-    addCoins(-item.cost)
-    if (item.id === 'xp-boost-50') addXp(50)
-    if (item.id === 'basic-crate') setShowCrate('basic')
-    if (item.id === 'premium-crate') setShowCrate('premium')
-    setShopMessage(`Purchased ${item.title}!`)
-    setTimeout(() => setShopMessage(null), 3000)
-  }
-
-  const pendingUnclaimed = pendingLevelRewards.filter(r => !r.claimed)
-  const leaderboardScore = getLeaderboardScore()
-
-  const allItems = [...REWARD_SHOP_ITEMS.basic, ...REWARD_SHOP_ITEMS.mid, ...REWARD_SHOP_ITEMS.premium]
-  const hiddenUnlocked = unlockedHiddenRewards.map(r => {
-    const num = parseInt(r)
-    const h = HIDDEN_REWARDS_DISPLAY.find(h => h.answers === num)
-    return h || null
-  }).filter(Boolean)
 
   return (
-    <main className="min-h-screen bg-velvet-black px-4 py-16 sm:px-6 md:px-10 lg:px-16">
-      <div className="mx-auto max-w-7xl space-y-8">
-
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">Velvet Vault</p>
-            <h1 className="mt-2 text-4xl font-heading uppercase tracking-[0.04em] text-velvet-white flex items-center gap-3">
-              <Gem className="w-8 h-8 text-amber-400" />
-              Reward Economy
+    <div className="min-h-screen bg-[#0A0A0A] text-velvet-white pt-24 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      {/* Header Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: EASE }}
+        className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-b from-[#161616] via-[#101010] to-[#0A0A0A] p-8 md:p-12 mb-10 shadow-2xl"
+      >
+        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-96 h-96 bg-[#C9A961]/10 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#C9A961]/10 border border-[#C9A961]/30 text-[#C9A961] text-[11px] uppercase tracking-[0.25em] font-medium">
+              <Crown size={13} />
+              The Syndicate VIP Club
+            </div>
+            <h1 className="font-heading text-4xl sm:text-5xl lg:text-6xl text-velvet-white uppercase tracking-tight">
+              Private Drops & Member Access
             </h1>
+            <p className="text-sm sm:text-base text-neutral-400 max-w-2xl leading-relaxed">
+              Welcome to the inner circle. Your member standing unlocks authentic streetwear allocations,
+              priority drop windows, and verified sneaker community ballots.
+            </p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-3 text-right">
-              <p className="text-[9px] uppercase tracking-[0.3em] text-velvet-muted">Vault Coins</p>
-              <p className="text-2xl font-bold text-amber-400 flex items-center gap-2 mt-1">
-                <Coins className="w-5 h-5" />
-                {vaultCoins.toLocaleString()}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-black/40 px-5 py-3 text-right">
-              <p className="text-[9px] uppercase tracking-[0.3em] text-velvet-muted">Level</p>
-              <p className="text-2xl font-bold text-velvet-white">{levelProg}</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-          {(['dashboard', 'shop', 'leaderboard', 'badges'] as const).map(tab => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 rounded-full text-[10px] uppercase tracking-[0.24em] font-bold transition-all ${
-                activeTab === tab
-                  ? 'bg-velvet-white text-velvet-black'
-                  : 'bg-white/5 text-velvet-muted hover:text-velvet-white border border-white/10'
-              }`}
+          <div className="flex md:flex-col items-center md:items-end gap-3 shrink-0">
+            <Link
+              href="/collection"
+              className="px-6 py-3.5 rounded-xl bg-[#C9A961] hover:bg-[#d8b870] text-black font-heading text-xs uppercase tracking-[0.2em] font-bold transition-all shadow-lg shadow-[#C9A961]/20 active:scale-95"
             >
-              {tab === 'dashboard' && '📊 Dashboard'}
-              {tab === 'shop' && '🛒 Reward Shop'}
-              {tab === 'leaderboard' && '🏆 Leaderboard'}
-              {tab === 'badges' && '🎖️ Badges'}
-            </button>
-          ))}
+              Explore Collection
+            </Link>
+          </div>
         </div>
 
-        {/* Toast Message */}
-        <AnimatePresence>
-          {claimMsg && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-center text-sm text-emerald-300"
-            >
-              {claimMsg}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ===== DASHBOARD TAB ===== */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-8">
-
-            {/* Daily Limits Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-velvet-muted">XP Today</p>
-                <p className="text-lg font-bold text-orange-400 mt-1">{limits.dailyXpRemaining}/{200} left</p>
-                <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full bg-orange-500 rounded-full" style={{ width: `${((200 - limits.dailyXpRemaining) / 200) * 100}%` }} />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-velvet-muted">Coins Today</p>
-                <p className="text-lg font-bold text-amber-400 mt-1">{limits.dailyCoinsRemaining}/{60} left</p>
-                <div className="mt-2 h-1.5 rounded-full bg-white/10 overflow-hidden">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${((60 - limits.dailyCoinsRemaining) / 60) * 100}%` }} />
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-velvet-muted">Basic Crates</p>
-                <p className="text-lg font-bold text-blue-400 mt-1">{limits.basicCratesRemaining}/2 left</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-velvet-muted">Premium Crates</p>
-                <p className="text-lg font-bold text-purple-400 mt-1">{limits.premiumCratesRemaining}/1 left</p>
-              </div>
+        {/* Member Status Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-10 pt-8 border-t border-white/5">
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-mono">Membership Tier</div>
+            <div className="font-heading text-xl sm:text-2xl text-velvet-white mt-1 flex items-center gap-2">
+              <span className="truncate">{memberTier}</span>
+              <span className="text-[10px] uppercase px-2 py-0.5 rounded bg-[#C9A961]/20 text-[#C9A961] border border-[#C9A961]/30 shrink-0">Active</span>
             </div>
-
-            {/* XP Progress */}
-            <div className="rounded-[2rem] border border-white/10 bg-black/40 p-8">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">Progression</p>
-                  <h3 className="mt-1 text-2xl font-heading text-velvet-white">Level {levelProg}</h3>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-velvet-muted">{xp.toLocaleString()} / {nextLevelXp.toLocaleString()} XP</p>
-                  <p className="text-xs text-velvet-muted mt-1">Total XP Earned: {useVaultStore.getState().totalXpEarned.toLocaleString()}</p>
-                </div>
-              </div>
-              <div className="h-4 rounded-full bg-white/10 overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progressPct}%` }}
-                  transition={{ duration: 1, ease: 'easeOut' }}
-                />
-              </div>
-              <div className="flex justify-between mt-2 text-[10px] text-velvet-muted">
-                <span>Level {levelProg}</span>
-                <span>{neededForNext - progressInLevel} XP to Level {levelProg + 1}</span>
-              </div>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <button
-                onClick={handleDailyLogin}
-                className={`rounded-2xl border p-5 text-center transition-all ${
-                  lastLoginClaim === today
-                    ? 'border-emerald-500/20 bg-emerald-500/10 opacity-60'
-                    : 'border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20'
-                }`}
-              >
-                <p className="text-2xl mb-2">{lastLoginClaim === today ? '✅' : '📅'}</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-velvet-white">
-                  {lastLoginClaim === today ? 'Claimed' : 'Daily Login'}
-                </p>
-                <p className="text-[10px] text-velvet-muted mt-1">+5 Coins +20 XP</p>
-              </button>
-
-              <button
-                onClick={() => setShowCrate('basic')}
-                disabled={limits.basicCratesRemaining <= 0}
-                className={`rounded-2xl border p-5 text-center transition-all ${
-                  limits.basicCratesRemaining <= 0
-                    ? 'border-white/5 bg-black/20 opacity-40'
-                    : 'border-blue-500/30 bg-blue-500/10 hover:bg-blue-500/20'
-                }`}
-              >
-                <p className="text-2xl mb-2">📦</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-velvet-white">Basic Crate</p>
-                <p className="text-[10px] text-velvet-muted mt-1">{limits.basicCratesRemaining}/2</p>
-              </button>
-
-              <button
-                onClick={() => setShowCrate('premium')}
-                disabled={limits.premiumCratesRemaining <= 0}
-                className={`rounded-2xl border p-5 text-center transition-all ${
-                  limits.premiumCratesRemaining <= 0
-                    ? 'border-white/5 bg-black/20 opacity-40'
-                    : 'border-purple-500/30 bg-purple-500/10 hover:bg-purple-500/20'
-                }`}
-              >
-                <p className="text-2xl mb-2">🎁</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-velvet-white">Premium Crate</p>
-                <p className="text-[10px] text-velvet-muted mt-1">{limits.premiumCratesRemaining}/1</p>
-              </button>
-
-              <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-5 text-center">
-                <p className="text-2xl mb-2">🔥</p>
-                <p className="text-[9px] uppercase tracking-[0.2em] font-bold text-velvet-white">{streakDays} Day Streak</p>
-                <p className="text-[10px] text-velvet-muted mt-1">{bonusStreakTokens} Streak Tokens</p>
-              </div>
-            </div>
-
-            {/* Pending Level Rewards */}
-            {pendingUnclaimed.length > 0 && (
-              <div className="rounded-[2rem] border border-amber-500/20 bg-amber-500/5 p-6 space-y-4">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300 font-bold">🎁 Pending Level Rewards</p>
-                <div className="grid gap-3">
-                  {pendingUnclaimed.map(r => (
-                    <div key={r.level} className="flex items-center justify-between rounded-xl border border-amber-500/20 bg-black/40 p-4">
-                      <div>
-                        <p className="text-sm font-semibold text-velvet-white">Level {r.level} Reward</p>
-                        <p className="text-xs text-velvet-muted">{r.rewardLabel}</p>
-                      </div>
-                      <button
-                        onClick={() => handleClaimLevel(r.level)}
-                        className="px-5 py-2.5 rounded-full bg-amber-500 text-black text-[9px] uppercase tracking-[0.2em] font-bold hover:bg-amber-400 transition-all"
-                      >
-                        Claim
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Streak Milestones */}
-            <div className="rounded-[2rem] border border-white/10 bg-black/40 p-6">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">🔥 Streak Milestones</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                {Object.entries(STREAK_DISPLAY).map(([day, info]) => {
-                  const d = parseInt(day)
-                  const reached = streakDays >= d
-                  return (
-                    <div key={day} className={`rounded-xl border p-3 text-center ${
-                      reached ? 'border-amber-500/30 bg-amber-500/10' : 'border-white/5 bg-black/20 opacity-50'
-                    }`}>
-                      <p className={`text-lg font-bold ${reached ? 'text-amber-400' : 'text-velvet-muted'}`}>{day}d</p>
-                      <p className="text-[8px] text-velvet-muted mt-1">{info.reward}</p>
-                      {reached && <p className="text-[9px] text-emerald-400 mt-1">✅</p>}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Hidden Rewards Progress */}
-            <div className="rounded-[2rem] border border-white/10 bg-black/40 p-6">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">🤫 Hidden Rewards Progress</p>
-              <div className="grid gap-3">
-                {HIDDEN_REWARDS_DISPLAY.map(h => {
-                  const unlocked = unlockedHiddenRewards.includes(h.answers.toString())
-                  const progress = Math.min(correctAnswers / h.answers * 100, 100)
-                  return (
-                    <div key={h.answers} className={`rounded-xl border p-4 ${
-                      unlocked ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-white/5 bg-black/20'
-                    }`}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <p className="text-xs font-semibold text-velvet-white">{unlocked ? '🔓' : '🔒'} {h.reward}</p>
-                          <p className="text-[10px] text-velvet-muted">{correctAnswers}/{h.answers} correct answers</p>
-                        </div>
-                        {unlocked && <span className="text-emerald-400 text-sm">✅ Unlocked</span>}
-                      </div>
-                      <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style={{ width: `${Math.min(progress, 100)}%` }} />
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Crate History */}
-            {crateHistory.length > 0 && (
-              <div className="rounded-[2rem] border border-white/10 bg-black/40 p-6">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">📦 Recent Crate Opens</p>
-                <div className="grid gap-2 max-h-48 overflow-y-auto">
-                  {crateHistory.slice(0, 10).map(h => (
-                    <div key={h.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-black/30 p-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{h.crateType === 'premium' ? '🎁' : '📦'}</span>
-                        <div>
-                          <p className="text-xs text-velvet-white">{h.rewardLabel}</p>
-                          <p className="text-[9px] text-velvet-muted capitalize">{h.rarity}</p>
-                        </div>
-                      </div>
-                      <p className="text-[9px] text-velvet-muted">{h.date}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="text-xs text-neutral-400 mt-1">Standard drop access & community ballots</div>
           </div>
-        )}
 
-        {/* ===== REWARD SHOP TAB ===== */}
-        {activeTab === 'shop' && (
-          <div className="space-y-8">
-            <div className="rounded-[2rem] border border-white/10 bg-velvet-card/70 p-8">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">Spend Your Coins</p>
-                  <h2 className="mt-2 text-3xl font-heading text-velvet-white">Reward Shop</h2>
-                </div>
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-3">
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-velvet-muted">Balance</p>
-                  <p className="text-xl font-bold text-amber-400 flex items-center gap-2 mt-1">
-                    <Coins className="w-4 h-4" /> {vaultCoins.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-4 text-sm text-velvet-muted max-w-2xl">
-                Spend Vault Coins on exclusive rewards. New items added regularly.
-              </p>
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-mono">Syndicate Credits</div>
+            <div className="font-heading text-2xl text-[#C9A961] mt-1 flex items-center gap-1.5 font-semibold">
+              <Wallet size={18} />
+              <span>{formatPrice(walletBalance)}</span>
             </div>
-
-            {shopMessage && (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-center text-sm text-emerald-300">
-                {shopMessage}
-              </div>
-            )}
-
-            {/* Basic Rewards */}
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">Basic Rewards</p>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {REWARD_SHOP_ITEMS.basic.map(item => (
-                  <ShopItem key={item.id} item={item} coins={vaultCoins} onBuy={handleBuyItem} />
-                ))}
-              </div>
-            </div>
-
-            {/* Mid-Tier Rewards */}
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">Mid-Tier Rewards</p>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {REWARD_SHOP_ITEMS.mid.map(item => (
-                  <ShopItem key={item.id} item={item} coins={vaultCoins} onBuy={handleBuyItem} />
-                ))}
-              </div>
-            </div>
-
-            {/* Premium Rewards */}
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">Premium Rewards</p>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {REWARD_SHOP_ITEMS.premium.map(item => (
-                  <ShopItem key={item.id} item={item} coins={vaultCoins} onBuy={handleBuyItem} />
-                ))}
-              </div>
+            <div className="text-xs text-neutral-400 mt-1">
+              {walletBalance === 150 ? '₹150 Welcome Credits for initiates' : 'Available for drop checkout deduction'}
             </div>
           </div>
-        )}
 
-        {/* ===== LEADERBOARD TAB ===== */}
-        {activeTab === 'leaderboard' && (
-          <div className="space-y-8">
-            <div className="rounded-[2rem] border border-white/10 bg-velvet-card/70 p-8">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">Compete & Earn</p>
-              <h2 className="mt-2 text-3xl font-heading text-velvet-white">Leaderboard</h2>
-              <p className="mt-4 text-sm text-velvet-muted max-w-2xl">
-                Leaderboard Score = XP Earned + Coins Earned + (Crates Opened × 10). Weekly & Monthly resets.
-              </p>
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-2">
-              {/* Score Breakdown */}
-              <div className="rounded-[2rem] border border-white/10 bg-black/40 p-8">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">Your Score</p>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-black/30">
-                    <div className="flex items-center gap-3">
-                      <Zap className="w-5 h-5 text-orange-400" />
-                      <span className="text-sm text-velvet-white">Total XP Earned</span>
-                    </div>
-                    <span className="text-lg font-bold text-orange-400">{useVaultStore.getState().totalXpEarned.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-black/30">
-                    <div className="flex items-center gap-3">
-                      <Coins className="w-5 h-5 text-amber-400" />
-                      <span className="text-sm text-velvet-white">Total Coins Earned</span>
-                    </div>
-                    <span className="text-lg font-bold text-amber-400">{useVaultStore.getState().totalCoinsEarned.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-white/5 bg-black/30">
-                    <div className="flex items-center gap-3">
-                      <Package className="w-5 h-5 text-blue-400" />
-                      <span className="text-sm text-velvet-white">Crates Opened × 10</span>
-                    </div>
-                    <span className="text-lg font-bold text-blue-400">{(cratesOpened * 10).toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-amber-500/20 bg-amber-500/5">
-                    <div className="flex items-center gap-3">
-                      <Trophy className="w-5 h-5 text-amber-300" />
-                      <span className="text-sm font-bold text-velvet-white">Total Leaderboard Score</span>
-                    </div>
-                    <span className="text-xl font-bold text-amber-300">{leaderboardScore.toLocaleString()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Weekly / Monthly Rewards */}
-              <div className="space-y-4">
-                <div className="rounded-[2rem] border border-white/10 bg-black/40 p-8">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-2">Weekly Reset</p>
-                  <p className="text-xl font-heading text-velvet-white mb-4">Every Monday</p>
-                  <div className="space-y-3">
-                    {[
-                      { rank: 'Top 10', reward: 'Exclusive Frame' },
-                      { rank: 'Top 3', reward: '100 Coins' },
-                      { rank: 'Rank 1', reward: '250 Coins' },
-                    ].map(r => (
-                      <div key={r.rank} className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30">
-                        <span className="text-xs text-velvet-muted">{r.rank}</span>
-                        <span className="text-xs font-semibold text-velvet-white">{r.reward}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-[2rem] border border-white/10 bg-black/40 p-8">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-2">Monthly Reset</p>
-                  <p className="text-xl font-heading text-velvet-white mb-4">1st of Month</p>
-                  <div className="space-y-3">
-                    {[
-                      { rank: 'Top 10', reward: 'Premium Badge' },
-                      { rank: 'Top 3', reward: '5% Coupon' },
-                      { rank: 'Rank 1', reward: '₹100 Coupon' },
-                    ].map(r => (
-                      <div key={r.rank} className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/30">
-                        <span className="text-xs text-velvet-muted">{r.rank}</span>
-                        <span className="text-xs font-semibold text-velvet-white">{r.reward}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-mono">Next Scheduled Drop</div>
+            <div className="font-heading text-xl text-velvet-white mt-1">OCT 12, 10:00 AM</div>
+            <div className="text-xs text-[#C9A961] mt-1 truncate">Air Jordan 1 Low Travis Scott Style</div>
           </div>
-        )}
 
-        {/* ===== BADGES TAB ===== */}
-        {activeTab === 'badges' && (
-          <div className="space-y-8">
-            <div className="rounded-[2rem] border border-white/10 bg-velvet-card/70 p-8">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted">Collect Them All</p>
-              <h2 className="mt-2 text-3xl font-heading text-velvet-white">Badges & Achievements</h2>
-              <p className="mt-4 text-sm text-velvet-muted max-w-2xl">
-                Badges are permanent and cannot be removed or traded. Each badge represents a unique achievement.
-              </p>
+          <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-400 font-mono">Live Ballot Entries</div>
+            <div className="font-heading text-2xl text-velvet-white mt-1 flex items-center gap-1.5">
+              <Ticket size={18} className="text-cyan-400" />
+              <span>{enteredRaffles.length > 0 ? `${enteredRaffles.length} Active` : '0 Active'}</span>
             </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.entries(BADGE_DISPLAY).map(([id, badge]) => {
-                const hasBadge = ownedBadges.includes(id)
-                return (
-                  <div
-                    key={id}
-                    className={`rounded-2xl border p-6 text-center transition-all ${
-                      hasBadge
-                        ? 'border-amber-500/30 bg-amber-500/10'
-                        : 'border-white/5 bg-black/20 opacity-60'
-                    }`}
-                  >
-                    <p className="text-4xl mb-3">{hasBadge ? badge.emoji : '🔒'}</p>
-                    <p className={`text-sm font-semibold ${hasBadge ? 'text-velvet-white' : 'text-velvet-muted'}`}>
-                      {badge.name}
-                    </p>
-                    <p className="text-[10px] text-velvet-muted mt-1">{badge.description}</p>
-                    {hasBadge && (
-                      <span className="inline-block mt-2 text-[9px] uppercase tracking-[0.2em] text-emerald-400 font-bold">
-                        ✅ Unlocked
-                      </span>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-
-            {/* All Badge Definitions */}
-            <div className="rounded-[2rem] border border-white/10 bg-black/40 p-6">
-              <p className="text-[10px] uppercase tracking-[0.3em] text-velvet-muted mb-4">📋 How to Unlock</p>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {[
-                  { badge: 'Vault Rookie', unlock: 'Reach Level 2' },
-                  { badge: 'Quiz Master', unlock: '100 Correct Answers' },
-                  { badge: 'Streak Warrior', unlock: '30-Day Streak' },
-                  { badge: 'Vault Legend', unlock: '500 Correct Answers' },
-                  { badge: 'Collector', unlock: 'Open 50 Crates' },
-                  { badge: 'Vault Elite', unlock: 'Reach Level 10' },
-                ].map(b => (
-                  <div key={b.badge} className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-black/30">
-                    <span className="text-lg">📌</span>
-                    <div>
-                      <p className="text-xs font-semibold text-velvet-white">{b.badge}</p>
-                      <p className="text-[9px] text-velvet-muted">{b.unlock}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="text-xs text-neutral-400 mt-1">Community ballot reservations pending</div>
           </div>
-        )}
-
-      </div>
-
-      {/* Crate Opening Modal */}
-      <CrateOpeningModal
-        isOpen={showCrate !== null}
-        onClose={() => setShowCrate(null)}
-        crateType={showCrate === 'premium' ? 'premium' : 'mystery'}
-      />
-    </main>
-  )
-}
-
-function ShopItem({ item, coins, onBuy }: {
-  item: { id: string; title: string; description: string; cost: number; icon: any; category: string }
-  coins: number
-  onBuy: (item: any) => void
-}) {
-  const canAfford = coins >= item.cost
-  const Icon = item.icon
-
-  return (
-    <div className={`rounded-2xl border p-5 flex flex-col justify-between ${
-      canAfford ? 'border-white/10 bg-black/40 hover:border-white/20' : 'border-white/5 bg-black/20 opacity-50'
-    } transition-all`}>
-      <div>
-        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center mb-4">
-          <Icon className="w-5 h-5 text-velvet-muted" />
         </div>
-        <p className="text-sm font-semibold text-velvet-white">{item.title}</p>
-        <p className="text-[10px] text-velvet-muted mt-1 leading-relaxed">{item.description}</p>
-      </div>
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-amber-400">
-          <Coins className="w-3.5 h-3.5" />
-          <span className="text-xs font-bold">{item.cost.toLocaleString()}</span>
-        </div>
+      </motion.div>
+
+      {/* Navigation Tabs */}
+      <div className="flex items-center gap-2 mb-8 border-b border-white/10 pb-4 overflow-x-auto">
         <button
-          onClick={() => onBuy(item)}
-          disabled={!canAfford}
-          className={`px-4 py-2 rounded-full text-[8px] uppercase tracking-[0.2em] font-bold transition-all ${
-            canAfford
-              ? 'bg-velvet-white text-velvet-black hover:bg-white/90'
-              : 'bg-white/5 text-velvet-muted cursor-not-allowed'
+          onClick={() => setActiveTab('drops')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-[0.18em] font-medium transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'drops'
+              ? 'bg-[#C9A961] text-black font-semibold'
+              : 'text-neutral-400 hover:text-white hover:bg-white/5'
           }`}
         >
-          {canAfford ? 'Buy' : 'Locked'}
+          <Sparkles size={14} />
+          Upcoming Drops ({UPCOMING_DROPS.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('raffles')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-[0.18em] font-medium transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'raffles'
+              ? 'bg-[#C9A961] text-black font-semibold'
+              : 'text-neutral-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Ticket size={14} />
+          Member Raffles ({ACTIVE_RAFFLES.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('tiers')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs uppercase tracking-[0.18em] font-medium transition-all cursor-pointer whitespace-nowrap ${
+            activeTab === 'tiers'
+              ? 'bg-[#C9A961] text-black font-semibold'
+              : 'text-neutral-400 hover:text-white hover:bg-white/5'
+          }`}
+        >
+          <Crown size={14} />
+          VIP Tier Privileges
         </button>
       </div>
+
+      {/* Tab 1: Upcoming Drops */}
+      {activeTab === 'drops' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {UPCOMING_DROPS.map((drop, idx) => {
+            const isNotified = notifiedDrops.includes(drop.id)
+
+            return (
+              <motion.div
+                key={drop.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.08, duration: 0.5, ease: EASE }}
+                className="bg-[#111111] border border-neutral-800 rounded-3xl overflow-hidden hover:border-[#C9A961]/40 transition-all flex flex-col justify-between p-6 shadow-xl"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-[#C9A961] bg-[#C9A961]/10 px-2.5 py-1 rounded-full border border-[#C9A961]/20 font-medium">
+                      {drop.tierAccess}
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider text-neutral-400">
+                      {drop.edition}
+                    </span>
+                  </div>
+
+                  <h3 className="font-heading text-2xl text-velvet-white tracking-tight mt-2 mb-1">
+                    {drop.title}
+                  </h3>
+
+                  <div className="text-xl font-heading text-[#C9A961] mb-4 font-semibold">
+                    {formatPrice(drop.price)}
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-black/60 border border-white/5 space-y-2 mb-6 text-xs text-neutral-300">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={13} className="text-[#C9A961]" />
+                      <span>{drop.releaseDate}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock size={13} className="text-[#C9A961]" />
+                      <span>{drop.releaseTime}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <button
+                    onClick={() => toggleNotify(drop.id)}
+                    className={`w-full py-3 rounded-xl text-xs uppercase tracking-[0.2em] font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      isNotified
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                        : 'bg-white/5 hover:bg-white/10 text-velvet-white border border-white/10'
+                    }`}
+                  >
+                    {isNotified ? (
+                      <>
+                        <CheckCircle2 size={14} />
+                        Reminder Set
+                      </>
+                    ) : (
+                      <>
+                        <Bell size={14} />
+                        Set VIP Drop Reminder
+                      </>
+                    )}
+                  </button>
+
+                  <Link
+                    href="/collection"
+                    className="w-full py-2.5 rounded-xl text-[11px] uppercase tracking-[0.18em] text-neutral-400 hover:text-white flex items-center justify-center gap-1 transition-colors"
+                  >
+                    View Collection Specs <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Tab 2: Member Raffles */}
+      {activeTab === 'raffles' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {ACTIVE_RAFFLES.map((raffle, idx) => {
+            const hasEntered = enteredRaffles.includes(raffle.id)
+
+            return (
+              <motion.div
+                key={raffle.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.08, duration: 0.5, ease: EASE }}
+                className="bg-[#111111] border border-neutral-800 rounded-3xl p-6 sm:p-8 flex flex-col justify-between hover:border-[#C9A961]/40 transition-all shadow-xl"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="text-[10px] uppercase tracking-[0.2em] text-cyan-400 bg-cyan-500/10 px-2.5 py-1 rounded-full border border-cyan-500/20 font-medium">
+                      Community Ballot
+                    </span>
+                    <span className="text-xs text-[#C9A961] font-heading font-medium">
+                      Draw: {raffle.drawDate}
+                    </span>
+                  </div>
+
+                  <h3 className="font-heading text-2xl text-velvet-white tracking-tight mb-2">
+                    {raffle.title}
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-neutral-400 mb-6 leading-relaxed">
+                    {raffle.description}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-3 mb-6 p-4 rounded-2xl bg-black/60 border border-white/5 text-xs">
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-neutral-400 font-mono">Allocation Size</div>
+                      <div className="font-heading text-lg text-velvet-white mt-0.5">{raffle.totalAllocations} Pairs Allocation</div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-neutral-400 font-mono">Retail Price</div>
+                      <div className="font-heading text-lg text-[#C9A961] mt-0.5 font-semibold">{formatPrice(raffle.retailPrice)}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <button
+                    onClick={() => enterRaffle(raffle.id)}
+                    className={`w-full py-3.5 rounded-xl text-xs uppercase tracking-[0.2em] font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                      hasEntered
+                        ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
+                        : 'bg-[#C9A961] hover:bg-[#d8b870] text-black shadow-lg shadow-[#C9A961]/20 active:scale-95'
+                    }`}
+                  >
+                    {hasEntered ? (
+                      <>
+                        <CheckCircle2 size={16} />
+                        Ballot Confirmed (Entry #418)
+                      </>
+                    ) : (
+                      <>
+                        <Ticket size={16} />
+                        Enter Allocation Ballot
+                      </>
+                    )}
+                  </button>
+                  <p className="text-[10px] text-center text-neutral-400 mt-2">
+                    Winners chosen via transparent randomized draw. No payment charged unless your ballot is selected.
+                  </p>
+                </div>
+              </motion.div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Tab 3: Tier Privileges */}
+      {activeTab === 'tiers' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {TIER_BENEFITS.map((tier, idx) => (
+            <motion.div
+              key={tier.tier}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.08, duration: 0.5, ease: EASE }}
+              className={`rounded-3xl p-6 sm:p-8 border flex flex-col justify-between shadow-xl ${
+                idx === 2
+                  ? 'bg-gradient-to-b from-[#1c1811] via-[#14120e] to-[#0d0c0a] border-[#C9A961]/50 shadow-[#C9A961]/5'
+                  : 'bg-[#111111] border-neutral-800'
+              }`}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className={`text-[10px] uppercase tracking-[0.2em] px-2.5 py-1 rounded-full border font-medium ${
+                    idx === 2
+                      ? 'bg-[#C9A961]/20 text-[#C9A961] border-[#C9A961]/30'
+                      : 'bg-white/10 text-neutral-300 border-white/10'
+                  }`}>
+                    {tier.badge}
+                  </span>
+                  <Crown size={16} className={idx === 2 ? 'text-[#C9A961]' : 'text-neutral-500'} />
+                </div>
+
+                <h3 className="font-heading text-2xl text-velvet-white tracking-tight mb-6">
+                  {tier.tier}
+                </h3>
+
+                <ul className="space-y-3 mb-8">
+                  {tier.perks.map((perk) => (
+                    <li key={perk} className="flex items-start gap-2.5 text-xs text-neutral-300">
+                      <CheckCircle2 size={14} className={idx === 2 ? 'text-[#C9A961] shrink-0 mt-0.5' : 'text-neutral-500 shrink-0 mt-0.5'} />
+                      <span>{perk}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="pt-4 border-t border-white/5">
+                <span className="text-[10px] uppercase tracking-widest text-neutral-400">
+                  {idx === 0 ? 'Default on Signup (Initiate)' : idx === 1 ? 'Unlocked at ₹25,000 Spend' : 'Unlocked at ₹75,000 Spend'}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

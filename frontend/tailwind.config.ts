@@ -23,8 +23,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        heading: ['Cormorant Garamond', 'Georgia', 'serif'],
-        body: ['Montserrat', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        heading: ['var(--font-cormorant)', 'Cormorant Garamond', 'Georgia', 'serif'],
+        body: ['var(--font-montserrat)', 'Montserrat', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
       },
       letterSpacing: {
         'extra-wide': '0.3em',

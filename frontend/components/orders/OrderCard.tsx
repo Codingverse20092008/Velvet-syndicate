@@ -6,6 +6,8 @@ import { Package, ChevronRight, MapPin, Calendar, CreditCard, ShoppingBag } from
 import Link from 'next/link'
 import { Order } from '@/store/orderStore'
 import { formatPrice } from '@/lib/utils'
+import { getFullImageUrl } from '@/lib/api'
+import Image from 'next/image'
 
 interface OrderCardProps {
   order: Order
@@ -76,7 +78,7 @@ export function OrderCard({ order }: OrderCardProps) {
           {order.items.slice(0, 3).map((item, idx) => (
             <div key={item.id} className="relative w-12 h-12 rounded-lg border-2 border-velvet-dark overflow-hidden bg-white/5">
               {item.imageUrl ? (
-                <img src={item.imageUrl} alt={item.productName} className="w-full h-full object-cover" />
+                <Image src={getFullImageUrl(item.imageUrl)} alt={item.productName} fill sizes="48px" className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <ShoppingBag size={16} className="text-velvet-muted" />

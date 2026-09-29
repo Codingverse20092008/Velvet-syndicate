@@ -52,7 +52,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
   return (
     <div className="relative group -mx-6 md:mx-0">
       {/* Main Image Container */}
-      <div className="relative aspect-[4/5] bg-velvet-dark overflow-hidden touch-pan-y">
+      <div className="relative aspect-[4/5] bg-neutral-900 overflow-hidden touch-pan-y">
         <AnimatePresence initial={false} custom={dragDirection} mode="popLayout">
           <motion.div
             key={currentIndex}
@@ -68,25 +68,15 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             onDragEnd={onDragEnd}
             onClick={() => setIsZoomed(true)}
           >
-            {isExternalUrl(getImageSrc(currentIndex)) ? (
-              <img
-                src={getImageSrc(currentIndex)}
-                alt={`${productName} - ${currentIndex + 1}`}
-                className="w-full h-full object-cover select-none pointer-events-none"
-                onError={() => handleImageError(currentIndex)}
-              />
-            ) : (
-              <Image
-                src={getImageSrc(currentIndex)}
-                alt={`${productName} - ${currentIndex + 1}`}
-                fill
-                className="object-cover select-none pointer-events-none"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                priority={currentIndex === 0}
-                unoptimized={isExternalUrl(getImageSrc(currentIndex))}
-                onError={() => handleImageError(currentIndex)}
-              />
-            )}
+            <Image
+              src={getImageSrc(currentIndex)}
+              alt={`${productName} - ${currentIndex + 1}`}
+              fill
+              className="object-cover select-none pointer-events-none"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              priority={currentIndex === 0}
+              onError={() => handleImageError(currentIndex)}
+            />
           </motion.div>
         </AnimatePresence>
 
@@ -140,16 +130,18 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 setDragDirection(index > currentIndex ? -1 : 1)
                 setCurrentIndex(index)
               }}
-              className={`relative w-20 aspect-[4/5] shrink-0 overflow-hidden border transition-all duration-500 luxury-ease ${
+              className={`relative w-20 aspect-[4/5] shrink-0 overflow-hidden border bg-neutral-900 transition-all duration-500 luxury-ease ${
                 index === currentIndex
                   ? 'border-velvet-accent'
                   : 'border-white/10 opacity-50 hover:opacity-100'
               }`}
             >
-              <img
+              <Image
                 src={getFullImageUrl(img)}
                 alt={`${productName} thumbnail ${index + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                sizes="80px"
+                className="object-cover"
                 onError={() => handleImageError(index)}
               />
             </button>

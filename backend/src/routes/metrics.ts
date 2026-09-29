@@ -13,7 +13,7 @@ const router = Router();
  */
 async function requireAdmin(req: Request) {
   const user = await getUserFromRequest(req);
-  if (user.role !== 'admin') {
+  if (user.role !== 'admin' && user.role !== 'super_admin') {
     throw new ForbiddenError('Admin access required');
   }
   return user;

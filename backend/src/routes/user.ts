@@ -87,7 +87,7 @@ router.get('/stats', asyncHandler(async (req: Request, res: Response) => {
   const stats = await getUserStats(user.id);
 
   // Hide loyalty points from admin users
-  if (user.role === 'admin') {
+  if (user.role === 'admin' || user.role === 'super_admin') {
     stats.loyaltyPoints = 0;
   }
 
