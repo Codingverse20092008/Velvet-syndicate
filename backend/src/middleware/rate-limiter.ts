@@ -17,6 +17,8 @@ if (client) {
   });
 }
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 /**
  * 🛡️ ENTERPRISE RATE LIMITER (Resilient)
  * Uses Redis if available for multi-instance sync, otherwise falls back to memory.
@@ -26,6 +28,7 @@ export const createLimiter = (options: {
   max: number;
   message: string;
   keyPrefix: string;
+  skip?: (req: any) => boolean;
 }) => {
   const store = client ? new RedisStore({
     // @ts-expect-error - Compatibility between ioredis versions
@@ -51,29 +54,53 @@ export const createLimiter = (options: {
     standardHeaders: true,
     legacyHeaders: false,
     store,
+    skip: options.skip,
   });
 };
 
-// 1. General API Limiter (100 req/min)
+// 1. General API Limiter (1000 req/min in dev, 100 req/min in prod)
 export const globalLimiter = createLimiter({
   windowMs: 60 * 1000,
-  max: 100,
+  max: isDev ? 1000 : 100,
   message: 'Too many requests, please try again in a minute.',
   keyPrefix: 'global',
+  skip: () => isDev,
 });
 
-// 2. Auth Limiter (10 req/15min)
+// 2. Auth Limiter (200 req/15min in dev, 15 req/15min in prod)
 export const authLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: isDev ? 200 : 15,
   message: 'Too many login attempts, please try again later.',
   keyPrefix: 'auth',
+  skip: () => isDev,
 });
 
-// 3. Checkout Limiter (10 req/hour)
+// 3. Checkout Limiter
+// In development: Bypassed for fast testing and prototyping (100 req / 15 min)
+// In production: Relaxed to 30 req / 15 min (replaces restrictive 10 req / hour)
+// Never throttles GET requests (order history, shipment polling)
 export const checkoutLimiter = createLimiter({
-  windowMs: 60 * 60 * 1000,
-  max: 10,
-  message: 'Too many checkout attempts, please try again in an hour.',
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 100 : 30,
+  message: 'Too many checkout attempts, please try again in a few minutes.',
   keyPrefix: 'checkout',
+  skip: (req) => {
+    if (req.method === 'GET' || req.method === 'OPTIONS') return true;
+    if (isDev) return true;
+    return false;
+  },
+});
+
+// 4. Dedicated Razorpay Limiter
+export const razorpayLimiter = createLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: isDev ? 100 : 30,
+  message: 'Too many payment requests, please try again in a few minutes.',
+  keyPrefix: 'razorpay',
+  skip: (req) => {
+    if (req.method === 'OPTIONS') return true;
+    if (isDev) return true;
+    return false;
+  },
 });

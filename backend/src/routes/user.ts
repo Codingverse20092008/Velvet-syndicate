@@ -9,9 +9,9 @@ const router = Router();
 
 // Validation schema for profile update
 const updateProfileSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long').optional(),
   phone: z.string().regex(/^[6-9]\d{9}$/, 'Please enter a valid 10-digit mobile number').nullable().optional(),
-  address: z.string().min(10, 'Address must be at least 10 characters').max(500, 'Address is too long').nullable().optional(),
+  address: z.string().min(5, 'Address must be at least 5 characters').max(500, 'Address is too long').nullable().optional(),
   avatar: z.string().regex(/^data:image\/[a-zA-Z]+;base64,/, 'Invalid image format').nullable().optional(),
 });
 
@@ -30,9 +30,9 @@ router.patch('/profile', asyncHandler(async (req: Request, res: Response) => {
   // Update profile
   const updatedUser = await updateUserProfile(user.id, {
     name: parsed.name,
-    phone: parsed.phone || null,
-    address: parsed.address || null,
-    avatar: parsed.avatar || null,
+    phone: parsed.phone !== undefined ? parsed.phone : undefined,
+    address: parsed.address !== undefined ? parsed.address : undefined,
+    avatar: parsed.avatar !== undefined ? parsed.avatar : undefined,
   });
 
   return successResponse(res, { 

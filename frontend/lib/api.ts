@@ -178,7 +178,8 @@ export async function apiFetch(path: string, options: ApiFetchOptions = {}): Pro
   const { skipAuth, skipRetry, headers, ...restOptions } = options
 
   // Build URL - ALWAYS use absolute URL in production
-  const url = path.startsWith('http') ? path : `${API_URL}/api${path}`
+  const cleanPath = path.startsWith('/api') ? path.replace(/^\/api/, '') : path
+  const url = path.startsWith('http') ? path : `${API_URL}/api${cleanPath.startsWith('/') ? cleanPath : `/${cleanPath}`}`
 
   // Get stored access token
   const accessToken = getStoredAccessToken()

@@ -1,10 +1,11 @@
+// Velvet Syndicate Backend Server - Protected Digital Assets Active
 import express, { Request, Response } from 'express';
 import crypto from 'node:crypto';
 import cors from 'cors';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import path from 'path';
-import { globalLimiter, authLimiter, checkoutLimiter } from './src/middleware/rate-limiter';
+import { globalLimiter, authLimiter } from './src/middleware/rate-limiter';
 import './src/workers/orderWorker'; // Start the background worker
 
 // Import env early to validate
@@ -299,12 +300,118 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static(path.join(process.cwd(), 'uploads')));
 
+// Root & Health Check Endpoints
+app.get(['/', '/health'], (req: Request, res: Response) => {
+  if (req.accepts('html')) {
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Velvet Syndicate API</title>
+  <style>
+    body {
+      background-color: #080808;
+      color: #E2DFD8;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #111111;
+      border: 1px solid #222222;
+      border-radius: 12px;
+      padding: 36px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 9999px;
+      padding: 4px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 20px;
+    }
+    .badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    h1 {
+      font-size: 22px;
+      letter-spacing: 0.15em;
+      margin: 0 0 10px 0;
+      color: #C9A961;
+      font-weight: 600;
+    }
+    p {
+      color: #8E8D8A;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0 0 24px 0;
+    }
+    .btn {
+      display: inline-block;
+      background: #C9A961;
+      color: #080808;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      transition: opacity 0.2s;
+    }
+    .btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge">API Status: Healthy</div>
+    <h1>VELVET SYNDICATE API</h1>
+    <p>The backend server is running smoothly on port 3001. To browse the luxury storefront, open the frontend application on port 3000.</p>
+    <a href="http://localhost:3000" class="btn">Open Velvet Storefront &rarr;</a>
+  </div>
+</body>
+</html>`);
+  }
+
+  return res.json({
+    name: 'Velvet Syndicate API',
+    status: 'online',
+    port: PORT,
+    environment: env.NODE_ENV,
+    frontend: 'http://localhost:3000',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // API Routes - Apply stricter rate limiting to auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/cart', cartRoutes);
-app.use('/api/orders', checkoutLimiter, ordersRoutes);
+app.use('/api/orders', ordersRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/user/addresses', addressRoutes);
 app.use('/api/events', eventsRoutes);
 app.use('/api/feedback', feedbackRoutes);

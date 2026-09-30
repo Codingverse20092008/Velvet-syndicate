@@ -6,67 +6,55 @@ import { usePathname } from 'next/navigation';
 
 export function SplashScreen() {
   const [isVisible, setIsVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return (
-        window.innerWidth < 768 ||
-        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-      );
-    }
-    return false;
-  });
-
+  const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const pathname = usePathname();
 
   useEffect(() => {
-    // 1. Skip on authentication and admin routes
-    const isAuthPage = pathname === '/login' || pathname === '/signup';
-    const isAdminPage = pathname?.startsWith('/admin');
-    if (isAuthPage || isAdminPage) {
+    // 1. Never show on non-home pages (e.g. /login, /profile, /vault, /cart, etc.)
+    if (pathname !== '/') {
       setIsVisible(false);
       return;
     }
 
-    // 2. Detect mobile device
-    const mobileDetected =
-      window.innerWidth < 768 ||
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    setIsMobile(mobileDetected);
-
-    // 3. Check for page reload or explicit ?splash=true / ?splash=1 URL parameter to enable re-testing
     try {
-      const navEntries = window.performance?.getEntriesByType?.('navigation');
-      const isReload =
-        navEntries &&
-        navEntries.length > 0 &&
-        (navEntries[0] as PerformanceNavigationTiming).type === 'reload';
-
+      // 2. Check if explicitly forced via URL for developer testing (?splash=1 or ?splash=true)
       const urlParams = new URLSearchParams(window.location.search);
       const forceSplash = urlParams.get('splash') === 'true' || urlParams.get('splash') === '1';
 
-      if (isReload || forceSplash) {
+      if (forceSplash) {
+        sessionStorage.removeItem('velvet_splash_seen');
         sessionStorage.removeItem('has_seen_splash');
-        sessionStorage.removeItem('hasShownSplash');
       }
-    } catch {
-      // Ignore performance API errors in legacy browsers
-    }
 
-    // 4. Check if already displayed in this browser session
-    const hasSeenSplash =
-      sessionStorage.getItem('has_seen_splash') === 'true' ||
-      sessionStorage.getItem('hasShownSplash') === 'true';
+      // 3. Strict session capping check:
+      // If velvet_splash_seen === 'true': immediately skip and unmount with zero flash
+      const splashSeen = 
+        sessionStorage.getItem('velvet_splash_seen') === 'true' ||
+        sessionStorage.getItem('has_seen_splash') === 'true';
 
-    if (!hasSeenSplash) {
+      if (splashSeen) {
+        setIsVisible(false);
+        return;
+      }
+
+      // 4. Not seen yet in this session -> show splash
       setIsVisible(true);
       document.body.style.overflow = 'hidden';
+
+      const mobileDetected =
+        window.innerWidth < 768 ||
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(mobileDetected);
+    } catch {
+      setIsVisible(false);
+      return;
     }
 
-    // 5. Fallback safety timer (11s - videos are 10s)
+    // 5. Safety timeout (10 seconds max)
     const fallbackTimer = setTimeout(() => {
       handleExit();
-    }, 11000);
+    }, 10000);
 
     return () => {
       document.body.style.overflow = 'unset';
@@ -93,8 +81,8 @@ export function SplashScreen() {
 
   const handleExit = () => {
     try {
+      sessionStorage.setItem('velvet_splash_seen', 'true');
       sessionStorage.setItem('has_seen_splash', 'true');
-      sessionStorage.setItem('hasShownSplash', 'true');
     } catch {
       // Ignore storage errors in private browsing
     }

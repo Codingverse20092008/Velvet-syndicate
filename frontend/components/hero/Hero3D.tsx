@@ -63,17 +63,10 @@ export function Hero3D() {
         )}
       </AnimatePresence>
 
-      {/* Flagship Sneaker Visual with Priority for LCP */}
+      {/* Ambient background while 3D Canvas initializes */}
       {(!canvasReady || hasError) && (
-        <div className={`absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ${canvasReady ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <Image
-            src="/images/sneaker-fallback.png"
-            alt="Velvet Syndicate Flagship Sneaker"
-            fill
-            sizes="100vw"
-            className="object-contain p-12 md:p-20 opacity-50 filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
-            priority={true}
-          />
+        <div className={`absolute inset-0 flex items-center justify-center bg-[#060606] transition-opacity duration-700 ${canvasReady ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+          <div className="w-8 h-8 rounded-full border border-velvet-accent/30 border-t-velvet-accent animate-spin" />
         </div>
       )}
 

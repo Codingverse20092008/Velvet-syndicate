@@ -24,6 +24,7 @@ interface User {
   address?: string
   avatar?: string
   createdAt?: string
+  googleId?: string
 }
 
 interface AuthState {
@@ -36,6 +37,7 @@ interface AuthState {
   checkAuth: () => Promise<void>
   logout: () => Promise<void>
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>
+  loginWithGoogle: (credential: string) => Promise<{ success: boolean; error?: string }>
   signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>
   refreshProfile: () => Promise<void>
 }
@@ -175,6 +177,61 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       console.warn('[AuthStore] login: error -', err)
       set({ isLoading: false })
       return { success: false, error: (err as Error).message }
+    }
+  },
+
+  loginWithGoogle: async (credential: string) => {
+    set({ isLoading: true })
+    try {
+      const res = await api.post('/auth/google', { credential })
+      const data = await res.json()
+
+      if (data.success) {
+        const token = data.token || data.accessToken || data.data?.token || data.data?.accessToken
+        const user = data.user || data.data?.user
+
+        if (token) {
+          setStoredAccessToken(token)
+          setEdgeAuthCookie(token)
+        }
+        const refreshToken = data.refreshToken || data.data?.refreshToken
+        if (refreshToken) {
+          setStoredRefreshToken(refreshToken)
+        }
+
+        if (user) {
+          set({ user, isAuthenticated: true, isLoading: false })
+        } else {
+          // Fallback to fetch /auth/me
+          const meRes = await api.get('/auth/me', { skipRetry: true })
+          const meData = await meRes.json()
+          if (meData.success && meData.data?.user) {
+            set({ user: meData.data.user, isAuthenticated: true, isLoading: false })
+          } else {
+            set({ isAuthenticated: true, isLoading: false })
+          }
+        }
+
+        // Sync cart if not in checkout
+        try {
+          const { useCartStore } = await import('@/store/cartStore')
+          if (!useCartStore.getState().checkoutInProgress) {
+            await useCartStore.getState().syncCart()
+          }
+        } catch (cartErr) {
+          console.warn('[AuthStore] Cart sync failed after Google login:', cartErr)
+        }
+
+        return { success: true }
+      }
+
+      setEdgeAuthCookie(null)
+      set({ isLoading: false })
+      return { success: false, error: data?.error || 'Google sign-in failed' }
+    } catch (err) {
+      console.warn('[AuthStore] loginWithGoogle error:', err)
+      set({ isLoading: false })
+      return { success: false, error: (err as Error).message || 'Google sign-in error' }
     }
   },
 

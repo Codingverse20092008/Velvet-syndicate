@@ -23,10 +23,14 @@ export function ExitIntentModal() {
   const totalPrice = hasHydrated ? items.reduce((sum, i) => sum + i.price * i.quantity, 0) : 0
   const leadItem = items[0]
 
+  const isCheckoutOrOrder = 
+    pathname.startsWith('/checkout') || 
+    pathname.startsWith('/orders') || 
+    pathname.includes('/order-success')
+
   useEffect(() => {
-    // Only trigger if cart has items and not on order success page
-    if (!hasHydrated || items.length === 0) return
-    if (pathname.includes('/order-success')) return
+    // Strictly do not trigger on checkout, order, or success pages, or if empty cart
+    if (isCheckoutOrOrder || !hasHydrated || items.length === 0) return
 
     // Limit trigger to once per browser session
     try {
@@ -93,7 +97,7 @@ export function ExitIntentModal() {
     }
   }, [hasHydrated, items.length, pathname])
 
-  if (!isOpen || items.length === 0) return null
+  if (isCheckoutOrOrder || !isOpen || items.length === 0) return null
 
   const handleSecurePair = () => {
     setIsOpen(false)

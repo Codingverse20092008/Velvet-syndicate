@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",
+    "@react-oauth/google": "^0.13.5",
     "@react-three/drei": "9.80.0",
     "@react-three/fiber": "8.13.0",
     "@upstash/redis": "^1.37.0",

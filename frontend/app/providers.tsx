@@ -1,8 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '278713684404-d4modf2abjjegfr6g5vptpmmibgpg3l4.apps.googleusercontent.com'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { checkAuth, isAuthenticated } = useAuthStore()
@@ -48,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, isInitialized, syncCart, fetchCart])
 
   return (
-    <>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       {/* Persistent Loading Bar */}
       <div className="fixed top-0 left-0 w-full h-[1px] bg-white/5 z-[10000] pointer-events-none">
         <div 
@@ -72,7 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       >
         {children}
       </div>
-    </>
+    </GoogleOAuthProvider>
   )
 }
 

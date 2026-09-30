@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { 
   ChevronLeft, Loader2, MapPin, 
-  Calendar, CreditCard, Hash, Package, RefreshCcw, WifiOff, XCircle, RotateCcw, ArrowLeftRight
+  Calendar, CreditCard, Hash, Package, RefreshCcw, WifiOff, XCircle, RotateCcw, ArrowLeftRight,
+  Download, Lock, FileText, CheckCircle2
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -140,6 +141,17 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const canRequestCancel = currentOrder.status === 'PENDING' || currentOrder.status === 'CONFIRMED'
   const canReturnExchange = currentOrder.status === 'DELIVERED' && (currentOrder as any).returnStatus === 'NONE'
   const existingReturnStatus = (currentOrder as any).returnStatus
+  const hasDigitalAsset = Boolean(
+    currentOrder.items?.some(
+      (item: any) =>
+        item.productId === 'prod_digital_sem3_cs' ||
+        item.productName?.toLowerCase().includes('computer application') ||
+        item.productName?.toLowerCase().includes('wbchse')
+    )
+  )
+  const isPaid =
+    currentOrder.paymentStatus === 'PAID' ||
+    (currentOrder.status === 'CONFIRMED' && currentOrder.paymentMethod === 'RAZORPAY')
 
   const submitReturnExchange = async (type: 'RETURN' | 'EXCHANGE') => {
     setIsReturnExchangeSubmitting(true)
@@ -225,6 +237,69 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
               <StatusMessage status={currentOrder.status} />
               <OrderTimeline status={currentOrder.status} />
+
+              {/* Digital E-Book Asset Download Card */}
+              {hasDigitalAsset && (
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`mt-8 p-6 sm:p-8 rounded-2xl border relative overflow-hidden shadow-2xl transition-all ${
+                    isPaid
+                      ? 'bg-gradient-to-br from-[#181308] via-[#0E0E0E] to-[#0A0A0A] border-[#C9A961]/50 shadow-[0_0_50px_rgba(201,169,97,0.15)]'
+                      : 'bg-[#0E0E0E] border-white/10'
+                  }`}
+                >
+                  {isPaid && (
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-[#C9A961]/15 rounded-full blur-3xl pointer-events-none" />
+                  )}
+
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        {isPaid ? (
+                          <>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                            <span className="text-[11px] uppercase tracking-widest text-[#C9A961] font-mono font-bold">
+                              Digital Asset Unlocked // Ready for Download
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock size={13} className="text-amber-400" />
+                            <span className="text-[11px] uppercase tracking-widest text-neutral-400 font-mono font-bold">
+                              Locked • Complete Payment to Unlock
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <h3 className="font-heading text-xl text-white font-semibold tracking-wide">
+                        WBCHSE Class 12 Computer Application (Sem 3) E-Book
+                      </h3>
+                      <p className="text-xs text-neutral-400 max-w-md leading-relaxed">
+                        {isPaid
+                          ? 'Your official semester 3 syllabus guide and question bank are decrypted and ready for offline reading.'
+                          : 'Access to this verified question bank unlocks immediately upon payment confirmation.'}
+                      </p>
+                    </div>
+
+                    {isPaid ? (
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/orders/${currentOrder.id}/download-pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download="EduTips-HS-Sem3-Computer.pdf"
+                        className="inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-[#C9A961] hover:bg-[#D4B872] text-black font-heading font-bold text-xs uppercase tracking-widest rounded-xl transition-all shadow-[0_4px_20px_rgba(201,169,97,0.3)] hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto flex-shrink-0"
+                      >
+                        <Download size={16} /> DOWNLOAD E-BOOK (PDF)
+                      </a>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 px-5 py-3.5 rounded-xl border border-white/10 bg-white/5 text-neutral-400 text-xs font-mono flex-shrink-0">
+                        <Lock size={14} /> Locked Asset
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {canRequestCancel && (

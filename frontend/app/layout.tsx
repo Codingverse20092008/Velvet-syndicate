@@ -9,7 +9,6 @@ import { AuthProvider } from './providers'
 import { ActiveOrderBanner } from '@/components/user/ActiveOrderBanner'
 import { ReturnVisitTracker } from '@/components/analytics/ReturnVisitTracker'
 import { SplashScreen } from '@/components/ui/SplashScreen'
-import { SocialProof } from '@/components/ui/SocialProof'
 import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 import { ExitIntentModal } from '@/components/cart/ExitIntentModal'
 import { SyndicateAIWidget } from '@/components/ai/SyndicateAIWidget'
@@ -56,7 +55,6 @@ export default function RootLayout({
     <html lang="en" className={`${cormorant.variable} ${montserrat.variable}`}>
       <body className={montserrat.className}>
         <SplashScreen />
-        <SocialProof />
         <MobileBottomNav />
         <AuthProvider>
           <Navigation />

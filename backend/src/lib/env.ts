@@ -1,10 +1,7 @@
 import * as dotenv from 'dotenv';
-// Only load .env.local in development
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config({ path: '.env.local' });
-} else {
-  dotenv.config();
-}
+// Load .env.local first if present, then fallback/fill with .env
+dotenv.config({ path: '.env.local' });
+dotenv.config();
 import { z } from 'zod';
 
 const envSchema = z.object({
@@ -38,6 +35,12 @@ const envSchema = z.object({
   AI_BASE_URL: z.string().optional(),
   AI_API_KEY: z.string().optional(),
   AI_MODEL_NAME: z.string().optional(),
+  // Google OAuth
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  // Razorpay Gateway
+  RAZORPAY_KEY_ID: z.string().optional(),
+  RAZORPAY_KEY_SECRET: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

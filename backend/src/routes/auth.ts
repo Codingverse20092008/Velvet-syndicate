@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { registerSchema, loginSchema } from '../lib/schemas';
-import { createUser, authenticateUser as authenticateUserSvc, logout } from '../services/auth.service';
+import { createUser, authenticateUser as authenticateUserSvc, authenticateGoogleUser, logout } from '../services/auth.service';
 import { sendOtp, verifyOtp } from '../services/otp.service';
 import { refreshSession, setAuthCookiesExpress, clearAuthCookiesExpress } from '../lib/auth';
 import { getUserFromRequest, getRefreshTokenFromRequest } from '../lib/auth-express';
@@ -75,6 +75,37 @@ router.post('/login', asyncHandler(async (req: Request, res: Response) => {
     message: 'Login successful',
     accessToken: tokens.accessToken,
     refreshToken: tokens.refreshToken,
+  });
+}));
+
+const googleAuthSchema = z.object({
+  credential: z.string().min(1, 'Google credential is required'),
+});
+
+// POST /api/auth/google
+// Receives { credential } (Google ID token / JWT from frontend)
+router.post('/google', asyncHandler(async (req: Request, res: Response) => {
+  const { credential } = googleAuthSchema.parse(req.body);
+
+  const { user, tokens } = await authenticateGoogleUser(credential);
+
+  // Set refresh token and access token in HTTP-only cross-domain cookies
+  setAuthCookiesExpress(res, tokens);
+
+  logger.info({ userId: user.id, email: user.email }, 'User authenticated via Google');
+
+  return res.status(200).json({
+    success: true,
+    token: tokens.accessToken,
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    user,
+    data: {
+      token: tokens.accessToken,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user,
+    }
   });
 }));
 

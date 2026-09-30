@@ -14,18 +14,7 @@ const Hero3D = dynamic(() => import('@/components/hero/Hero3D').then(mod => ({ d
   ssr: false,
   loading: () => (
     <div className="relative w-full h-screen bg-[#060606] flex items-center justify-center overflow-hidden">
-      <Image
-        src="/images/sneaker-fallback.png"
-        alt="Velvet Syndicate Flagship Sneaker"
-        fill
-        sizes="100vw"
-        className="object-contain p-12 md:p-24 opacity-60 filter drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
-        priority
-      />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 100%)' }} />
-      <div className="relative z-10 text-white/50 text-xs tracking-[0.3em] uppercase animate-pulse">
-        Initializing 3D Archive...
-      </div>
+      <div className="w-8 h-8 rounded-full border border-velvet-accent/40 border-t-velvet-accent animate-spin" />
     </div>
   ),
 })

@@ -26,6 +26,9 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+rzp-key.csv
+client_secret*.json
+*.pdf
 
 # vercel
 .vercel

@@ -5,7 +5,8 @@ export const users = sqliteTable('users', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  passwordHash: text('password_hash').notNull(),
+  passwordHash: text('password_hash'),
+  googleId: text('google_id').unique(),
   role: text('role', { enum: ['user', 'admin', 'super_admin'] }).notNull().default('user'),
   emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
   phone: text('phone'),
@@ -18,6 +19,7 @@ export const users = sqliteTable('users', {
 }, (table) => ({
   emailIdx: uniqueIndex('users_email_idx').on(table.email),
   phoneIdx: uniqueIndex('users_phone_idx').on(table.phone),
+  googleIdIdx: uniqueIndex('users_google_id_idx').on(table.googleId),
 }));
 
 // OTP Verifications
@@ -169,6 +171,7 @@ export const orders = sqliteTable('orders', {
   paymentMethod: text('payment_method').notNull().default('COD'),
   shippingAddress: text('shipping_address').notNull(),
   idempotencyKey: text('idempotency_key'),
+  paymentId: text('payment_id'),
   returnStatus: text('return_status', { enum: ['NONE', 'RETURN_REQUESTED', 'RETURN_APPROVED', 'RETURN_REJECTED', 'EXCHANGE_REQUESTED', 'EXCHANGE_APPROVED', 'EXCHANGE_REJECTED'] }).notNull().default('NONE'),
   returnReason: text('return_reason'),
   createdAt: text('created_at').default(sql`(CURRENT_TIMESTAMP)`).notNull(),

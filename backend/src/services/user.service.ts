@@ -1,14 +1,14 @@
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
-import { db } from '../lib/db';
+import { db, dbClient } from '../lib/db';
 import { orderItems, orders, products, users } from '../lib/schema';
 import { NotFoundError } from '../lib/errors';
 import { logger } from '../lib/logger';
 
 interface UpdateProfileData {
-  name: string;
-  phone: string | null;
-  address: string | null;
-  avatar: string | null;
+  name?: string;
+  phone?: string | null;
+  address?: string | null;
+  avatar?: string | null;
   bankAccountNo?: string | null;
   bankIfsc?: string | null;
 }
@@ -37,6 +37,8 @@ export interface UserStats {
   totalOrders: number;
   totalSpent: number;
   loyaltyPoints: number;
+  credits: number;
+  walletBalance: number;
   lastOrderDate: string | null;
   lastOrderStatus: string | null;
   lastActivity: string | null;
@@ -87,13 +89,13 @@ export async function updateUserProfile(
 
   // Update user
   const updateData: Record<string, any> = {
-    name: data.name,
-    phone: data.phone,
-    address: data.address,
-    avatar: data.avatar,
     updatedAt: new Date().toISOString(),
   };
 
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.phone !== undefined) updateData.phone = data.phone;
+  if (data.address !== undefined) updateData.address = data.address;
+  if (data.avatar !== undefined) updateData.avatar = data.avatar;
   if (data.bankAccountNo !== undefined) updateData.bankAccountNo = data.bankAccountNo;
   if (data.bankIfsc !== undefined) updateData.bankIfsc = data.bankIfsc;
 
@@ -208,10 +210,25 @@ export async function getUserStats(userId: string): Promise<UserStats> {
   const totalSpent = Number(aggregates?.totalSpent ?? 0);
   const lastOrderDate = aggregates?.lastOrderDate ?? null;
 
+  let walletCredits = 150;
+  try {
+    const vaultResult = await dbClient.execute({
+      sql: 'SELECT vault_coins FROM vault_users WHERE user_id = ? LIMIT 1',
+      args: [userId],
+    });
+    if (vaultResult.rows.length > 0 && vaultResult.rows[0].vault_coins !== null) {
+      walletCredits = Number(vaultResult.rows[0].vault_coins);
+    }
+  } catch (err) {
+    logger.warn({ err, userId }, 'Failed to fetch user vault_coins for stats');
+  }
+
   return {
     totalOrders: Number(aggregates?.totalOrders ?? 0),
     totalSpent,
     loyaltyPoints: Math.floor(totalSpent / 100),
+    credits: walletCredits,
+    walletBalance: walletCredits,
     lastOrderDate,
     lastOrderStatus: latestOrder?.status ?? null,
     lastActivity: lastOrderDate ?? profile?.createdAt ?? null,
